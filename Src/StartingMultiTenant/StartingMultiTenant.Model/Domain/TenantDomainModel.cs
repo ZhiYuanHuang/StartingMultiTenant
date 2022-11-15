@@ -4,7 +4,9 @@ using System.Text;
 
 namespace StartingMultiTenant.Model.Domain
 {
-    internal class TenantDomainModel
+    public class TenantDomainModel
     {
+        public Int64 Id { get; set; }
+        public string TenantDomain { get; set; }
     }
 }

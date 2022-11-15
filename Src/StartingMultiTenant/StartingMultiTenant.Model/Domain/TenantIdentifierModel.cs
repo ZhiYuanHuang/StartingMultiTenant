@@ -4,7 +4,12 @@ using System.Text;
 
 namespace StartingMultiTenant.Model.Domain
 {
-    internal class TenantIdentifierModel
+    public class TenantIdentifierModel
     {
+        public Int64 Id { get; set; }
+        public string TenantGuid { get; set; }
+        public string TenantIdentifier { get; set; }
+        public Int64 TenantDomainId { get; set; }
+
     }
 }

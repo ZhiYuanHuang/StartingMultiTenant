@@ -4,7 +4,11 @@ using System.Text;
 
 namespace StartingMultiTenant.Model.Domain
 {
-    internal class TemplateCreateDbScriptModel
+    public class TemplateCreateDbScriptModel
     {
+        public Int64 Id { get; set; }
+        public string Name { get; set; }
+        public string FilePath { get; set; }
+        public string ServiceIdentifier { get; set; }
     }
 }

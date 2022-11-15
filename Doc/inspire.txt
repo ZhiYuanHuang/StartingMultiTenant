@@ -1,0 +1,27 @@
+对象：
+    数据库池（dbserverPool）：
+	    host,port,user,password,dbservername
+    二级域名：
+	    
+    模板建库脚本：
+	    name(api使用),脚本文件,ServiceIdentifier(附着在生成的数据库链接上)
+		('identityServier4_db_script','','ids'),
+		('empty_db_script','','empty')
+    自定义建库脚本:
+	    name(api使用),脚本文件,ServiceIdentifier
+		
+		
+		
+example: 
+
+TenantDomain: Reader.cn
+TenantIdentifier: YiLin
+DbContext:
+  SelectedDbServer: 
+  CreateDbScripts:
+    - Name: identityServier4_db_script
+      ServiceIdentifier: ids
+      SelectedDbServer: 
+    - Name: empty_db_script
+      ServiceIdentifier: test_empty
+      SelectedDbServer: db_test

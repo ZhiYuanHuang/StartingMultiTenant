@@ -4,7 +4,12 @@ using System.Text;
 
 namespace StartingMultiTenant.Model.Domain
 {
-    internal class DbServerModel
+    public class DbServerModel
     {
+        public Int64 Id { get; set; }
+        public string ServerHost { get; set; }
+        public string ServerPort { get; set; }
+        public string UserName { get; set; }
+        public string EncryptUserpwd { get; set; }
     }
 }
