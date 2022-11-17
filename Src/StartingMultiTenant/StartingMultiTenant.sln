@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StartingMultiTenant.Model",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StartingMultiTenant.Util", "StartingMultiTenant.Util\StartingMultiTenant.Util.csproj", "{FD36D0DC-9484-48C8-9B8E-F2CB3ED00F7D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StartingMultiTenant.Service", "StartingMultiTenant.Service\StartingMultiTenant.Service.csproj", "{7459CE11-541E-4568-A52D-4A73F61E42C9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{FD36D0DC-9484-48C8-9B8E-F2CB3ED00F7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FD36D0DC-9484-48C8-9B8E-F2CB3ED00F7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FD36D0DC-9484-48C8-9B8E-F2CB3ED00F7D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7459CE11-541E-4568-A52D-4A73F61E42C9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7459CE11-541E-4568-A52D-4A73F61E42C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7459CE11-541E-4568-A52D-4A73F61E42C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7459CE11-541E-4568-A52D-4A73F61E42C9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

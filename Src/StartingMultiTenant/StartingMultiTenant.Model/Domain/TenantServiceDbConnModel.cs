@@ -11,5 +11,8 @@ namespace StartingMultiTenant.Model.Domain
         public Int64 TenantId { get; set; }
         public string ServiceIdentifier { get; set; }
         public string EncryptedConnStr { get; set; }
+        public string CreateScriptName { get; set; }
+        public string BaseCreateScriptVersion { get; set; }
+        public string CurCreateScriptVersion { get; set; }
     }
 }
