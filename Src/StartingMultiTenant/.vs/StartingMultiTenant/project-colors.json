@@ -1,0 +1,21 @@
+{
+  "Version": 1,
+  "ProjectMap": {
+    "fd36d0dc-9484-48c8-9b8e-f2cb3ed00f7d": {
+      "ProjectGuid": "fd36d0dc-9484-48c8-9b8e-f2cb3ed00f7d",
+      "DisplayName": "StartingMultiTenant.Util",
+      "ColorIndex": 0
+    },
+    "7459ce11-541e-4568-a52d-4a73f61e42c9": {
+      "ProjectGuid": "7459ce11-541e-4568-a52d-4a73f61e42c9",
+      "DisplayName": "StartingMultiTenant.Service",
+      "ColorIndex": 1
+    },
+    "ce2db8aa-14a5-4909-84b0-e26c1cc306f1": {
+      "ProjectGuid": "ce2db8aa-14a5-4909-84b0-e26c1cc306f1",
+      "DisplayName": "StartingMultiTenant.Model",
+      "ColorIndex": 2
+    }
+  },
+  "NextColorIndex": 3
+}

@@ -4,7 +4,7 @@ using System.Text;
 
 namespace StartingMultiTenant.Service
 {
-    public class MysqlDbServerExecutor
+    public class MysqlDbServerExecutor: IDbServerExecutor
     {
     }
 }
