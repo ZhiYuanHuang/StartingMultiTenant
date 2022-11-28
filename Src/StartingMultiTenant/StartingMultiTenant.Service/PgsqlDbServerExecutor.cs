@@ -6,41 +6,86 @@ using Npgsql;
 using StartingMultiTenant.Model.Dto;
 using Microsoft.Extensions.Logging;
 using StartingMultiTenant.Util;
+using System.Threading.Tasks;
 
 namespace StartingMultiTenant.Service
 {
-    public class PgsqlDbServerExecutor: IDbServerExecutor
+    public class PgsqlDbServerExecutor: BaseDbServerExecutor
     {
-        private readonly DbServerDto _dbServer;
-        private readonly string _decryptUserPwd = string.Empty;
-        private readonly ILogger<PgsqlDbServerExecutor> _logger;
-        public PgsqlDbServerExecutor(DbServerDto dbServer,ILogger<PgsqlDbServerExecutor> logger) {
-            _dbServer = dbServer;
-            _logger = logger;
+        public PgsqlDbServerExecutor(DbServerModel dbServer,
+            ILogger<PgsqlDbServerExecutor> logger,
+            SysConstService sysConstService,
+            EncryptService encryptService) :base(dbServer,logger,sysConstService, encryptService) {
         }
 
+        protected override async Task<bool> executeScript(string dbConnStr,string dbScriptStr) {
+            NpgsqlConnection conn = new NpgsqlConnection(dbConnStr);
 
-        public bool ExecuteCreateDb(string createDbScriptTemplate) {
-            string dbConnStr = generateDbConnStr(_dbServer);
-            string createDbScript= SqlScriptHelper.GenerateCreateDbScriptByTemp(createDbScriptTemplate);
-
-            NpgsqlConnection conn = null;
-
+            bool result = false;
             try {
-                var createDb_cmd = new NpgsqlCommand();
-            }catch(Exception ex) {
 
+                var npgsqlCommand = new NpgsqlCommand(dbScriptStr, conn);
+                await conn.OpenAsync();
+
+                if (conn.State == System.Data.ConnectionState.Open) {
+                    await npgsqlCommand.ExecuteNonQueryAsync();
+                    result = true;
+                }
+            } catch (Exception ex) {
+                result = false;
+                _logger.LogError($"execute script raise error,ex:{ex.Message}");
             } finally {
                 conn?.Dispose();
             }
 
-            return true;
+            return result;
         }
 
-        private static string generateDbConnStr(DbServerDto dbServer,string database=null) {
-            return $"Host={dbServer.ServerHost};Port={dbServer.ServerPort};UserName={dbServer.UserName};Password={dbServer.DecryptUserPwd}{(string.IsNullOrEmpty(database)?"":$";Database={database}")}";
+        protected override async Task<bool> executeScript(string dbConnStr, string updateSchemaScript, string rollbackScript) {
+            NpgsqlConnection conn = new NpgsqlConnection(dbConnStr);
+
+            bool result = false;
+            try {
+
+                var npgsqlCommand = new NpgsqlCommand(updateSchemaScript, conn);
+                await conn.OpenAsync();
+
+                if (conn.State == System.Data.ConnectionState.Open) {
+                    try {
+                        await npgsqlCommand.ExecuteNonQueryAsync();
+                        result = true;
+                    } catch {
+                        result = false;
+                    }
+
+                    if (!result) {
+                        try {
+                            npgsqlCommand = new NpgsqlCommand(rollbackScript,conn);
+                            await npgsqlCommand.ExecuteNonQueryAsync();
+                        } catch {
+                        }
+                    }
+                   
+                }
+            } catch (Exception ex) {
+                result = false;
+                _logger.LogError($"execute script raise error,ex:{ex.Message}");
+            } finally {
+                conn?.Dispose();
+            }
+
+            return result;
+        }
+
+        protected override string generateDbConnStr(DbServerModel dbServer,string database=null) {
+            string decryptUserPwd = _encryptService.Decrypt_DbServerPwd(dbServer.EncryptUserpwd);
+            return $"Host={dbServer.ServerHost};Port={dbServer.ServerPort};UserName={dbServer.UserName};Password={decryptUserPwd}{(string.IsNullOrEmpty(database)?"":$";Database={database}")}";
             //string connString = "Host=localhost;Port=5432;Username=postgres;Password=admin;Database=postgres";
             
+        }
+
+        protected override string resolveDatabaseName(string dbConnStr) {
+            throw new NotImplementedException();
         }
     }
 }

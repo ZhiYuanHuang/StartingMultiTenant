@@ -9,8 +9,12 @@ namespace StartingMultiTenant.Model.Domain
     {
         public Int64 Id { get; set; }
         public string Name { get; set; }
+        public string ServiceIdentifier { get; set; }
+        public string DbIdentifier { get; set; }
+        public int MajorVersion { get; set; }
+        public string DbNameWildcard { get; set; }
         public string FilePath { get; set; }
         public int DbType { get; set; }
-        public string ServiceIdentifier { get; set; }
+       
     }
 }

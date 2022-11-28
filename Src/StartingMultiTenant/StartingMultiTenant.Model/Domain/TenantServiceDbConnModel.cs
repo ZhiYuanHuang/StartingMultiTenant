@@ -10,9 +10,13 @@ namespace StartingMultiTenant.Model.Domain
         public Int64 Id { get; set; }
         public Int64 TenantId { get; set; }
         public string ServiceIdentifier { get; set; }
+        public string DbIdentifier { get; set; }
+        public bool BeControlled { get; set; }
+        public string CreateScriptVersion { get; set; }
+        public string CurSchemaVersion { get; set; }
+        public Int64 DbServerId { get; set; }
         public string EncryptedConnStr { get; set; }
-        public string CreateScriptName { get; set; }
-        public string BaseCreateScriptVersion { get; set; }
-        public string CurCreateScriptVersion { get; set; }
+
+       
     }
 }

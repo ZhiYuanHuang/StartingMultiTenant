@@ -5,8 +5,8 @@ using System.Text;
 
 namespace StartingMultiTenant.Model.Dto
 {
-    public class DbServerDto:DbServerModel
-    {
-        public string DecryptUserPwd { get; set; }
-    }
+    //public class DbServerDto:DbServerModel
+    //{
+    //    public string DecryptUserPwd { get; set; }
+    //}
 }

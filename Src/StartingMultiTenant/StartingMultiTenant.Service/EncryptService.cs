@@ -23,24 +23,22 @@ namespace StartingMultiTenant.Service
             return EncryptUtil.Decrypt_Aes(string.IsNullOrEmpty(aesKey) ? _sysAesKey : aesKey, cipherText);
         }
 
-        public void Encrypt_DbserverPwd(ref DbServerModel dbServer,string userPwd) {
-            dbServer.EncryptUserpwd = EncryptUtil.Encrypt_Aes(_sysAesKey, userPwd);
+        public string Encrypt_DbserverPwd(string userPwd) {
+            return EncryptUtil.Encrypt_Aes(_sysAesKey, userPwd);
+        }
+
+        public string Decrypt_DbServerPwd(string encryptUserpwd) {
+            return EncryptUtil.Decrypt_Aes(_sysAesKey, encryptUserpwd);
             
         }
 
-        public DbServerDto Decrypt_DbServerPwd(DbServerModel dbServerModel) {
-            string decryptPwd = EncryptUtil.Decrypt_Aes(_sysAesKey,dbServerModel.EncryptUserpwd);
-            return new DbServerDto() {
-                DecryptUserPwd = decryptPwd,
-
-                DbType =dbServerModel.DbType,
-                EncryptUserpwd=dbServerModel.EncryptUserpwd,
-                ServerHost=dbServerModel.ServerHost,
-                ServerPort=dbServerModel.ServerPort,
-                UserName=dbServerModel.UserName,
-                Id=dbServerModel.Id,
-            };
+        public string Encrypt_DbConn(string userPwd) {
+            return EncryptUtil.Encrypt_Aes(_sysAesKey, userPwd);
         }
- 
+
+        public string Decrypt_DbConn(string encryptUserpwd) {
+            return EncryptUtil.Decrypt_Aes(_sysAesKey, encryptUserpwd);
+
+        }
     }
 }
