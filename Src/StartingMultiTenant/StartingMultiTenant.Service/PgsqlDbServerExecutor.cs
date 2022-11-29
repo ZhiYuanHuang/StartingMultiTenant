@@ -7,6 +7,7 @@ using StartingMultiTenant.Model.Dto;
 using Microsoft.Extensions.Logging;
 using StartingMultiTenant.Util;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace StartingMultiTenant.Service
 {
@@ -79,13 +80,17 @@ namespace StartingMultiTenant.Service
 
         protected override string generateDbConnStr(DbServerModel dbServer,string database=null) {
             string decryptUserPwd = _encryptService.Decrypt_DbServerPwd(dbServer.EncryptUserpwd);
-            return $"Host={dbServer.ServerHost};Port={dbServer.ServerPort};UserName={dbServer.UserName};Password={decryptUserPwd}{(string.IsNullOrEmpty(database)?"":$";Database={database}")}";
+            return $"Host={dbServer.ServerHost};Port={dbServer.ServerPort};UserName={dbServer.UserName};Password={decryptUserPwd}{(string.IsNullOrEmpty(database)?"":$";Database={database};")}";
             //string connString = "Host=localhost;Port=5432;Username=postgres;Password=admin;Database=postgres";
             
         }
 
         protected override string resolveDatabaseName(string dbConnStr) {
-            throw new NotImplementedException();
+            var match= Regex.Match(dbConnStr, "Database=([\\S]+?)(?=$|;)", RegexOptions.IgnoreCase);
+            if (match.Success) {
+                return match.Groups[1].Value;
+            }
+            return string.Empty;
         }
     }
 }

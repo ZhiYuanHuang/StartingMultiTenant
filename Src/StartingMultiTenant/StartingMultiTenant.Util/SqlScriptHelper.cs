@@ -65,8 +65,8 @@ namespace StartingMultiTenant.Util
             return string.Format(dropDbScriptFormat,dbName);
         }
 
-        public static string GenerateRandomDbName(string dbIdentifier,string tenantGuid) {
-            return string.Format("{0}_{1}", dbIdentifier, HashUtil.Hash_8(tenantGuid + $"_{DateTimeOffset.Now.ToUnixTimeSeconds()}"));
+        public static string GenerateRandomDbName(string dbIdentifier,string tenantIdentifier) {
+            return string.Format("{0}_{1}", dbIdentifier, HashUtil.Hash_8(tenantIdentifier + $"_{DateTimeOffset.Now.ToUnixTimeSeconds()}"));
         }
     }
 }

@@ -9,7 +9,7 @@ namespace StartingMultiTenant.Model.Domain
         public Int64 Id { get; set; }
         public string TenantGuid { get; set; }
         public string TenantIdentifier { get; set; }
-        public Int64 TenantDomainId { get; set; }
+        public string TenantDomain { get; set; }
 
     }
 }

@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace StartingMultiTenant.Service
+namespace StartingMultiTenant.Business
 {
-    public class DbOperaService
+    internal class DbServerBusiness
     {
     }
 }

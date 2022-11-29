@@ -18,21 +18,27 @@ namespace StartingMultiTenant.Service
     {
         private readonly SysConstService _sysConstService;
         private readonly ILoggerFactory _loggerFactory;
+        private readonly EncryptService _encryptService;
         public DbServerExecutorFactory(SysConstService sysConstService,
-            ILoggerFactory loggerFactory) {
+            ILoggerFactory loggerFactory,
+            EncryptService encryptService) {
             _sysConstService = sysConstService;
             _loggerFactory = loggerFactory;
+            _encryptService = encryptService;
         }
         
-        public IDbServerExecutor CreateDbServerExecutor(DbServerDto dbServerDto) {
+        public IDbServerExecutor CreateDbServerExecutor(DbServerModel dbServer) {
             IDbServerExecutor executor = null;
-            switch ((DbTypeEnum)dbServerDto.DbType) {
-                case DbTypeEnum.Mysql:
-                    executor = new MysqlDbServerExecutor();
+            switch ((DbTypeEnum)dbServer.DbType) {
+                case DbTypeEnum.Mysql: {
+                        var logger = _loggerFactory.CreateLogger<MysqlDbServerExecutor>();
+                        executor = new MysqlDbServerExecutor(dbServer, logger, _sysConstService, _encryptService);
+                    }
                     break;
-                case DbTypeEnum.Postgres:
-                    var logger = _loggerFactory.CreateLogger<PgsqlDbServerExecutor>();
-                    executor = new PgsqlDbServerExecutor(dbServerDto, logger,_sysConstService);
+                case DbTypeEnum.Postgres: {
+                        var logger = _loggerFactory.CreateLogger<PgsqlDbServerExecutor>();
+                        executor = new PgsqlDbServerExecutor(dbServer, logger, _sysConstService, _encryptService);
+                    }
                     break;
                 default:
                     throw new Exception("unknow db type");
