@@ -10,6 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\StartingMultiTenant.Business\StartingMultiTenant.Business.csproj" />
     <ProjectReference Include="..\StartingMultiTenant.Model\StartingMultiTenant.Model.csproj" />
     <ProjectReference Include="..\StartingMultiTenant.Util\StartingMultiTenant.Util.csproj" />
   </ItemGroup>

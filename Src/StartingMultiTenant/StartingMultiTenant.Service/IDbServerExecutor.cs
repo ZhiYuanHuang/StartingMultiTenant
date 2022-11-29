@@ -12,6 +12,9 @@ namespace StartingMultiTenant.Service
 {
     public interface IDbServerExecutor
     {
+        public DbServerModel DbServer { get;  }
+        bool CreateDb(CreateDbScriptModel createDbScriptModel, string tenantIdentifier, out string uniqueDbName);
+        Task DeleteDb(string dbName);
     }
 
     public class DbServerExecutorFactory

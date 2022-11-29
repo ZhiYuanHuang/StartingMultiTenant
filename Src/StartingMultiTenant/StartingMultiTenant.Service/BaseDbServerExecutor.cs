@@ -4,8 +4,10 @@ using StartingMultiTenant.Model.Dto;
 using StartingMultiTenant.Util;
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace StartingMultiTenant.Service
 {
@@ -16,6 +18,9 @@ namespace StartingMultiTenant.Service
         protected readonly ILogger<IDbServerExecutor> _logger;
         protected readonly SysConstService _sysConstService;
         protected readonly EncryptService _encryptService;
+
+        public DbServerModel DbServer { get => _dbServer; }
+
         public BaseDbServerExecutor(DbServerModel dbServer,
             ILogger<IDbServerExecutor> logger,
             SysConstService sysConstService,
@@ -26,7 +31,7 @@ namespace StartingMultiTenant.Service
             _encryptService = encryptService;
         }
 
-        public virtual bool CreateDb(CreateDbScriptModel createDbScriptModel, string tenantGuid, out string uniqueDbName) {
+        public virtual bool CreateDb(CreateDbScriptModel createDbScriptModel, string tenantIdentifier, out string uniqueDbName) {
             uniqueDbName = string.Empty;
             if (!System.IO.File.Exists(createDbScriptModel.FilePath)) {
                 _logger.LogError("createDb script file not exists");
@@ -36,7 +41,7 @@ namespace StartingMultiTenant.Service
             string createDbScript = string.Empty;
             try {
 
-                uniqueDbName = SqlScriptHelper.GenerateRandomDbName(createDbScriptModel.DbIdentifier, tenantGuid);
+                uniqueDbName = SqlScriptHelper.GenerateRandomDbName(createDbScriptModel.DbIdentifier, tenantIdentifier);
 
                 string dbNameWildcard = !string.IsNullOrEmpty(createDbScriptModel.DbNameWildcard) ? createDbScriptModel.DbNameWildcard : _sysConstService.DbNameWildcard;
                 var generateResult = SqlScriptHelper.GenerateCreateDbScript(createDbScriptModel.FilePath, dbNameWildcard, uniqueDbName).GetAwaiter().GetResult();
@@ -106,6 +111,32 @@ namespace StartingMultiTenant.Service
 
         protected string decrypt_conn(string encryptedConnStr) {
             return _encryptService.Decrypt_DbConn(encryptedConnStr);
+        }
+
+        public override bool Equals(object obj) {
+            if (obj == null) {
+                return false;
+            }
+            IDbServerExecutor otherDbServerExecutor= obj as IDbServerExecutor;
+            if (otherDbServerExecutor == null) {
+                return false;
+            }
+            DbServerModel otherDbserver = otherDbServerExecutor.DbServer;
+            if(DbServer==null || otherDbserver == null) {
+                return false;
+            }
+            if(DbServer.DbType!= otherDbserver.DbType || DbServer.ServerHost!= otherDbserver.ServerHost || DbServer.ServerPort!=otherDbserver.ServerPort || DbServer.UserName != otherDbserver.UserName) {
+                return false;
+            }
+
+            return base.Equals(obj);
+        }
+
+        public override int GetHashCode() {
+            if (DbServer == null) {
+                return base.GetHashCode();
+            }
+            return String.Format("{0}|{1}|{2}|{3}", DbServer.DbType, DbServer.ServerHost, DbServer.ServerPort,DbServer.UserName).GetHashCode();
         }
     }
 }
