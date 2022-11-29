@@ -1,13 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.3.32901.215
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31410.357
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StartingMultiTenant.Model", "StartingMultiTenant.Model\StartingMultiTenant.Model.csproj", "{CE2DB8AA-14A5-4909-84B0-E26C1CC306F1}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StartingMultiTenant.Util", "StartingMultiTenant.Util\StartingMultiTenant.Util.csproj", "{FD36D0DC-9484-48C8-9B8E-F2CB3ED00F7D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StartingMultiTenant.Service", "StartingMultiTenant.Service\StartingMultiTenant.Service.csproj", "{7459CE11-541E-4568-A52D-4A73F61E42C9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StartingMultiTenant.Service", "StartingMultiTenant.Service\StartingMultiTenant.Service.csproj", "{7459CE11-541E-4568-A52D-4A73F61E42C9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StartingMultiTenant.Business", "StartingMultiTenant.Business\StartingMultiTenant.Business.csproj", "{C92A38CC-1202-432E-8528-3AE68770C927}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +29,10 @@ Global
 		{7459CE11-541E-4568-A52D-4A73F61E42C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7459CE11-541E-4568-A52D-4A73F61E42C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7459CE11-541E-4568-A52D-4A73F61E42C9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C92A38CC-1202-432E-8528-3AE68770C927}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C92A38CC-1202-432E-8528-3AE68770C927}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C92A38CC-1202-432E-8528-3AE68770C927}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C92A38CC-1202-432E-8528-3AE68770C927}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
