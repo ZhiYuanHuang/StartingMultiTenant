@@ -15,6 +15,9 @@ namespace StartingMultiTenant.Service
         public DbServerModel DbServer { get;  }
         bool CreateDb(CreateDbScriptModel createDbScriptModel, string tenantIdentifier, out string uniqueDbName);
         Task DeleteDb(string dbName);
+
+        bool UpdateSchemaByDatabase(string dataBaseName, SchemaUpdateScriptModel schemaUpdateScript);
+        string GenerateEncryptDbConnStr(string dbName);
     }
 
     public class DbServerExecutorFactory

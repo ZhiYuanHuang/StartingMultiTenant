@@ -57,39 +57,44 @@ namespace StartingMultiTenant.Service
                 return false;
             }
 
-            string dbConnStr = generateDbConnStr(_dbServer);
+            string dbConnStr = generateDbConnStr();
 
             return executeScript(dbConnStr, createDbScript).GetAwaiter().GetResult();
         }
 
         public virtual async Task DeleteDb(string dbName) {
             string script= SqlScriptHelper.GenerateDeleteDbScript(dbName);
-            string dbConnStr = generateDbConnStr(_dbServer);
+            string dbConnStr = generateDbConnStr();
             await executeScript(dbConnStr, script);
         }
 
-        public virtual bool UpdateSchema(string encryptedConnStr,SchemaUpdateScriptModel schemaUpdateScript) {
-            if(!System.IO.File.Exists(schemaUpdateScript.FilePath) || !System.IO.File.Exists(schemaUpdateScript.RollBackScriptPath)) {
+        public virtual bool UpdateSchemaByConnStr(string encryptedConnStr,SchemaUpdateScriptModel schemaUpdateScript) {
+
+            string connStr = decrypt_conn(encryptedConnStr);
+            string dbName = resolveDatabaseName(connStr);
+
+            return UpdateSchemaByDatabase(dbName,schemaUpdateScript);
+        }
+
+        public virtual bool UpdateSchemaByDatabase(string dataBaseName, SchemaUpdateScriptModel schemaUpdateScript) {
+            if (!System.IO.File.Exists(schemaUpdateScript.FilePath) || !System.IO.File.Exists(schemaUpdateScript.RollBackScriptPath)) {
                 _logger.LogError("updateSchema or rollback script file not exists");
                 return false;
             }
 
-            
             string updateSchemaScript = string.Empty;
             string rollbackScript = string.Empty;
-            string connStr = string.Empty ;
+            string connStr = string.Empty;
             try {
-                connStr = decrypt_conn(encryptedConnStr);
-                string dbName = resolveDatabaseName(connStr);
-                connStr = generateDbConnStr(_dbServer, dbName);
+                connStr = generateDbConnStr( dataBaseName);
 
                 string dbNameWildcard = !string.IsNullOrEmpty(schemaUpdateScript.DbNameWildcard) ? schemaUpdateScript.DbNameWildcard : _sysConstService.DbNameWildcard;
-                var generateResult = SqlScriptHelper.GenerateUpdateSchemaScript(schemaUpdateScript.FilePath, dbNameWildcard, dbName).GetAwaiter().GetResult();
+                var generateResult = SqlScriptHelper.GenerateUpdateSchemaScript(schemaUpdateScript.FilePath, dbNameWildcard, dataBaseName).GetAwaiter().GetResult();
                 if (generateResult.Item1) {
                     updateSchemaScript = generateResult.Item2;
                 }
 
-                generateResult = SqlScriptHelper.GenerateRollbackSchemaScript(schemaUpdateScript.RollBackScriptPath, dbNameWildcard, dbName).GetAwaiter().GetResult();
+                generateResult = SqlScriptHelper.GenerateRollbackSchemaScript(schemaUpdateScript.RollBackScriptPath, dbNameWildcard, dataBaseName).GetAwaiter().GetResult();
                 if (generateResult.Item1) {
                     updateSchemaScript = generateResult.Item2;
                 }
@@ -97,20 +102,28 @@ namespace StartingMultiTenant.Service
                 _logger.LogError($"generate create db script raise error,ex:{ex.Message}");
             }
 
-            if(string.IsNullOrEmpty(connStr) || string.IsNullOrEmpty(updateSchemaScript) || string.IsNullOrEmpty(rollbackScript)) {
+            if (string.IsNullOrEmpty(connStr) || string.IsNullOrEmpty(updateSchemaScript) || string.IsNullOrEmpty(rollbackScript)) {
                 return false;
             }
 
-            return executeScript(connStr, updateSchemaScript,rollbackScript).GetAwaiter().GetResult();
+            return executeScript(connStr, updateSchemaScript, rollbackScript).GetAwaiter().GetResult();
         }
 
-        protected abstract string generateDbConnStr(DbServerModel dbServer, string database = null);
+        public string GenerateEncryptDbConnStr(string dbName) {
+            return decrypt_conn(generateDbConnStr(dbName));
+        }
+
+        protected abstract string generateDbConnStr( string database = null);
         protected abstract string resolveDatabaseName(string dbConnStr);
         protected abstract Task<bool> executeScript(string dbConnStr, string dbScriptStr);
         protected abstract Task<bool> executeScript(string dbConnStr, string updateSchemaScript,string rollbackScript);
 
         protected string decrypt_conn(string encryptedConnStr) {
             return _encryptService.Decrypt_DbConn(encryptedConnStr);
+        }
+
+        protected string encrypt_conn(string connStr) {
+            return _encryptService.Encrypt_DbConn(connStr);
         }
 
         public override bool Equals(object obj) {

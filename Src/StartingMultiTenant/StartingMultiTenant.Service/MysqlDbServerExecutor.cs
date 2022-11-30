@@ -78,10 +78,10 @@ namespace StartingMultiTenant.Service
             return result;
         }
 
-        protected override string generateDbConnStr(DbServerModel dbServer, string database = null) {
+        protected override string generateDbConnStr(string database = null) {
             //Database=tenantstore.mulids;Data Source=127.0.0.1;Port=3307;User Id=root;Password=123456;Charset=utf8;
-            string decryptUserPwd = _encryptService.Decrypt_DbServerPwd(dbServer.EncryptUserpwd);
-            return $"Data Source={dbServer.ServerHost};Port={dbServer.ServerPort};User Id={dbServer.UserName};Password={decryptUserPwd};Charset=utf8;{(string.IsNullOrEmpty(database) ? "" : $";Database={database}")}";
+            string decryptUserPwd = _encryptService.Decrypt_DbServerPwd(_dbServer.EncryptUserpwd);
+            return $"Data Source={_dbServer.ServerHost};Port={_dbServer.ServerPort};User Id={_dbServer.UserName};Password={decryptUserPwd};Charset=utf8;{(string.IsNullOrEmpty(database) ? "" : $";Database={database}")}";
         }
 
         protected override string resolveDatabaseName(string dbConnStr) {

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace StartingMultiTenant.Service
 {
@@ -15,22 +16,28 @@ namespace StartingMultiTenant.Service
         private readonly ILogger<TenantDbOperaService> _logger;
         private readonly ICreateDbScriptBusiness _createDbScriptBusiness;
         private readonly IDbServerBusiness _dbServerBusiness;
+        private readonly ISchemaUpdateScriptBusiness _schemaUpdateScriptBusiness;
 
         private readonly Random _random;
 
         public TenantDbOperaService(DbServerExecutorFactory dbServerExecutorFactory,
             ILogger<TenantDbOperaService> logger,
             ICreateDbScriptBusiness createDbScriptBusiness,
-            IDbServerBusiness dbServerBusiness) {
+            IDbServerBusiness dbServerBusiness,
+            ISchemaUpdateScriptBusiness schemaUpdateScriptBusiness) {
             _random = new Random();
             _dbServerExecutorFactory = dbServerExecutorFactory;
             _logger = logger;
             _createDbScriptBusiness = createDbScriptBusiness;
             _dbServerBusiness = dbServerBusiness;
+            _schemaUpdateScriptBusiness = schemaUpdateScriptBusiness;
         }
 
-        public async Tuple<bool, List<TenantServiceDbConnModel>> CreateTenantDb(string tenantDomain,string tenantIdentifier,List<string> createScriptNameList) {
+        public async Task<Tuple<bool, List<TenantServiceDbConnModel>>> CreateTenantDb(string tenantDomain,string tenantIdentifier,List<string> createScriptNameList) {
             List<CreateDbScriptModel> createDbScriptList= await _createDbScriptBusiness.GetListByNames(createScriptNameList);
+
+
+
             if (createDbScriptList.Count != createScriptNameList.Count) {
                 var noexistScriptList= createScriptNameList.Except(createDbScriptList.Select(x => x.Name)).ToList();
                 _logger.LogError($"create db scripts {string.Join(',',noexistScriptList)} no exist");
@@ -60,6 +67,7 @@ namespace StartingMultiTenant.Service
             Dictionary<IDbServerExecutor, List<string>> serverAndDbDict = new Dictionary<IDbServerExecutor, List<string>>();
 
             bool success = true;
+            List<TenantServiceDbConnModel> createDbSet = new List<TenantServiceDbConnModel>();
             foreach(var createScript in createDbScriptList) {
                 var theDbServer = getRandomServer(createScript.DbType, dbServerList);
                 var dbserverExecutor= _dbServerExecutorFactory.CreateDbServerExecutor(theDbServer);
@@ -70,10 +78,39 @@ namespace StartingMultiTenant.Service
                     } else {
                         serverAndDbDict.Add(dbserverExecutor,new List<string>() { createDbName});
                     }
+
+                    var schemaUpdateScripts=await _schemaUpdateScriptBusiness.GetSchemaUpdateScripts(createScript.Name,createScript.MajorVersion);
+                    int lastMinorVersion = 0;
+                    if (schemaUpdateScripts.Any()) {
+                        schemaUpdateScripts = schemaUpdateScripts.OrderBy(x => x.MinorVersion).ToList();
+                        bool updateSchemaError = false;
+                        foreach(var schemaUpdateScript in schemaUpdateScripts) {
+                            lastMinorVersion = schemaUpdateScript.MinorVersion;
+                            if (!dbserverExecutor.UpdateSchemaByDatabase(createDbName, schemaUpdateScript)) {
+                                updateSchemaError = true;
+                                break;
+                            }
+                        }
+                        if (updateSchemaError) {
+                            success = false;
+                            break;
+                        }
+                    }
+
+                    createDbSet.Add(new TenantServiceDbConnModel() { 
+                        TenantDomain=tenantDomain,
+                        TenantIdentifier=tenantIdentifier,
+                        ServiceIdentifier=createScript.ServiceIdentifier,
+                        DbIdentifier=createScript.DbIdentifier,
+                        CreateScriptVersion=createScript.MajorVersion,
+                        CurSchemaVersion=lastMinorVersion,
+                        DbServerId=theDbServer.Id,
+                        EncryptedConnStr=dbserverExecutor.GenerateEncryptDbConnStr(createDbName),
+                    });
                 } else {
                     success = false;
                     if (!string.IsNullOrEmpty(createDbName)) {
-                        dbserverExecutor.DeleteDb(createDbName).ConfigureAwait(false);
+                        await dbserverExecutor.DeleteDb(createDbName).ConfigureAwait(false);
                     }
                     break;
                 }
@@ -84,12 +121,13 @@ namespace StartingMultiTenant.Service
                     var dbExecutor = pair.Key;
                     var createDbList = pair.Value;
                     foreach(var createDb in createDbList) {
-                        dbExecutor.DeleteDb(createDb).ConfigureAwait(false);
+                        await dbExecutor.DeleteDb(createDb).ConfigureAwait(false);
                     }
                 }
+                return Tuple.Create<bool, List<TenantServiceDbConnModel>>(false, null);
             }
 
-
+            return Tuple.Create<bool, List<TenantServiceDbConnModel>>(true, createDbSet);
         }
 
         private DbServerModel getRandomServer(int dbType, List<DbServerModel> dbServerList) {

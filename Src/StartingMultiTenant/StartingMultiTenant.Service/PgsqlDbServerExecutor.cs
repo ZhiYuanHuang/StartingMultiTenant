@@ -78,9 +78,9 @@ namespace StartingMultiTenant.Service
             return result;
         }
 
-        protected override string generateDbConnStr(DbServerModel dbServer,string database=null) {
-            string decryptUserPwd = _encryptService.Decrypt_DbServerPwd(dbServer.EncryptUserpwd);
-            return $"Host={dbServer.ServerHost};Port={dbServer.ServerPort};UserName={dbServer.UserName};Password={decryptUserPwd}{(string.IsNullOrEmpty(database)?"":$";Database={database};")}";
+        protected override string generateDbConnStr(string database=null) {
+            string decryptUserPwd = _encryptService.Decrypt_DbServerPwd(_dbServer.EncryptUserpwd);
+            return $"Host={_dbServer.ServerHost};Port={_dbServer.ServerPort};UserName={_dbServer.UserName};Password={decryptUserPwd}{(string.IsNullOrEmpty(database)?"":$";Database={database};")}";
             //string connString = "Host=localhost;Port=5432;Username=postgres;Password=admin;Database=postgres";
             
         }
