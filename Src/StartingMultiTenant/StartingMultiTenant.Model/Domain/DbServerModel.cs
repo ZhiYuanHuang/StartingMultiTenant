@@ -12,5 +12,6 @@ namespace StartingMultiTenant.Model.Domain
         public string ServerPort { get; set; }
         public string UserName { get; set; }
         public string EncryptUserpwd { get; set; }
+        public bool CanCreateNew { get; set; }
     }
 }

@@ -68,7 +68,7 @@ namespace StartingMultiTenant.Service
             await executeScript(dbConnStr, script);
         }
 
-        public virtual bool UpdateSchemaByConnStr(string encryptedConnStr,SchemaUpdateScriptModel schemaUpdateScript) {
+        public bool UpdateSchemaByConnStr(string encryptedConnStr,SchemaUpdateScriptModel schemaUpdateScript) {
 
             string connStr = decrypt_conn(encryptedConnStr);
             string dbName = resolveDatabaseName(connStr);

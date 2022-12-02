@@ -17,6 +17,7 @@ namespace StartingMultiTenant.Service
         private readonly ICreateDbScriptBusiness _createDbScriptBusiness;
         private readonly IDbServerBusiness _dbServerBusiness;
         private readonly ISchemaUpdateScriptBusiness _schemaUpdateScriptBusiness;
+        private readonly ITenantServiceDbConnBusiness _tenantServiceDbConnBusiness;
 
         private readonly Random _random;
 
@@ -24,19 +25,19 @@ namespace StartingMultiTenant.Service
             ILogger<TenantDbOperaService> logger,
             ICreateDbScriptBusiness createDbScriptBusiness,
             IDbServerBusiness dbServerBusiness,
-            ISchemaUpdateScriptBusiness schemaUpdateScriptBusiness) {
+            ISchemaUpdateScriptBusiness schemaUpdateScriptBusiness,
+            ITenantServiceDbConnBusiness tenantServiceDbConnBusiness) {
             _random = new Random();
             _dbServerExecutorFactory = dbServerExecutorFactory;
             _logger = logger;
             _createDbScriptBusiness = createDbScriptBusiness;
             _dbServerBusiness = dbServerBusiness;
             _schemaUpdateScriptBusiness = schemaUpdateScriptBusiness;
+            _tenantServiceDbConnBusiness = tenantServiceDbConnBusiness;
         }
 
         public async Task<Tuple<bool, List<TenantServiceDbConnModel>>> CreateTenantDb(string tenantDomain,string tenantIdentifier,List<string> createScriptNameList) {
             List<CreateDbScriptModel> createDbScriptList= await _createDbScriptBusiness.GetListByNames(createScriptNameList);
-
-
 
             if (createDbScriptList.Count != createScriptNameList.Count) {
                 var noexistScriptList= createScriptNameList.Except(createDbScriptList.Select(x => x.Name)).ToList();
@@ -51,6 +52,7 @@ namespace StartingMultiTenant.Service
             }
 
             List<DbServerModel> dbServerList= await _dbServerBusiness.GetDbServers();
+            dbServerList= dbServerList.Where(x => x.CanCreateNew).Select(x => x).ToList();
             if(!dbServerList.Any()) {
                 _logger.LogError($"no exist any db server");
                 return Tuple.Create<bool, List<TenantServiceDbConnModel>>(false, null);
@@ -102,6 +104,7 @@ namespace StartingMultiTenant.Service
                         TenantIdentifier=tenantIdentifier,
                         ServiceIdentifier=createScript.ServiceIdentifier,
                         DbIdentifier=createScript.DbIdentifier,
+                        CreateScriptName=createScript.Name,
                         CreateScriptVersion=createScript.MajorVersion,
                         CurSchemaVersion=lastMinorVersion,
                         DbServerId=theDbServer.Id,
@@ -128,6 +131,26 @@ namespace StartingMultiTenant.Service
             }
 
             return Tuple.Create<bool, List<TenantServiceDbConnModel>>(true, createDbSet);
+        }
+
+        public async Task<bool> UpdateTenantDb(string tenantDomain, string tenantIdentifier,SchemaUpdateScriptModel schemaUpdateScript) {
+            List<TenantServiceDbConnModel> tenantServiceDbConnList=await _tenantServiceDbConnBusiness.GetTenantServiceDbConns(tenantDomain,tenantIdentifier,schemaUpdateScript.Name);
+            var toUpdateSchemaDb= tenantServiceDbConnList.Where(x => x.CreateScriptVersion == schemaUpdateScript.BaseMajorVersion && x.CurSchemaVersion == (schemaUpdateScript.MinorVersion - 1)).FirstOrDefault();
+
+            if (toUpdateSchemaDb == null) {
+                _logger.LogError($"未找到 {tenantDomain} {tenantIdentifier} {schemaUpdateScript.Name} 创建的数据库链接");
+                return false;
+            }
+            List<DbServerModel> dbServerList = await _dbServerBusiness.GetDbServers(toUpdateSchemaDb.DbServerId);
+            if(!dbServerList.Any()) {
+                _logger.LogError($"未找到 {tenantDomain} {tenantIdentifier} {schemaUpdateScript.Name} 创建的数据库链接对应的数据库服务器");
+                return false;
+            }
+
+            DbServerModel theDbServer = dbServerList[0];
+            IDbServerExecutor dbServerExecutor = _dbServerExecutorFactory.CreateDbServerExecutor(theDbServer);
+
+            return dbServerExecutor.UpdateSchemaByConnStr(toUpdateSchemaDb.EncryptedConnStr,schemaUpdateScript);
         }
 
         private DbServerModel getRandomServer(int dbType, List<DbServerModel> dbServerList) {

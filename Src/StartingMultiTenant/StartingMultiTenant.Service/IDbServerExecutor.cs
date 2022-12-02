@@ -16,6 +16,7 @@ namespace StartingMultiTenant.Service
         bool CreateDb(CreateDbScriptModel createDbScriptModel, string tenantIdentifier, out string uniqueDbName);
         Task DeleteDb(string dbName);
 
+        bool UpdateSchemaByConnStr(string encryptedConnStr, SchemaUpdateScriptModel schemaUpdateScript);
         bool UpdateSchemaByDatabase(string dataBaseName, SchemaUpdateScriptModel schemaUpdateScript);
         string GenerateEncryptDbConnStr(string dbName);
     }

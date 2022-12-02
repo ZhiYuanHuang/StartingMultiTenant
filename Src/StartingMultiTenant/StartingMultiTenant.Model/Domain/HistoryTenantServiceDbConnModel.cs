@@ -11,6 +11,7 @@ namespace StartingMultiTenant.Model.Domain
         public string TenantDomain { get; set; }
         public string ServiceIdentifier { get; set; }
         public string DbIdentifier { get; set; }
+        public string CreateScriptName { get; set; }
         public int CreateScriptVersion { get; set; }
         public int CurSchemaVersion { get; set; }
         public Int64 DbServerId { get; set; }

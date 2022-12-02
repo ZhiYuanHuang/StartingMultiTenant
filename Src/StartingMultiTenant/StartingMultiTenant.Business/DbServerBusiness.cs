@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 namespace StartingMultiTenant.Business
 {
     public interface IDbServerBusiness {
-        Task<List<DbServerModel>> GetDbServers();
+        Task<List<DbServerModel>> GetDbServers(Int64? dbServerId=null);
     }
     public class DbServerBusiness
     {
-        public async Task<List<DbServerModel>> GetDbServers() {
+        public async Task<List<DbServerModel>> GetDbServers(Int64? dbServerId=null) {
             return new List<DbServerModel>();
         }
     }
