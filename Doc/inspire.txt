@@ -10,8 +10,16 @@
     自定义建库脚本:
 	    name(api使用),脚本文件,ServiceIdentifier
 		
-		
-		
+功能约定：
+    最基本功能从api/界面实现一个租户一系列服务的使用的一系列数据库的创建
+    数据库服务器动态扩展，满员
+    数据库schema升级对所有租户所有数据库执行
+	数据库schema升级基于建库脚本的基版本，并认为一次升级所有数据库都要升级
+    不监控所创建的各个数据库，只记录租户一系列服务的一系列数据库
+	记录外部创建的数据库链接，不实现数据库升级
+	不实现自动迁移，迁移方式为手动迁移后在系统切换数据库服务器，检查切换后的服务器是否有该数据库
+	切换基于单个租户，或单个数据库服务器
+
 example: 
 
 TenantDomain: Reader.cn
@@ -25,3 +33,6 @@ DbContext:
     - Name: empty_db_script
       ServiceIdentifier: test_empty
       SelectedDbServer: db_test
+	  
+
+
