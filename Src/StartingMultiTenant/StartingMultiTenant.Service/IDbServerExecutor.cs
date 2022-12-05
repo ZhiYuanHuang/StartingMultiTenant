@@ -19,6 +19,7 @@ namespace StartingMultiTenant.Service
         bool UpdateSchemaByConnStr(string encryptedConnStr, SchemaUpdateScriptModel schemaUpdateScript);
         bool UpdateSchemaByDatabase(string dataBaseName, SchemaUpdateScriptModel schemaUpdateScript);
         string GenerateEncryptDbConnStr(string dbName);
+        string ResolveDatabaseName(string encryptedDbConn);
     }
 
     public class DbServerExecutorFactory

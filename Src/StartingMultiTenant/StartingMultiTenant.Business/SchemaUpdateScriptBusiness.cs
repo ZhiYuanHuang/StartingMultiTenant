@@ -7,11 +7,16 @@ using System.Threading.Tasks;
 namespace StartingMultiTenant.Business
 {
     public interface ISchemaUpdateScriptBusiness {
-        Task<List<SchemaUpdateScriptModel>> GetSchemaUpdateScripts(string createScriptName, int baseMajorVersion);
+        Task<List<SchemaUpdateScriptModel>> GetSchemaUpdateScriptsByCreateScript(string createScriptName, int baseMajorVersion);
+        Task<SchemaUpdateScriptModel> GetSchemaUpdateScriptByName(string updateScriptName);
     }
     public class SchemaUpdateScriptBusiness: ISchemaUpdateScriptBusiness
     {
-        public async Task<List<SchemaUpdateScriptModel>> GetSchemaUpdateScripts(string createScriptName,int baseMajorVersion) {
+        public async Task<SchemaUpdateScriptModel> GetSchemaUpdateScriptByName(string updateScriptName) {
+            throw new NotImplementedException();
+        }
+
+        public async Task<List<SchemaUpdateScriptModel>> GetSchemaUpdateScriptsByCreateScript(string createScriptName,int baseMajorVersion) {
             return new List<SchemaUpdateScriptModel>();
         }
     }

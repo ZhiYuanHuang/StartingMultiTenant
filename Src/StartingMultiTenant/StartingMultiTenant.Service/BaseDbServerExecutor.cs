@@ -113,6 +113,10 @@ namespace StartingMultiTenant.Service
             return decrypt_conn(generateDbConnStr(dbName));
         }
 
+        public string ResolveDatabaseName(string encryptedDbConn) {
+            return resolveDatabaseName(decrypt_conn(encryptedDbConn));
+        }
+
         protected abstract string generateDbConnStr( string database = null);
         protected abstract string resolveDatabaseName(string dbConnStr);
         protected abstract Task<bool> executeScript(string dbConnStr, string dbScriptStr);
