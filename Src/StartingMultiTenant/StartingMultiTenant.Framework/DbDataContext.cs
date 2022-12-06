@@ -10,7 +10,6 @@ namespace StartingMultiTenant.Framework
         }
         public IDbFunc Master { get; set; }
         public IDbFunc Slave { get; set; }
-
         public DbDataContextOption DbDataContextOption { get; set; }
     }
 

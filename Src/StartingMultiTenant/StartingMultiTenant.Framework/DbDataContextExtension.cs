@@ -14,13 +14,20 @@ namespace StartingMultiTenant.Framework
                 DbDataContextOption dbDataContextOption = new DbDataContextOption();
                 dbDataContextOptionAction(dbDataContextOption);
 
+                if(string.IsNullOrEmpty(dbDataContextOption.SlaveConnStr)) {
+                    dbDataContextOption.SlaveConnStr = dbDataContextOption.MasterConnStr;
+                }
+
                 IDbFunc masterDb = null;
                 IDbFunc slaveDb = null;
+                string paramSymbol = string.Empty;
                 switch (dbDataContextOption.DbType) {
                     case DbTypeEnum.Postgres: {
                             var logger = provider.GetRequiredService<ILogger<PostgresqlDb>>();
                             masterDb = new PostgresqlDb(logger,dbDataContextOption.MasterConnStr);
+                            
                             slaveDb = new PostgresqlDb(logger,dbDataContextOption.SlaveConnStr);
+                            paramSymbol = "?";
                         }
                         break;
                     default:

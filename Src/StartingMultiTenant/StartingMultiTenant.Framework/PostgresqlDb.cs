@@ -4,43 +4,94 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
+using Dapper;
+using System.Collections;
+using Npgsql;
+using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
+using System.IO;
+using StartingMultiTenant.Util;
+using MySqlConnector;
 
 namespace StartingMultiTenant.Framework
 {
     public class PostgresqlDb : IDbFunc
     {
+        public string DbHost { get; private set; }
+        public string DbPort { get; private set; }
+        public string DbName { get; private set; }
+
         private readonly string _connectionString = null;
         public string ConnectionString { get { return _connectionString; } }
-        /// <summary>
-        /// 数据库名称
-        /// </summary>
-        public string DbName { get; }
 
-        private ILogger<PostgresqlDb> _logger;
+        private readonly ILogger<PostgresqlDb> _logger;
+
+        private ConcurrentQueue<NpgsqlConnection> _queue = new ConcurrentQueue<NpgsqlConnection>();
+        private const int ALARM_THRESHOLD_VALUE = 1000000;
+        private const int COMMAND_TIMEOUT = 300;
+        private const string POSTGRESQL_CONNECTION = "PostgresqlConnection";
+        private const string POSTGRESQL_TRANSACTION = "PostgresqlTransaction";
+        private const string POSTGRESSQL_TRANSACTION_COUNTER = "PostgresqlTransactionCounter";
 
         public PostgresqlDb(ILogger<PostgresqlDb> logger, string connectionString) {
 
             _logger = logger;
 
             _connectionString = connectionString;
-            {
-                // get db_name from connection_string
-                foreach (string s in _connectionString.Split(';')) {
-                    if (s.Trim().ToLower().StartsWith("database")) {
-                        DbName = s.Split('=')[1].Trim();
-                        break;
-                    }
-                }
+            DbHost = resolveHost(_connectionString);
+            DbPort= resolvePort(_connectionString);
+            DbName = resolveDatabaseName(_connectionString);
+        }
+
+
+        public void BeginTransaction(bool forceCreateNew=false) {
+            CallContext.SetData(POSTGRESSQL_TRANSACTION_COUNTER, ConvertUtil.ToInt(CallContext.GetData(POSTGRESSQL_TRANSACTION_COUNTER), 0) + 1);
+            var connection = CallContext.GetData(POSTGRESQL_CONNECTION) as NpgsqlConnection;
+
+            if (connection == null) {
+                connection = GetConnection();
+                NpgsqlTransaction transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted);
+
+                CallContext.SetData(POSTGRESQL_CONNECTION, connection);
+                CallContext.SetData(POSTGRESQL_TRANSACTION, transaction);
             }
         }
 
+        public void CommitTransaction() {
+            CallContext.SetData(POSTGRESSQL_TRANSACTION_COUNTER, ConvertUtil.ToInt(CallContext.GetData(POSTGRESSQL_TRANSACTION_COUNTER), 0) - 1);
 
-        public void BeginTransaction() {
-            throw new NotImplementedException();
+            int counter = ConvertUtil.ToInt(CallContext.GetData(POSTGRESSQL_TRANSACTION_COUNTER), 0);
+            if (counter > 0) {
+                return;
+            }
+
+            NpgsqlTransaction transaction = CallContext.GetData(POSTGRESQL_TRANSACTION) as NpgsqlTransaction;
+            if (transaction != null) {
+                transaction.Commit();
+                transaction.Dispose();
+
+                NpgsqlConnection connection = CallContext.GetData(POSTGRESQL_CONNECTION) as NpgsqlConnection;
+                FreeConnection(connection);
+
+                CallContext.SetData(POSTGRESQL_TRANSACTION, null);
+                CallContext.SetData(POSTGRESQL_CONNECTION, null);
+            }
         }
 
-        public void CommitTransaction() {
-            throw new NotImplementedException();
+        public void RollbackTransaction() {
+            CallContext.SetData(POSTGRESSQL_TRANSACTION_COUNTER, null);
+
+            NpgsqlTransaction transaction = CallContext.GetData(POSTGRESQL_TRANSACTION) as NpgsqlTransaction;
+            if (transaction != null) {
+                transaction.Rollback();
+                transaction.Dispose();
+
+                NpgsqlConnection connection = CallContext.GetData(POSTGRESQL_CONNECTION) as NpgsqlConnection;
+                FreeConnection(connection);
+
+                CallContext.SetData(POSTGRESQL_TRANSACTION, null);
+                CallContext.SetData(POSTGRESQL_CONNECTION, null);
+            }
         }
 
         public DataTable ExecuteDataTable(string sql) {
@@ -115,8 +166,61 @@ namespace StartingMultiTenant.Framework
             throw new NotImplementedException();
         }
 
-        public void RollbackTransaction() {
-            throw new NotImplementedException();
+        private NpgsqlConnection GetConnection() {
+            long startTicks = DateTime.Now.Ticks;
+
+            bool ok = _queue.TryDequeue(out NpgsqlConnection connection);
+            if (!ok) {
+                connection = new NpgsqlConnection(_connectionString);
+            }
+
+            try {
+                connection.Open();
+            } catch (Exception ex) {
+                _logger.LogError(ex.ToString() + "|" + _connectionString);
+                throw new Exception(ex.Message, ex);
+            }
+
+            long elapsedTicks = DateTime.Now.Ticks - startTicks;
+            if (elapsedTicks > ALARM_THRESHOLD_VALUE) {
+                _logger.LogWarning($"打开连接超过预定伐值:{ALARM_THRESHOLD_VALUE / 10000}(毫秒), Queue Count:{_queue.Count}, ConnectionString:{DbHost}:{DbPort}-{DbName}, Mileseconds:{elapsedTicks / 10000}");
+            }
+
+            return connection;
+        }
+
+        private void FreeConnection(NpgsqlConnection connection) {
+            connection.Close();
+
+            if (_queue.Count < 1000) {
+                _queue.Enqueue(connection);
+            } else {
+                connection = null;
+            }
+        }
+
+        private string resolveDatabaseName(string dbConnStr) {
+            var match = Regex.Match(dbConnStr, "Database=([\\S]+?)(?=$|;)", RegexOptions.IgnoreCase);
+            if (match.Success) {
+                return match.Groups[1].Value;
+            }
+            return string.Empty;
+        }
+
+        private string resolveHost(string dbConnStr) {
+            var match = Regex.Match(dbConnStr, "Host=([\\S]+?)(?=$|;)", RegexOptions.IgnoreCase);
+            if (match.Success) {
+                return match.Groups[1].Value;
+            }
+            return string.Empty;
+        }
+
+        private string resolvePort(string dbConnStr) {
+            var match = Regex.Match(dbConnStr, "Port=([\\S]+?)(?=$|;)", RegexOptions.IgnoreCase);
+            if (match.Success) {
+                return match.Groups[1].Value;
+            }
+            return string.Empty;
         }
     }
 }
