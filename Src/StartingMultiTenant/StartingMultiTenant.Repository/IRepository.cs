@@ -11,9 +11,9 @@ namespace StartingMultiTenant.Repository
         T GetEntityByQuery(Dictionary<string, object> fieldValueDict = null);
 
         void BeginTransaction();
-        int ExecuteNonQuery(string sql, Dictionary<string, object> p);
+        //int ExecuteNonQuery(string sql, Dictionary<string, object> p);
 
-        object ExecuteScalar(string sql, Dictionary<string, object> p);
+        //object ExecuteScalar(string sql, Dictionary<string, object> p);
         void CommitTransaction();
         void RollbackTransaction();
     }

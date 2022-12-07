@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -11,7 +12,7 @@ namespace StartingMultiTenant.Repository
     public abstract class BaseRepository<T>:IRepository<T> where T : class, new ()
     {
         protected readonly TenantDbDataContext _tenantDbDataContext;
-        public abstract string TableName { get; protected set; }
+        public abstract string TableName { get; }
         public BaseRepository(TenantDbDataContext tenantDbDataContext) {
             _tenantDbDataContext = tenantDbDataContext;
         }
@@ -28,14 +29,13 @@ namespace StartingMultiTenant.Repository
             _tenantDbDataContext.Master.RollbackTransaction();
         }
 
-        public virtual int ExecuteNonQuery(string sql, Dictionary<string, object> p) {
-            return _tenantDbDataContext.Master.ExecuteNonQuery(sql,p);
-        }
+        //public virtual int ExecuteNonQuery(string sql, Dictionary<string, object> p) {
+        //    return _tenantDbDataContext.Master.ExecuteNonQuery(sql,p);
+        //}
 
-        public virtual object ExecuteScalar(string sql, Dictionary<string, object> p) {
-            return _tenantDbDataContext.Master.ExecuteScalar(sql,p);
-        }
-
+        //public virtual object ExecuteScalar(string sql, Dictionary<string, object> p) {
+        //    return _tenantDbDataContext.Master.ExecuteScalar(sql,p);
+        //}
         
         public List<T> GetEntitiesByQuery(Dictionary<string, object> fieldValueDict = null) {
             CheckTableNameNotNull();
@@ -46,6 +46,7 @@ namespace StartingMultiTenant.Repository
 
                 int i = 0;
                 builder.Append(" where ");
+
                 foreach (KeyValuePair<string, object> kvp in fieldValueDict) {
                     builder.Append(string.Format($" {kvp.Key.ToUpper()}=@{kvp.Key} "));
                     if (++i < fieldValueDict.Count) {
@@ -56,7 +57,7 @@ namespace StartingMultiTenant.Repository
                 return _tenantDbDataContext.Slave.QueryList<T>(builder.ToString(), fieldValueDict);
             }
 
-            return _tenantDbDataContext.Slave.QueryList<T>(builder.ToString());
+            return _tenantDbDataContext.Slave.QueryList<T>(builder.ToString(),null);
         }
 
         public T GetEntityByQuery(Dictionary<string, object> fieldValueDict = null) {
@@ -78,7 +79,7 @@ namespace StartingMultiTenant.Repository
                 return _tenantDbDataContext.Slave.Query<T>(builder.ToString(), fieldValueDict);
             }
 
-            return _tenantDbDataContext.Slave.Query<T>(builder.ToString());
+            return _tenantDbDataContext.Slave.Query<T>(builder.ToString(),null);
         }
 
         public void CheckTableNameNotNull() {

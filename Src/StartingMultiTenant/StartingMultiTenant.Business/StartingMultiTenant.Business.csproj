@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\StartingMultiTenant.Model\StartingMultiTenant.Model.csproj" />
+    <ProjectReference Include="..\StartingMultiTenant.Repository\StartingMultiTenant.Repository.csproj" />
   </ItemGroup>
 
 </Project>

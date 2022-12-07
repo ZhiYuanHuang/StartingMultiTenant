@@ -12,6 +12,7 @@ using System.Text.RegularExpressions;
 using System.IO;
 using StartingMultiTenant.Util;
 using MySqlConnector;
+using System.Linq;
 
 namespace StartingMultiTenant.Framework
 {
@@ -44,7 +45,7 @@ namespace StartingMultiTenant.Framework
         }
 
 
-        public void BeginTransaction(bool forceCreateNew=false) {
+        public void BeginTransaction() {
             CallContext.SetData(POSTGRESSQL_TRANSACTION_COUNTER, ConvertUtil.ToInt(CallContext.GetData(POSTGRESSQL_TRANSACTION_COUNTER), 0) + 1);
             var connection = CallContext.GetData(POSTGRESQL_CONNECTION) as NpgsqlConnection;
 
@@ -94,77 +95,194 @@ namespace StartingMultiTenant.Framework
             }
         }
 
-        public DataTable ExecuteDataTable(string sql) {
-            throw new NotImplementedException();
+        public int ExecuteNonQuery(string sql, object p = null) {
+            int ret = 0;
+
+            GetContextConnectionAndTrans(out NpgsqlConnection connection, out NpgsqlTransaction transaction);
+
+            try {
+                ret = connection.Execute(sql, p, transaction, COMMAND_TIMEOUT, CommandType.Text);
+            } catch (Exception ex) {
+                _logger.LogError(ex.ToString() + "|" + sql + "|" + $"{(p != null ? Newtonsoft.Json.JsonConvert.SerializeObject(p) : "")}");
+                throw new Exception(ex.Message, ex);
+            } finally {
+                if (transaction == null) {
+                    FreeConnection(connection);
+                }
+            }
+
+            return ret;
         }
 
-        public DataTable ExecuteDataTable(string sql, Dictionary<string, object> p) {
-            throw new NotImplementedException();
+        public int ExecuteNonQuery(string sql, Dictionary<string, object> p=null) {
+            int ret = 0;
+
+            GetContextConnectionAndTrans(out NpgsqlConnection connection,out NpgsqlTransaction transaction);
+
+            DynamicParameters dynamicParameters = generateParam(p);
+
+            try {
+                ret = connection.Execute(sql, dynamicParameters, transaction, COMMAND_TIMEOUT, CommandType.Text);
+            } catch (Exception ex) {
+                _logger.LogError(ex.ToString() + "|" + sql+"|"+$"{(p!=null?Newtonsoft.Json.JsonConvert.SerializeObject(p):"")}");
+                throw new Exception(ex.Message, ex);
+            } finally {
+                if (transaction == null) {
+                    FreeConnection(connection);
+                }
+            }
+
+            return ret;
         }
 
-        public DataTable ExecuteDataTable(string sql, int pageIndex, int pageSize) {
-            throw new NotImplementedException();
+        public object ExecuteScalar(string sql, object p = null) {
+            object ret = null;
+
+            GetContextConnectionAndTrans(out NpgsqlConnection connection, out NpgsqlTransaction transaction);
+
+            try {
+                ret = connection.ExecuteScalar(sql, p, transaction, COMMAND_TIMEOUT, CommandType.Text);
+            } catch (Exception ex) {
+                _logger.LogError(ex.ToString() + "|" + sql + "|" + $"{(p != null ? Newtonsoft.Json.JsonConvert.SerializeObject(p) : "")}");
+                throw new Exception(ex.Message, ex);
+            } finally {
+                if (transaction == null) {
+                    FreeConnection(connection);
+                }
+            }
+
+            return ret;
         }
 
-        public DataTable ExecuteDataTable(string sql, int pageIndex, int pageSize, Dictionary<string, object> p) {
-            throw new NotImplementedException();
+        public object ExecuteScalar(string sql, Dictionary<string, object> p=null) {
+            object ret = null;
+
+            GetContextConnectionAndTrans(out NpgsqlConnection connection, out NpgsqlTransaction transaction);
+
+            DynamicParameters dynamicParameters = generateParam(p);
+
+            try {
+                ret= connection.ExecuteScalar(sql,dynamicParameters,transaction,COMMAND_TIMEOUT,CommandType.Text);
+            } catch (Exception ex) {
+                _logger.LogError(ex.ToString() + "|" + sql + "|" + $"{(p != null ? Newtonsoft.Json.JsonConvert.SerializeObject(p) : "")}");
+                throw new Exception(ex.Message, ex);
+            } finally {
+                if (transaction == null) {
+                    FreeConnection(connection);
+                }
+            }
+
+            return ret;
         }
 
-        public int ExecuteNonQuery(string sql) {
-            throw new NotImplementedException();
-        }
+        public T Query<T>(string sql, object p) where T : new() {
+            T t = default(T);
 
-        public int ExecuteNonQuery(string sql, Dictionary<string, object> p) {
-            throw new NotImplementedException();
-        }
+            GetContextConnectionAndTrans(out NpgsqlConnection connection, out NpgsqlTransaction transaction);
 
-        public object ExecuteScalar(string sql) {
-            throw new NotImplementedException();
-        }
+            try {
+                t = connection.QueryFirstOrDefault<T>(sql, p, transaction, COMMAND_TIMEOUT, CommandType.Text);
+            } catch (Exception ex) {
+                _logger.LogError(ex.ToString() + "|" + sql + "|" + $"{(p != null ? Newtonsoft.Json.JsonConvert.SerializeObject(p) : "")}");
+                throw new Exception(ex.Message, ex);
+            } finally {
+                if (transaction == null) {
+                    FreeConnection(connection);
+                }
+            }
 
-        public object ExecuteScalar(string sql, Dictionary<string, object> p) {
-            throw new NotImplementedException();
-        }
-
-        public T Query<T>(string sql) where T : new() {
-            throw new NotImplementedException();
+            return t;
         }
 
         public T Query<T>(string sql, Dictionary<string, object> p) where T : new() {
-            throw new NotImplementedException();
+            T t = default(T);
+
+            GetContextConnectionAndTrans(out NpgsqlConnection connection, out NpgsqlTransaction transaction);
+
+            DynamicParameters dynamicParameters = generateParam(p);
+
+            try {
+                t= connection.QueryFirstOrDefault<T>(sql,dynamicParameters,transaction,COMMAND_TIMEOUT,CommandType.Text);
+            }catch(Exception ex) {
+                _logger.LogError(ex.ToString() + "|" + sql + "|" + $"{(p != null ? Newtonsoft.Json.JsonConvert.SerializeObject(p) : "")}");
+                throw new Exception(ex.Message, ex);
+            } finally {
+                if (transaction == null) {
+                    FreeConnection(connection);
+                }
+            }
+
+            return t;
         }
 
-        public T Query<T>(string sql, int pageIndex, int pageSize) where T : new() {
-            throw new NotImplementedException();
-        }
+        public List<T> QueryList<T>(string sql, object p) where T : new() {
+            List<T> resultList = new List<T>();
 
-        public T Query<T>(string sql, int pageIndex, int pageSize, Dictionary<string, object> p) where T : new() {
-            throw new NotImplementedException();
-        }
+            GetContextConnectionAndTrans(out NpgsqlConnection connection, out NpgsqlTransaction transaction);
 
-        public List<T> QueryList<T>(string sql) where T : new() {
-            throw new NotImplementedException();
+            try {
+                var resultSet = connection.Query<T>(sql, p, transaction, false, COMMAND_TIMEOUT, CommandType.Text);
+                if (resultSet != null) {
+                    resultList = resultSet.ToList();
+                }
+            } catch (Exception ex) {
+                _logger.LogError(ex.ToString() + "|" + sql + "|" + $"{(p != null ? Newtonsoft.Json.JsonConvert.SerializeObject(p) : "")}");
+                throw new Exception(ex.Message, ex);
+            } finally {
+                if (transaction == null) {
+                    FreeConnection(connection);
+                }
+            }
+
+            return resultList;
         }
 
         public List<T> QueryList<T>(string sql, Dictionary<string, object> p) where T : new() {
-            throw new NotImplementedException();
+            List<T> resultList = new List<T>();
+
+            GetContextConnectionAndTrans(out NpgsqlConnection connection, out NpgsqlTransaction transaction);
+
+            DynamicParameters dynamicParameters = generateParam(p);
+
+            try {
+                var resultSet = connection.Query<T>(sql, dynamicParameters, transaction,false, COMMAND_TIMEOUT, CommandType.Text);
+                if(resultSet != null ) {
+                    resultList= resultSet.ToList();
+                }
+            } catch (Exception ex) {
+                _logger.LogError(ex.ToString() + "|" + sql + "|" + $"{(p != null ? Newtonsoft.Json.JsonConvert.SerializeObject(p) : "")}");
+                throw new Exception(ex.Message, ex);
+            } finally {
+                if (transaction == null) {
+                    FreeConnection(connection);
+                }
+            }
+
+            return resultList;
         }
 
-        public List<T> QueryList<T>(string sql, int pageIndex, int pageSize) where T : new() {
-            throw new NotImplementedException();
+        private void GetContextConnectionAndTrans(out NpgsqlConnection connection, out NpgsqlTransaction transaction) {
+            transaction = null;
+            connection = CallContext.GetData(POSTGRESQL_CONNECTION) as NpgsqlConnection;
+            if (connection == null) {
+                connection = GetConnection();
+            } else {
+                transaction = CallContext.GetData(POSTGRESQL_TRANSACTION) as NpgsqlTransaction;
+            }
         }
 
-        public List<T> QueryList<T>(string sql, int pageIndex, int pageSize, Dictionary<string, object> p) where T : new() {
-            throw new NotImplementedException();
+        private DynamicParameters generateParam(Dictionary<string, object> p = null) {
+            DynamicParameters dynamicParameters = null;
+            if (p != null && p.Any()) {
+                dynamicParameters = new DynamicParameters();
+                foreach (var pair in p) {
+                    dynamicParameters.Add(pair.Key, pair.Value);
+                }
+            }
+            return dynamicParameters;
         }
 
-        public PagingData<T> QueryPaging<T>(string sql, int pageIndex, int pageSize) where T : new() {
-            throw new NotImplementedException();
-        }
 
-        public PagingData<T> QueryPaging<T>(string sql, int pageIndex, int pageSize, Dictionary<string, object> p) where T : new() {
-            throw new NotImplementedException();
-        }
 
         private NpgsqlConnection GetConnection() {
             long startTicks = DateTime.Now.Ticks;
@@ -222,5 +340,6 @@ namespace StartingMultiTenant.Framework
             }
             return string.Empty;
         }
+
     }
 }
