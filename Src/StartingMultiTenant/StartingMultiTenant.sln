@@ -13,7 +13,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StartingMultiTenant.Busines
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StartingMultiTenant.Framework", "StartingMultiTenant.Framework\StartingMultiTenant.Framework.csproj", "{48033A78-CB25-4930-B669-2F724EAAB162}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StartingMultiTenant.Repository", "StartingMultiTenant.Repository\StartingMultiTenant.Repository.csproj", "{2194E78E-212F-4BBA-B119-967F9537C8F4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StartingMultiTenant.Repository", "StartingMultiTenant.Repository\StartingMultiTenant.Repository.csproj", "{2194E78E-212F-4BBA-B119-967F9537C8F4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StartingMultiTenant.Test", "StartingMultiTenant.Test\StartingMultiTenant.Test.csproj", "{4E73CDD3-71A9-42FD-8056-982D72D205B2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{2194E78E-212F-4BBA-B119-967F9537C8F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2194E78E-212F-4BBA-B119-967F9537C8F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2194E78E-212F-4BBA-B119-967F9537C8F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4E73CDD3-71A9-42FD-8056-982D72D205B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E73CDD3-71A9-42FD-8056-982D72D205B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E73CDD3-71A9-42FD-8056-982D72D205B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E73CDD3-71A9-42FD-8056-982D72D205B2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

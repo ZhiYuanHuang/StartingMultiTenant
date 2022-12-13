@@ -9,9 +9,6 @@ using System.Threading.Tasks;
 
 namespace StartingMultiTenant.Business
 {
-    public interface IDbServerBusiness {
-        Task<List<DbServerModel>> GetDbServers(Int64? dbServerId=null);
-    }
     public class DbServerBusiness
     {
         private readonly DbServerRepository _dbServerRepository;

@@ -10,7 +10,7 @@ namespace StartingMultiTenant.Repository
         private readonly string _tableName;
         public override string TableName { get => _tableName; }
         public DbServerRepository(TenantDbDataContext tenantDbDataContext) :base(tenantDbDataContext) {
-            _tableName = "dbserver";
+            _tableName = "DbServer";
         }
 
         public List<DbServerModel> GetDbServers(Int64? dbServerId = null) {

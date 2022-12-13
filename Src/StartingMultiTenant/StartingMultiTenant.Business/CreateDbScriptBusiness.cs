@@ -6,10 +6,7 @@ using System.Threading.Tasks;
 
 namespace StartingMultiTenant.Business
 {
-    public interface ICreateDbScriptBusiness {
-        Task<List<CreateDbScriptModel>> GetListByNames(List<string> nameList);
-    }
-    public class CreateDbScriptBusiness : ICreateDbScriptBusiness
+    public class CreateDbScriptBusiness 
     {
         public async Task<List<CreateDbScriptModel>> GetListByNames(List<string> nameList) {
             return new List<CreateDbScriptModel>();

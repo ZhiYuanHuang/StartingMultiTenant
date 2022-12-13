@@ -11,23 +11,23 @@ using System.Threading.Tasks;
 
 namespace StartingMultiTenant.Service
 {
-    public class TenantDbOperaService
+    public class SingleTenantService
     {
         private readonly DbServerExecutorFactory _dbServerExecutorFactory;
-        private readonly ILogger<TenantDbOperaService> _logger;
-        private readonly ICreateDbScriptBusiness _createDbScriptBusiness;
-        private readonly IDbServerBusiness _dbServerBusiness;
-        private readonly ISchemaUpdateScriptBusiness _schemaUpdateScriptBusiness;
-        private readonly ITenantServiceDbConnBusiness _tenantServiceDbConnBusiness;
+        private readonly ILogger<SingleTenantService> _logger;
+        private readonly CreateDbScriptBusiness _createDbScriptBusiness;
+        private readonly DbServerBusiness _dbServerBusiness;
+        private readonly SchemaUpdateScriptBusiness _schemaUpdateScriptBusiness;
+        private readonly TenantServiceDbConnBusiness _tenantServiceDbConnBusiness;
 
         private readonly Random _random;
 
-        public TenantDbOperaService(DbServerExecutorFactory dbServerExecutorFactory,
-            ILogger<TenantDbOperaService> logger,
-            ICreateDbScriptBusiness createDbScriptBusiness,
-            IDbServerBusiness dbServerBusiness,
-            ISchemaUpdateScriptBusiness schemaUpdateScriptBusiness,
-            ITenantServiceDbConnBusiness tenantServiceDbConnBusiness) {
+        public SingleTenantService(DbServerExecutorFactory dbServerExecutorFactory,
+            ILogger<SingleTenantService> logger,
+            CreateDbScriptBusiness createDbScriptBusiness,
+            DbServerBusiness dbServerBusiness,
+            SchemaUpdateScriptBusiness schemaUpdateScriptBusiness,
+            TenantServiceDbConnBusiness tenantServiceDbConnBusiness) {
             _random = new Random();
             _dbServerExecutorFactory = dbServerExecutorFactory;
             _logger = logger;
@@ -37,18 +37,18 @@ namespace StartingMultiTenant.Service
             _tenantServiceDbConnBusiness = tenantServiceDbConnBusiness;
         }
 
-        public async Task<Tuple<bool, List<TenantServiceDbConnModel>>> CreateTenantDb(string tenantDomain,string tenantIdentifier,List<string> createScriptNameList) {
+        public async Task<bool> CreateTenantDbs(string tenantDomain,string tenantIdentifier,List<string> createScriptNameList) {
             List<CreateDbScriptModel> createDbScriptList= await _createDbScriptBusiness.GetListByNames(createScriptNameList);
 
             if (createDbScriptList.Count != createScriptNameList.Count) {
                 var noexistScriptList= createScriptNameList.Except(createDbScriptList.Select(x => x.Name)).ToList();
                 _logger.LogError($"create db scripts {string.Join(',',noexistScriptList)} no exist");
-                return Tuple.Create<bool, List<TenantServiceDbConnModel>>(false,null);
+                return false;
             }
             foreach(var createScriptName in createScriptNameList) {
                 if (createDbScriptList.FirstOrDefault(x => x.Name == createScriptName) == null) {
                     _logger.LogError($"create db script {createScriptName} no exist");
-                    return Tuple.Create<bool, List<TenantServiceDbConnModel>>(false, null);
+                    return false;
                 }
             }
 
@@ -56,7 +56,7 @@ namespace StartingMultiTenant.Service
             dbServerList= dbServerList.Where(x => x.CanCreateNew).Select(x => x).ToList();
             if(!dbServerList.Any()) {
                 _logger.LogError($"no exist any db server");
-                return Tuple.Create<bool, List<TenantServiceDbConnModel>>(false, null);
+                return false;
             }
 
             List<int> toUseDbTypes= createDbScriptList.Select(x => x.DbType).Distinct().ToList();
@@ -64,7 +64,7 @@ namespace StartingMultiTenant.Service
             List<int> lackDbTypes= toUseDbTypes.Except(existDbTypes).ToList();
             if (lackDbTypes.Any()) {
                 _logger.LogError($"lack {(DbTypeEnum)lackDbTypes[0]} type db");
-                return Tuple.Create<bool, List<TenantServiceDbConnModel>>(false, null);
+                return false;
             }
 
             Dictionary<IDbServerExecutor, List<string>> serverAndDbDict = new Dictionary<IDbServerExecutor, List<string>>();
@@ -128,10 +128,23 @@ namespace StartingMultiTenant.Service
                         await dbExecutor.DeleteDb(createDb).ConfigureAwait(false);
                     }
                 }
-                return Tuple.Create<bool, List<TenantServiceDbConnModel>>(false, null);
+                return false;
             }
 
-            return Tuple.Create<bool, List<TenantServiceDbConnModel>>(true, createDbSet);
+            success= _tenantServiceDbConnBusiness.BatchInsertDbConns(createDbSet);
+            if (!success) {
+                foreach (var pair in serverAndDbDict) {
+                    var dbExecutor = pair.Key;
+                    var createDbList = pair.Value;
+                    foreach (var createDb in createDbList) {
+                        await dbExecutor.DeleteDb(createDb).ConfigureAwait(false);
+                    }
+                }
+
+                return false;
+            }
+
+            return true;
         }
 
         public async Task<bool> UpdateTenantDb(TenantServiceDbConnModel tenantServiceDbConn, SchemaUpdateScriptModel schemaUpdateScript) {

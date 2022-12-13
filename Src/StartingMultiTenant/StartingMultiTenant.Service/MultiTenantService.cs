@@ -13,13 +13,13 @@ namespace StartingMultiTenant.Service
 {
     public class MultiTenantService
     {
-        private readonly TenantDbOperaService _tenantDbOperaService;
-        private readonly ISchemaUpdateScriptBusiness _schemaUpdateScriptBusiness;
+        private readonly SingleTenantService _tenantDbOperaService;
+        private readonly SchemaUpdateScriptBusiness _schemaUpdateScriptBusiness;
         private readonly ILogger<MultiTenantService> _logger;
-        private readonly ITenantServiceDbConnBusiness _tenantServiceDbConnBusiness;
-        public MultiTenantService(TenantDbOperaService tenantDbOperaService,
-            ISchemaUpdateScriptBusiness schemaUpdateScriptBusiness,
-            ITenantServiceDbConnBusiness tenantServiceDbConnBusiness,
+        private readonly TenantServiceDbConnBusiness _tenantServiceDbConnBusiness;
+        public MultiTenantService(SingleTenantService tenantDbOperaService,
+            SchemaUpdateScriptBusiness schemaUpdateScriptBusiness,
+            TenantServiceDbConnBusiness tenantServiceDbConnBusiness,
             ILogger<MultiTenantService> logger) { 
             _tenantDbOperaService=tenantDbOperaService;
             _schemaUpdateScriptBusiness = schemaUpdateScriptBusiness;
