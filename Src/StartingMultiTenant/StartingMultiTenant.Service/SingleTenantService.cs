@@ -199,7 +199,7 @@ namespace StartingMultiTenant.Service
 
             CreateDbScriptModel theCreateScript = createScripts[0];
             if (theCreateScript.DbType != toUseDbServer.DbType) {
-                _logger.LogError($"the wait to use dbServer type is not equal to the origin create script dbtype");
+                _logger.LogError($"the dbtype of new dbServer is not equal to the origin create script dbtype");
                 return false;
             }
 
@@ -207,7 +207,7 @@ namespace StartingMultiTenant.Service
             string dbName= dbServerExecutor.ResolveDatabaseName(toUpdateDbConn.EncryptedConnStr);
             string encryptedConnStr= dbServerExecutor.GenerateEncryptDbConnStr(dbName);
 
-            return await _tenantServiceDbConnBusiness.ExchangeToAnotherDbServer(dbConnId,toUseDbServer.Id,encryptedConnStr);
+            return _tenantServiceDbConnBusiness.ExchangeToAnotherDbServer(toUpdateDbConn, toUseDbServer.Id,encryptedConnStr);
         }
 
         private DbServerModel getRandomServer(int dbType, List<DbServerModel> dbServerList) {

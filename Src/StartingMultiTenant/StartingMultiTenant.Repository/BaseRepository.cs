@@ -82,6 +82,11 @@ namespace StartingMultiTenant.Repository
             return _tenantDbDataContext.Slave.Query<T>(builder.ToString(),null);
         }
 
+        public T GetEntityById(Int64 Id) {
+            string sql = $"Select * From {TableName} Where Id=@id";
+            return _tenantDbDataContext.Slave.Query<T>(sql,new { id=Id});
+        }
+
         public void CheckTableNameNotNull() {
             if (string.IsNullOrEmpty(TableName)) {
                 throw new Exception("tableName is empty,cann't auto generate sql");

@@ -41,9 +41,46 @@ namespace StartingMultiTenant.Repository
             return success;
         }
 
+        public bool ExchangeDbServer(Int64 dbConnId, Int64 newDbServerId,string newEncryptConnStr) {
+            string sql = @"Update TenantServiceDbConn Set DbServerId=@dbServerId,EncryptedConnStr=@encryptedConnStr Where Id=@id";
+
+            return _tenantDbDataContext.Master.ExecuteNonQuery(sql,new { dbServerId=newDbServerId, encryptedConnStr =newEncryptConnStr})>0;
+        }
+
         public List<TenantServiceDbConnModel> GetConnListByDbServer(Int64 dbServerId) {
             Dictionary<string, object> p = new Dictionary<string, object>() {
                 { "DbServerId",dbServerId}
+            };
+
+            return GetEntitiesByQuery(p);
+        }
+
+        public List<TenantServiceDbConnModel> GetTenantServiceDbConns(string tenantDomain, string tenantIdentifier, string createScriptName) {
+            Dictionary<string, object> p = new Dictionary<string, object>() {
+                { "TenantDomain",tenantDomain},
+                {"TenantIdentifier",tenantIdentifier },
+                {"CreateScriptName",createScriptName }
+            };
+
+            return GetEntitiesByQuery(p);
+        }
+
+        public List<TenantServiceDbConnModel> GetTenantServiceDbConns(string createScriptName, int createScriptVersion) {
+            Dictionary<string, object> p = new Dictionary<string, object>() {
+                {"CreateScriptName",createScriptName },
+                 { "CreateScriptVersion",createScriptVersion}
+            };
+
+            return GetEntitiesByQuery(p);
+        }
+
+        public List<TenantServiceDbConnModel> GetTenantServiceDbConns(long? dbConnId = null) {
+            if(!dbConnId.HasValue) {
+                return GetEntitiesByQuery();
+            }
+
+            Dictionary<string, object> p = new Dictionary<string, object>() {
+                { "Id",dbConnId.Value},
             };
 
             return GetEntitiesByQuery(p);
