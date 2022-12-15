@@ -15,7 +15,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StartingMultiTenant.Framewo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StartingMultiTenant.Repository", "StartingMultiTenant.Repository\StartingMultiTenant.Repository.csproj", "{2194E78E-212F-4BBA-B119-967F9537C8F4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StartingMultiTenant.Test", "StartingMultiTenant.Test\StartingMultiTenant.Test.csproj", "{4E73CDD3-71A9-42FD-8056-982D72D205B2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StartingMultiTenant.Test", "StartingMultiTenant.Test\StartingMultiTenant.Test.csproj", "{4E73CDD3-71A9-42FD-8056-982D72D205B2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
