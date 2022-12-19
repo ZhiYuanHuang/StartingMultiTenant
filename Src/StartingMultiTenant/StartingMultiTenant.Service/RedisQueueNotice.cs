@@ -1,7 +1,9 @@
-﻿using StackExchange.Redis;
+﻿using Microsoft.Extensions.Logging;
+using StackExchange.Redis;
 using StartingMultiTenant.Model.Dto;
 using System;
 using System.Collections.Generic;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -17,8 +19,11 @@ namespace StartingMultiTenant.Service
 
         private const string _Action_Channel = "tenant_action_channel";
 
-        public RedisQueueNotice() {
+        private readonly ILogger<RedisQueueNotice> _logger;
+
+        public RedisQueueNotice(ILogger<RedisQueueNotice> logger) {
             _pubLockObj = new object();
+            _logger= logger;
         }
 
         public void Init(string connStr) {
@@ -27,12 +32,27 @@ namespace StartingMultiTenant.Service
 
         public async Task NoticeTenantAction(TenantActionInfoDto tenantActionInfo) {
             checkConnection();
-            await _pubDb.PublishAsync(_Action_Channel, Newtonsoft.Json.JsonConvert.SerializeObject(tenantActionInfo));
+            try {
+                await _pubDb.PublishAsync(_Action_Channel, Newtonsoft.Json.JsonConvert.SerializeObject(tenantActionInfo));
+            }
+            catch(Exception ex) {
+                
+                _logger.LogError(ex, "redis queue push error");
+                Exception exception = new Exception("redis queue push error",ex);
+                throw exception;
+            }
         }
 
         public async Task NoticeTenantAction<T>(TenantActionInfoDto<T> tenantActionInfo) {
             checkConnection();
-            await _pubDb.PublishAsync(_Action_Channel, Newtonsoft.Json.JsonConvert.SerializeObject(tenantActionInfo));
+            try {
+                await _pubDb.PublishAsync(_Action_Channel, Newtonsoft.Json.JsonConvert.SerializeObject(tenantActionInfo));
+            } catch (Exception ex) {
+
+                _logger.LogError(ex, "redis queue push error");
+                Exception exception = new Exception("redis queue push error", ex);
+                throw exception;
+            }
         }
         private void checkConnection() {
             if (_pubConnection == null) {

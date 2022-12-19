@@ -12,11 +12,11 @@ namespace StartingMultiTenant.Service
         private readonly IQueueNotice _queueNotice;
         private readonly bool _enableNotice;
         private readonly int _queueType;
-        public TenantActionNoticeService(IConfiguration configuration) {
+        public TenantActionNoticeService(QueueNoticeFactory  queueNoticeFactory,IConfiguration configuration) {
             bool.TryParse(configuration["QueueNotice:Enable"], out _enableNotice);
             if (_enableNotice) {
                 if (int.TryParse(configuration["QueueNotice:QueueType"],out _queueType)) {
-                    var tmpQueueNotice= QueueNoticeFactory.CreateQueueNotice((QueueNoticeEnum)_queueType);
+                    var tmpQueueNotice= queueNoticeFactory.CreateQueueNotice((QueueNoticeEnum)_queueType);
                     if (tmpQueueNotice == null) {
                         _enableNotice = false;
 

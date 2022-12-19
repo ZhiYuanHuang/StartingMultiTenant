@@ -1,4 +1,5 @@
-﻿using StartingMultiTenant.Model.Dto;
+﻿using Microsoft.Extensions.Logging;
+using StartingMultiTenant.Model.Dto;
 using StartingMultiTenant.Model.Enum;
 using System;
 using System.Collections.Generic;
@@ -14,13 +15,25 @@ namespace StartingMultiTenant.Service
         Task NoticeTenantAction<T>(TenantActionInfoDto<T> tenantActionInfo);
     }
 
-    public static class QueueNoticeFactory
+    public class QueueNoticeFactory
     {
-        public static IQueueNotice CreateQueueNotice(QueueNoticeEnum queueNoticeEnum) {
+        private readonly ILoggerFactory _loggerFactory;
+        public QueueNoticeFactory(ILoggerFactory loggerFactory) { 
+            _loggerFactory = loggerFactory;
+        }
+        public IQueueNotice CreateQueueNotice(QueueNoticeEnum queueNoticeEnum) {
+            IQueueNotice queueNotice = null;
+            
             switch (queueNoticeEnum) {
-                case QueueNoticeEnum.Redis:
+                case QueueNoticeEnum.Redis: {
+                        var logger = _loggerFactory.CreateLogger<RedisQueueNotice>();
+                        queueNotice = new RedisQueueNotice(logger);
+                    }
                     break;
-                case QueueNoticeEnum.RabbitMQ:
+                case QueueNoticeEnum.RabbitMQ: {
+                        var logger = _loggerFactory.CreateLogger<RabbitQueueNotice>();
+                        queueNotice = new RabbitQueueNotice(logger);
+                    }
                     break;
                 default:
                     break;

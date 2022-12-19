@@ -10,11 +10,13 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
+    <PackageReference Include="RabbitMQ.Client" Version="6.4.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\StartingMultiTenant.Business\StartingMultiTenant.Business.csproj" />
     <ProjectReference Include="..\StartingMultiTenant.Repository\StartingMultiTenant.Repository.csproj" />
+    <ProjectReference Include="..\StartingMultiTenant.Service\StartingMultiTenant.Service.csproj" />
   </ItemGroup>
 
 </Project>
