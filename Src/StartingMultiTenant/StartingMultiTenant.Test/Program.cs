@@ -31,7 +31,7 @@ namespace StartingMultiTenant.Test
             }
 
             if (isProd) {
-                RabbitQueueNotice rabbitQueueNotice = new RabbitQueueNotice();
+                RabbitQueueNotice rabbitQueueNotice = new RabbitQueueNotice(loggerFactory.CreateLogger<RabbitQueueNotice>());
                 rabbitQueueNotice.Init("127.0.0.1;5673");
                 Random random = new Random();
                 while (true) {
