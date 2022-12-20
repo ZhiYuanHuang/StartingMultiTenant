@@ -10,12 +10,11 @@ namespace StartingMultiTenant.Util
     {
         private const string dropDbScriptFormat = "DROP DATABASE IF EXISTS {0};";
 
-        public static async Task<Tuple<bool,string>> GenerateCreateDbScript(string scriptFilePath,string dbNameWildcard,string uniqueDbName) {
+        public static Tuple<bool,string> GenerateCreateDbScript(string scriptContent,string dbNameWildcard,string uniqueDbName) {
             if (string.IsNullOrEmpty(dbNameWildcard) || string.IsNullOrEmpty(uniqueDbName)) {
                 return Tuple.Create(false, string.Empty);
             }
 
-            string scriptContent=await System.IO.File.ReadAllTextAsync(scriptFilePath);
             if (string.IsNullOrEmpty(scriptContent)) {
                 return Tuple.Create(false, string.Empty);
             }
@@ -27,12 +26,11 @@ namespace StartingMultiTenant.Util
             return Tuple.Create(true, scriptStr);
         }
 
-        public static async Task<Tuple<bool, string>> GenerateUpdateSchemaScript(string scriptFilePath, string dbNameWildcard, string uniqueDbName) {
+        public static Tuple<bool, string> GenerateUpdateSchemaScript(string scriptContent, string dbNameWildcard, string uniqueDbName) {
             if (string.IsNullOrEmpty(dbNameWildcard) || string.IsNullOrEmpty(uniqueDbName)) {
                 return Tuple.Create(false, string.Empty);
             }
 
-            string scriptContent = await System.IO.File.ReadAllTextAsync(scriptFilePath);
             if (string.IsNullOrEmpty(scriptContent)) {
                 return Tuple.Create(false, string.Empty);
             }
@@ -44,12 +42,11 @@ namespace StartingMultiTenant.Util
             return Tuple.Create(true, scriptStr);
         }
 
-        public static async Task<Tuple<bool, string>> GenerateRollbackSchemaScript(string scriptFilePath, string dbNameWildcard, string uniqueDbName) {
+        public static Tuple<bool, string> GenerateRollbackSchemaScript(string scriptContent, string dbNameWildcard, string uniqueDbName) {
             if (string.IsNullOrEmpty(dbNameWildcard) || string.IsNullOrEmpty(uniqueDbName)) {
                 return Tuple.Create(false, string.Empty);
             }
 
-            string scriptContent = await System.IO.File.ReadAllTextAsync(scriptFilePath);
             if (string.IsNullOrEmpty(scriptContent)) {
                 return Tuple.Create(false, string.Empty);
             }

@@ -13,7 +13,6 @@ namespace StartingMultiTenant.Model.Domain
         public string ServiceIdentifier { get; set; }
         public string DbIdentifier { get; set; }
         public string DbNameWildcard { get; set; }
-        public string FilePath { get; set; }
         public Object BinaryContent { get; set; }
         public int DbType { get; set; }
        

@@ -33,18 +33,24 @@ namespace StartingMultiTenant.Service
 
         public virtual bool CreateDb(CreateDbScriptModel createDbScriptModel, string tenantIdentifier, out string uniqueDbName) {
             uniqueDbName = string.Empty;
-            if (!System.IO.File.Exists(createDbScriptModel.FilePath)) {
-                _logger.LogError("createDb script file not exists");
+
+            string originCreateDbScript = string.Empty;
+            byte[]? tmpByteArr = null;
+            if (createDbScriptModel.BinaryContent == null || (tmpByteArr =createDbScriptModel.BinaryContent as byte[])==null) {
+                _logger.LogError($"create db script {createDbScriptModel.Name} content is empty");
                 return false;
             }
 
+            originCreateDbScript = Encoding.UTF8.GetString(tmpByteArr);
+
             string createDbScript = string.Empty;
+
             try {
 
                 uniqueDbName = SqlScriptHelper.GenerateRandomDbName(createDbScriptModel.DbIdentifier, tenantIdentifier);
 
                 string dbNameWildcard = !string.IsNullOrEmpty(createDbScriptModel.DbNameWildcard) ? createDbScriptModel.DbNameWildcard : _sysConstService.DbNameWildcard;
-                var generateResult = SqlScriptHelper.GenerateCreateDbScript(createDbScriptModel.FilePath, dbNameWildcard, uniqueDbName).GetAwaiter().GetResult();
+                var generateResult = SqlScriptHelper.GenerateCreateDbScript(originCreateDbScript, dbNameWildcard, uniqueDbName);
                 if (generateResult.Item1) {
                     createDbScript = generateResult.Item2;
                 }
@@ -77,10 +83,23 @@ namespace StartingMultiTenant.Service
         }
 
         public virtual bool UpdateSchemaByDatabase(string dataBaseName, SchemaUpdateScriptModel schemaUpdateScript) {
-            if (!System.IO.File.Exists(schemaUpdateScript.FilePath) || !System.IO.File.Exists(schemaUpdateScript.RollBackScriptPath)) {
-                _logger.LogError("updateSchema or rollback script file not exists");
+ 
+            string originUpdateSchemaScript = string.Empty;
+            string originRollbackScript = string.Empty;
+            byte[]? tmpByteArr = null;
+            if(schemaUpdateScript.BinaryContent==null || (tmpByteArr=schemaUpdateScript.BinaryContent as byte[]) == null) {
+                _logger.LogError($"updateSchema script {schemaUpdateScript.Name} content is empty");
                 return false;
             }
+
+            originUpdateSchemaScript = Encoding.UTF8.GetString(tmpByteArr);
+
+            if(schemaUpdateScript.RollBackScriptBinaryContent==null || (tmpByteArr=schemaUpdateScript.RollBackScriptBinaryContent as byte[]) == null) {
+                _logger.LogError($"updateSchema script {schemaUpdateScript.Name} rollback script content not exists");
+                return false;
+            }
+
+            originRollbackScript=Encoding.UTF8.GetString(tmpByteArr);
 
             string updateSchemaScript = string.Empty;
             string rollbackScript = string.Empty;
@@ -89,12 +108,12 @@ namespace StartingMultiTenant.Service
                 connStr = generateDbConnStr( dataBaseName);
 
                 string dbNameWildcard = !string.IsNullOrEmpty(schemaUpdateScript.DbNameWildcard) ? schemaUpdateScript.DbNameWildcard : _sysConstService.DbNameWildcard;
-                var generateResult = SqlScriptHelper.GenerateUpdateSchemaScript(schemaUpdateScript.FilePath, dbNameWildcard, dataBaseName).GetAwaiter().GetResult();
+                var generateResult = SqlScriptHelper.GenerateUpdateSchemaScript(originUpdateSchemaScript, dbNameWildcard, dataBaseName);
                 if (generateResult.Item1) {
                     updateSchemaScript = generateResult.Item2;
                 }
 
-                generateResult = SqlScriptHelper.GenerateRollbackSchemaScript(schemaUpdateScript.RollBackScriptPath, dbNameWildcard, dataBaseName).GetAwaiter().GetResult();
+                generateResult = SqlScriptHelper.GenerateRollbackSchemaScript(originRollbackScript, dbNameWildcard, dataBaseName);
                 if (generateResult.Item1) {
                     updateSchemaScript = generateResult.Item2;
                 }
