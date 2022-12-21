@@ -52,7 +52,7 @@ namespace StartingMultiTenant.Service
                 }
             }
 
-            List<DbServerModel> dbServerList= await _dbServerBusiness.GetDbServers();
+            List<DbServerModel> dbServerList= _dbServerBusiness.GetDbServers();
             dbServerList= dbServerList.Where(x => x.CanCreateNew).Select(x => x).ToList();
             if(!dbServerList.Any()) {
                 _logger.LogError($"no exist any db server");
@@ -160,7 +160,7 @@ namespace StartingMultiTenant.Service
                 return false;
             }
 
-            List<DbServerModel> dbServerList = await _dbServerBusiness.GetDbServers(tenantServiceDbConn.DbServerId);
+            List<DbServerModel> dbServerList = _dbServerBusiness.GetDbServers(tenantServiceDbConn.DbServerId);
             if(!dbServerList.Any()) {
                 _logger.LogError($"未找到 {tenantServiceDbConn.TenantDomain} {tenantServiceDbConn.TenantIdentifier} {schemaUpdateScript.CreateScriptName} 创建的数据库链接对应的数据库服务器");
                 return false;
@@ -173,7 +173,7 @@ namespace StartingMultiTenant.Service
         }
 
         public async Task<bool> ExchangeTenantConnDb(Int64 dbConnId,Int64 toUseDbServerId) {
-            List<DbServerModel> toUseDbServers= await _dbServerBusiness.GetDbServers(toUseDbServerId);
+            List<DbServerModel> toUseDbServers= _dbServerBusiness.GetDbServers(toUseDbServerId);
 
             if (!toUseDbServers.Any()) {
                 _logger.LogError($"cann't find id {toUseDbServerId} dbserver");

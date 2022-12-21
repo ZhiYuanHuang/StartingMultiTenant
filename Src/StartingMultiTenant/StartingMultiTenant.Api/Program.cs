@@ -1,6 +1,8 @@
 using StartingMultiTenant.Repository;
 using StartingMultiTenant.Framework;
 using Microsoft.Extensions.Configuration;
+using StartingMultiTenant.Service;
+using StartingMultiTenant.Business;
 
 namespace StartingMultiTenant.Api
 {
@@ -19,9 +21,22 @@ namespace StartingMultiTenant.Api
             builder.Services.AddDbDataContext<TenantDbDataContext>(options => {
                 builder.Configuration.GetSection("StartingMultiTenantDbOption").Bind(options);
             });
+            
             builder.Services.AddTransient<ServiceInfoRepository>();
             builder.Services.AddTransient<DbInfoRepository>();
+            builder.Services.AddTransient<DbServerRepository>();
+            builder.Services.AddTransient<TenantServiceDbConnRepository>();
+            builder.Services.AddTransient<TenantDomainRepository>();
+            builder.Services.AddTransient<TenantIdentifierRepository>();
+            builder.Services.AddTransient<ExternalTenantServiceDbConnRepository>();
+            builder.Services.AddTransient<SchemaUpdateScriptRepository>();
+            builder.Services.AddTransient<CreateDbScriptRepository>();
 
+            builder.Services.AddTransient<DbServerBusiness>();
+            builder.Services.AddTransient<TenantDomainBusiness>();
+            builder.Services.AddTransient<CreateDbScriptBusiness>();
+
+            builder.Services.AddSingleton<EncryptService>();
 
             var app = builder.Build();
 

@@ -215,7 +215,7 @@ namespace StartingMultiTenant.Framework
             return t;
         }
 
-        public List<T> QueryList<T>(string sql, object p) where T : new() {
+        public List<T> QueryList<T>(string sql, object p=null) where T : new() {
             List<T> resultList = new List<T>();
 
             GetContextConnectionAndTrans(out NpgsqlConnection connection, out NpgsqlTransaction transaction);

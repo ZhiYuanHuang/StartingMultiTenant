@@ -23,7 +23,7 @@ namespace StartingMultiTenant.Business
             _logger = logger;
         }
 
-        public async Task<List<DbServerModel>> GetDbServers(Int64? dbServerId=null) {
+        public List<DbServerModel> GetDbServers(Int64? dbServerId=null) {
             return _dbServerRepository.GetDbServers(dbServerId);
         }
 

@@ -10,8 +10,8 @@ namespace StartingMultiTenant.Model.Domain
         public int DbType { get; set; }
         public string ServerHost { get; set; }
         public int ServerPort { get; set; }
-        public string UserName { get; set; }
-        public string EncryptUserpwd { get; set; }
+        public string? UserName { get; set; }
+        public string? EncryptUserpwd { get; set; }
         public bool CanCreateNew { get; set; }
     }
 }

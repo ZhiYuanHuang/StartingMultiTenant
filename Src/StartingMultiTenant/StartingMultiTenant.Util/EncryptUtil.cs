@@ -22,7 +22,7 @@ namespace StartingMultiTenant.Util
             return Convert.ToBase64String(resultByteArr);
         }
 
-        public static string Decrypt_Aes(string cipherText,string aesKey)
+        public static string Decrypt_Aes(string aesKey, string cipherText)
         {
             byte[] toDecryptByteArr = Convert.FromBase64String(cipherText);
             byte[] resultByteArr;

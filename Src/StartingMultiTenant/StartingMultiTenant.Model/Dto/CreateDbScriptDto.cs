@@ -1,20 +1,19 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
-namespace StartingMultiTenant.Model.Domain
+namespace StartingMultiTenant.Model.Dto
 {
-    public class CreateDbScriptModel
+    public class CreateDbScriptDto
     {
-        public Int64 Id { get; set; }
         public string Name { get; set; }
         public int MajorVersion { get; set; }
         public string ServiceIdentifier { get; set; }
         public string DbIdentifier { get; set; }
         public string? DbNameWildcard { get; set; }
-        public Object? BinaryContent { get; set; }
         public int DbType { get; set; }
-       
+
+        public IFormFile ScriptFile { get; set; }
     }
 }
