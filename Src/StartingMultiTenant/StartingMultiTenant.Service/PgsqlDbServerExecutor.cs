@@ -25,10 +25,11 @@ namespace StartingMultiTenant.Service
             bool result = false;
             try {
 
-                var npgsqlCommand = new NpgsqlCommand(dbScriptStr, conn);
                 await conn.OpenAsync();
 
                 if (conn.State == System.Data.ConnectionState.Open) {
+                    //CREATE DATABASE "Test_db" WITH OWNER = postgres ENCODING = 'UTF8' LOCALE_PROVIDER = libc LOCALE = 'en_US.utf8';
+                    var npgsqlCommand = new NpgsqlCommand(dbScriptStr, conn);
                     await npgsqlCommand.ExecuteNonQueryAsync();
                     result = true;
                 }
@@ -76,6 +77,16 @@ namespace StartingMultiTenant.Service
             }
 
             return result;
+        }
+
+        protected override string generateCreateDbStr(string dataBaseName) {
+            //CREATE DATABASE "Test_db" WITH OWNER = postgres ENCODING = 'UTF8' LOCALE_PROVIDER = libc LOCALE = 'en_US.utf8';
+            string userName = DbServer.UserName;
+            if (string.IsNullOrEmpty(userName)) {
+                userName = "postgres";
+            }
+
+            return string.Format("CREATE DATABASE \"{0}\" WITH OWNER = {1} ENCODING = 'UTF8' LOCALE_PROVIDER = libc LOCALE = 'en_US.utf8';",dataBaseName.ToLower(),userName);
         }
 
         protected override string generateDbConnStr(string database=null) {

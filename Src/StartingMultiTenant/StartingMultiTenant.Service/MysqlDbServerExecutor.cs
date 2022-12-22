@@ -78,6 +78,10 @@ namespace StartingMultiTenant.Service
             return result;
         }
 
+        protected override string generateCreateDbStr(string dataBaseName) {
+            throw new NotImplementedException();
+        }
+
         protected override string generateDbConnStr(string database = null) {
             //Database=tenantstore.mulids;Data Source=127.0.0.1;Port=3307;User Id=root;Password=123456;Charset=utf8;
             string decryptUserPwd = _encryptService.Decrypt_DbServerPwd(_dbServer.EncryptUserpwd);

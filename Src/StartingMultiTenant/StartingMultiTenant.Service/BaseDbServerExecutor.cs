@@ -43,29 +43,26 @@ namespace StartingMultiTenant.Service
 
             originCreateDbScript = Encoding.UTF8.GetString(tmpByteArr);
 
-            string createDbScript = string.Empty;
+            string createDbTableScript = string.Empty;
 
+            string dbConnStr = generateDbConnStr();
+            bool createDbResult = false;
             try {
-
                 uniqueDbName = SqlScriptHelper.GenerateRandomDbName(createDbScriptModel.DbIdentifier, tenantIdentifier);
-
-                string dbNameWildcard = !string.IsNullOrEmpty(createDbScriptModel.DbNameWildcard) ? createDbScriptModel.DbNameWildcard : _sysConstService.DbNameWildcard;
-                var generateResult = SqlScriptHelper.GenerateCreateDbScript(originCreateDbScript, dbNameWildcard, uniqueDbName);
-                if (generateResult.Item1) {
-                    createDbScript = generateResult.Item2;
-                }
-            } catch (Exception ex) {
-                _logger.LogError($"generate create db script raise error,ex:{ex.Message}");
+                string createDbScriptStr = generateCreateDbStr(uniqueDbName);
+                createDbResult= executeScript(dbConnStr, createDbScriptStr).GetAwaiter().GetResult(); 
+            } catch (Exception ex){
+                createDbResult = false;
+                _logger.LogError($"create db script raise error,ex:{ex.Message}");
             }
 
-            if (string.IsNullOrEmpty(createDbScript)) {
-                uniqueDbName = string.Empty;
+            if (!createDbResult) {
                 return false;
             }
 
-            string dbConnStr = generateDbConnStr();
-
-            return executeScript(dbConnStr, createDbScript).GetAwaiter().GetResult();
+            createDbTableScript = originCreateDbScript;
+            dbConnStr = generateDbConnStr(uniqueDbName);
+            return executeScript(dbConnStr, createDbTableScript).GetAwaiter().GetResult();
         }
 
         public virtual async Task DeleteDb(string dbName) {
@@ -129,13 +126,14 @@ namespace StartingMultiTenant.Service
         }
 
         public string GenerateEncryptDbConnStr(string dbName) {
-            return decrypt_conn(generateDbConnStr(dbName));
+            return encrypt_conn(generateDbConnStr(dbName));
         }
 
         public string ResolveDatabaseName(string encryptedDbConn) {
             return resolveDatabaseName(decrypt_conn(encryptedDbConn));
         }
 
+        protected abstract string generateCreateDbStr(string dataBaseName);
         protected abstract string generateDbConnStr( string database = null);
         protected abstract string resolveDatabaseName(string dbConnStr);
         protected abstract Task<bool> executeScript(string dbConnStr, string dbScriptStr);

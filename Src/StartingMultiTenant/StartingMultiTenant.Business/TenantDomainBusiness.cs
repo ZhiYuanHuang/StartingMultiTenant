@@ -21,6 +21,11 @@ namespace StartingMultiTenant.Business
             _logger = logger;
         }
 
+        public bool Exist(string tenantDomain) {
+            var model= _tenantDomainRepo.Get(tenantDomain);
+            return model!= null;
+        }
+
         public bool Insert(TenantDomainModel tenantDomain) {
             try {
                 return _tenantDomainRepo.Insert(tenantDomain);

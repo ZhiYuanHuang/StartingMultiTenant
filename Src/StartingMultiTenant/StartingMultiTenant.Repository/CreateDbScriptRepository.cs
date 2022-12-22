@@ -17,9 +17,12 @@ namespace StartingMultiTenant.Repository
         }
 
         public List<CreateDbScriptModel> GetListByNames(List<string> nameList) {
-            string sql = @"Select * From CreateDbScript Where Name In @names";
-            return _tenantDbDataContext.Slave.QueryList<CreateDbScriptModel>(sql, new { 
-                names=nameList
+            string sql = @"Select * From CreateDbScript Where Name = ANY( @names)";
+            //return _tenantDbDataContext.Slave.QueryList<CreateDbScriptModel>(sql, new { 
+            //    names=nameList
+            //});
+            return _tenantDbDataContext.Slave.QueryList<CreateDbScriptModel>(sql, new Dictionary<string, object>() {
+                { "names",nameList.ToArray()}
             });
         }
 

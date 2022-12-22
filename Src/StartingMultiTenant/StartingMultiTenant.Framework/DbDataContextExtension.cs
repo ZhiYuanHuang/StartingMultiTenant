@@ -23,6 +23,7 @@ namespace StartingMultiTenant.Framework
                 string paramSymbol = string.Empty;
                 switch (dbDataContextOption.DbType) {
                     case DbTypeEnum.Postgres: {
+
                             var logger = provider.GetRequiredService<ILogger<PostgresqlDb>>();
                             masterDb = new PostgresqlDb(logger,dbDataContextOption.MasterConnStr);
                             

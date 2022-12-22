@@ -31,12 +31,20 @@ namespace StartingMultiTenant.Api
             builder.Services.AddTransient<ExternalTenantServiceDbConnRepository>();
             builder.Services.AddTransient<SchemaUpdateScriptRepository>();
             builder.Services.AddTransient<CreateDbScriptRepository>();
+            builder.Services.AddTransient<HistoryTenantServiceDbConnRepository>();
 
             builder.Services.AddTransient<DbServerBusiness>();
             builder.Services.AddTransient<TenantDomainBusiness>();
+            builder.Services.AddTransient<TenantIdentifierBusiness>();
             builder.Services.AddTransient<CreateDbScriptBusiness>();
+            builder.Services.AddTransient<SchemaUpdateScriptBusiness>();
+            builder.Services.AddTransient<TenantServiceDbConnBusiness>();
 
+            builder.Services.AddSingleton<SysConstService>();
             builder.Services.AddSingleton<EncryptService>();
+            builder.Services.AddSingleton<SingleTenantService>();
+
+            builder.Services.AddSingleton<DbServerExecutorFactory>();
 
             var app = builder.Build();
 

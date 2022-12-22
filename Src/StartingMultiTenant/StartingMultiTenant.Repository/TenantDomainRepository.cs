@@ -13,6 +13,14 @@ namespace StartingMultiTenant.Repository
 
         }
 
+        public TenantDomainModel Get(string tenantDomain) {
+            Dictionary<string, object> p = new Dictionary<string, object>() {
+                { "TenantDomain",tenantDomain}
+            };
+
+            return GetEntityByQuery(p);
+        }
+
         public bool Insert(TenantDomainModel tenantDomain) {
             string sql = "Insert Into TenantDomain (TenantDomain) Values (@tenantDomain)";
             return _tenantDbDataContext.Master.ExecuteNonQuery(sql,tenantDomain)>0;
