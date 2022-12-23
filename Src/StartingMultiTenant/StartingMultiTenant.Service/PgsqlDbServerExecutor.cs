@@ -23,13 +23,15 @@ namespace StartingMultiTenant.Service
             NpgsqlConnection conn = new NpgsqlConnection(dbConnStr);
 
             bool result = false;
+
+            NpgsqlCommand npgsqlCommand = null;
             try {
 
                 await conn.OpenAsync();
 
                 if (conn.State == System.Data.ConnectionState.Open) {
                     //CREATE DATABASE "Test_db" WITH OWNER = postgres ENCODING = 'UTF8' LOCALE_PROVIDER = libc LOCALE = 'en_US.utf8';
-                    var npgsqlCommand = new NpgsqlCommand(dbScriptStr, conn);
+                    npgsqlCommand = new NpgsqlCommand(dbScriptStr, conn);
                     await npgsqlCommand.ExecuteNonQueryAsync();
                     result = true;
                 }
@@ -37,6 +39,8 @@ namespace StartingMultiTenant.Service
                 result = false;
                 _logger.LogError($"execute script raise error,ex:{ex.Message}");
             } finally {
+                npgsqlCommand?.Dispose();
+                conn?.Close();
                 conn?.Dispose();
             }
 
@@ -89,9 +93,9 @@ namespace StartingMultiTenant.Service
             return string.Format("CREATE DATABASE \"{0}\" WITH OWNER = {1} ENCODING = 'UTF8' LOCALE_PROVIDER = libc LOCALE = 'en_US.utf8';",dataBaseName.ToLower(),userName);
         }
 
-        protected override string generateDbConnStr(string database=null) {
+        protected override string generateDbConnStr(string database=null, bool pooling = true) {
             string decryptUserPwd = _encryptService.Decrypt_DbServerPwd(_dbServer.EncryptUserpwd);
-            return $"Host={_dbServer.ServerHost};Port={_dbServer.ServerPort};UserName={_dbServer.UserName};Password={decryptUserPwd}{(string.IsNullOrEmpty(database)?"":$";Database={database};")}";
+            return $"Host={_dbServer.ServerHost};Port={_dbServer.ServerPort};UserName={_dbServer.UserName};Password={decryptUserPwd};{(pooling?"":"Pooling=false;")}{(string.IsNullOrEmpty(database)?"":$"Database={database};")}";
             //string connString = "Host=localhost;Port=5432;Username=postgres;Password=admin;Database=postgres";
             
         }

@@ -17,6 +17,15 @@ namespace StartingMultiTenant.Business
             _tenantIdentifierRepo= tenantIdentifierRepo;
         }
 
+        public bool Insert(TenantIdentifierModel tenantIdentifier) {
+            
+            return _tenantIdentifierRepo.Insert(tenantIdentifier);
+        }
+
+        public bool Delete(string tenantGuid) {
+            return _tenantIdentifierRepo.Delete(tenantGuid);
+        }
+
         public bool ExistTenant(string tenantDomain,string tenantIdentifier) {
             List<TenantIdentifierModel> tenantList= _tenantIdentifierRepo.GetTenantListByDomain(tenantDomain);
             if (!tenantList.Any()) {
@@ -25,6 +34,10 @@ namespace StartingMultiTenant.Business
 
             var existTenant= tenantList.FirstOrDefault(x => string.Compare(x.TenantIdentifier, tenantIdentifier, 0) == 0);
             return existTenant!= null;
+        }
+
+        public List<TenantIdentifierModel> GetPageByDomain(string tenantDomain, int pageSize, int pageIndex) {
+            return _tenantIdentifierRepo.GetPageByDomain(tenantDomain,pageSize,pageIndex);
         }
     }
 }

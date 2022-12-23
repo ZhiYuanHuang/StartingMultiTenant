@@ -82,7 +82,7 @@ namespace StartingMultiTenant.Service
             throw new NotImplementedException();
         }
 
-        protected override string generateDbConnStr(string database = null) {
+        protected override string generateDbConnStr(string database = null, bool pooling = true) {
             //Database=tenantstore.mulids;Data Source=127.0.0.1;Port=3307;User Id=root;Password=123456;Charset=utf8;
             string decryptUserPwd = _encryptService.Decrypt_DbServerPwd(_dbServer.EncryptUserpwd);
             return $"Data Source={_dbServer.ServerHost};Port={_dbServer.ServerPort};User Id={_dbServer.UserName};Password={decryptUserPwd};Charset=utf8;{(string.IsNullOrEmpty(database) ? "" : $";Database={database}")}";

@@ -1,4 +1,5 @@
 ﻿using StartingMultiTenant.Model.Domain;
+using StartingMultiTenant.Model.Enum;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -13,17 +14,19 @@ namespace StartingMultiTenant.Repository
             :base(tenantDbDataContext) { 
         }
 
-        public bool InsertHistoryDbConn(TenantServiceDbConnModel tenantServiceDbConn) {
-            string sql = @"Insert into HistoryTenantServiceDbConn (DbConnId,CreateScriptName,CreateScriptVersion,CurSchemaVersion,DbServerId,EncryptedConnStr)
-                           Values (@dbConnId,@createScriptName,@createScriptVersion,@curSchemaVersion,@dbServerId,@encryptedConnStr)";
+        public bool InsertHistoryDbConn(TenantServiceDbConnModel tenantServiceDbConn, DbConnActionTypeEnum dbConnActionType) {
+            string sql = @"Insert into HistoryTenantServiceDbConn (DbConnId,CreateScriptName,CreateScriptVersion,CurSchemaVersion,DbServerId,EncryptedConnStr,ActionType)
+                           Values (@dbConnId,@createScriptName,@createScriptVersion,@curSchemaVersion,@dbServerId,@encryptedConnStr,@actionType)";
 
             return _tenantDbDataContext.Master.ExecuteNonQuery(sql, 
                 new { 
                     dbConnId=tenantServiceDbConn.Id,
                     createScriptName=tenantServiceDbConn.CreateScriptName,
-                    curSchemaVersion=tenantServiceDbConn.CurSchemaVersion,
+                    createScriptVersion=tenantServiceDbConn.CreateScriptVersion,
+                    curSchemaVersion =tenantServiceDbConn.CurSchemaVersion,
                     dbServerId=tenantServiceDbConn.DbServerId,
                     encryptedConnStr=tenantServiceDbConn.EncryptedConnStr,
+                    actionType=(int)dbConnActionType
                 }
                 )>0;
         }

@@ -42,4 +42,10 @@ namespace StartingMultiTenant.Model.Dto
             PageIndex = 1;
         }
     }
+
+    public class PagingParam<T>: PagingParam
+    {
+        public T Data { get; set; }
+
+    }
 }

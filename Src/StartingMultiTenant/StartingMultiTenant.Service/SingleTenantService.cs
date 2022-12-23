@@ -37,7 +37,7 @@ namespace StartingMultiTenant.Service
             _tenantServiceDbConnBusiness = tenantServiceDbConnBusiness;
         }
 
-        public async Task<bool> CreateTenantDbs(string tenantDomain,string tenantIdentifier,List<string> createScriptNameList) {
+        public async Task<bool> CreateTenantDbs(string tenantDomain,string tenantIdentifier,List<string> createScriptNameList,bool overrideWhenExisted) {
             List<CreateDbScriptModel> createDbScriptList= await _createDbScriptBusiness.GetListByNames(createScriptNameList);
 
             if (createDbScriptList.Count != createScriptNameList.Count) {
@@ -131,7 +131,7 @@ namespace StartingMultiTenant.Service
                 return false;
             }
 
-            success= _tenantServiceDbConnBusiness.BatchInsertDbConns(createDbSet);
+            success= _tenantServiceDbConnBusiness.BatchInsertDbConns(createDbSet,overrideWhenExisted);
             if (!success) {
                 foreach (var pair in serverAndDbDict) {
                     var dbExecutor = pair.Key;

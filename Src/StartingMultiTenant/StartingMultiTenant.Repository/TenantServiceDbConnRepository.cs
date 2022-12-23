@@ -41,6 +41,17 @@ namespace StartingMultiTenant.Repository
             return success;
         }
 
+        public bool InsertOrUpdate(TenantServiceDbConnModel dbConn) {
+            string sql = @"Insert Into TenantServiceDbConn (TenantIdentifier,TenantDomain,ServiceIdentifier,DbIdentifier,CreateScriptName,CreateScriptVersion,CurSchemaVersion,DbServerId,EncryptedConnStr)
+                           Values (@tenantIdentifier,@tenantDomain,@serviceIdentifier,@dbIdentifier,@createScriptName,@createScriptVersion,@curSchemaVersion,@dbServerId,@encryptedConnStr)
+                           ON CONFLICT ON CONSTRAINT u_tenantservicedbconn_1
+                           DO Update Set
+                             ServiceIdentifier=@serviceIdentifier,DbIdentifier=@dbIdentifier,CurSchemaVersion=@curSchemaVersion,DbServerId=@dbServerId,EncryptedConnStr=@encryptedConnStr";
+
+            return _tenantDbDataContext.Master.ExecuteNonQuery(sql,dbConn)>0;
+           
+        }
+
         public bool ExchangeDbServer(Int64 dbConnId, Int64 newDbServerId,string newEncryptConnStr) {
             string sql = @"Update TenantServiceDbConn Set DbServerId=@dbServerId,EncryptedConnStr=@encryptedConnStr Where Id=@id";
 
@@ -55,14 +66,15 @@ namespace StartingMultiTenant.Repository
             return GetEntitiesByQuery(p);
         }
 
-        public List<TenantServiceDbConnModel> GetTenantServiceDbConns(string tenantDomain, string tenantIdentifier, string createScriptName) {
+        public TenantServiceDbConnModel GetTenantServiceDbConns(string tenantDomain, string tenantIdentifier, string createScriptName,int createScriptVersion) {
             Dictionary<string, object> p = new Dictionary<string, object>() {
                 { "TenantDomain",tenantDomain},
                 {"TenantIdentifier",tenantIdentifier },
-                {"CreateScriptName",createScriptName }
+                {"CreateScriptName",createScriptName },
+                { "CreateScriptVersion",createScriptVersion}
             };
 
-            return GetEntitiesByQuery(p);
+            return GetEntityByQuery(p);
         }
 
         public List<TenantServiceDbConnModel> GetTenantServiceDbConns(string createScriptName, int createScriptVersion) {

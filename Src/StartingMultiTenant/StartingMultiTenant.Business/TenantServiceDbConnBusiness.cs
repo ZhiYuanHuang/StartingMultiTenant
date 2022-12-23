@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using StartingMultiTenant.Model.Domain;
+using StartingMultiTenant.Model.Enum;
 using StartingMultiTenant.Repository;
 using System;
 using System.Collections.Generic;
@@ -20,16 +21,41 @@ namespace StartingMultiTenant.Business
             _historyTenantServiceDbConnRepo = historyTenantServiceDbConnRepo;
             _logger = logger;
         }
-        public async Task<List<TenantServiceDbConnModel>> GetTenantServiceDbConns(string tenantDomain, string tenantIdentifier, string createScriptName) {
-            return await Task.Factory.StartNew(()=>_tenantServiceDbConnRepository.GetTenantServiceDbConns(tenantDomain,tenantIdentifier,createScriptName));
-        }
-
+       
         public async Task<List<TenantServiceDbConnModel>> GetTenantServiceDbConns(long? dbConnId = null) {
             return await Task.Factory.StartNew(() => _tenantServiceDbConnRepository.GetTenantServiceDbConns(dbConnId));
         }
 
-        public bool BatchInsertDbConns(List<TenantServiceDbConnModel> dbConnList) {
-            return _tenantServiceDbConnRepository.BatchInsertDbConns(dbConnList);
+        public bool BatchInsertDbConns(List<TenantServiceDbConnModel> dbConnList,bool overrideWhenExisted) {
+            bool success = false;
+
+            if (!overrideWhenExisted) {
+                return _tenantServiceDbConnRepository.BatchInsertDbConns(dbConnList);
+            }
+
+            try {
+                _tenantServiceDbConnRepository.BeginTransaction();
+
+                foreach (var dbConn in dbConnList) {
+                    var existedDbConn= _tenantServiceDbConnRepository.GetTenantServiceDbConns(dbConn.TenantDomain,dbConn.TenantIdentifier,dbConn.CreateScriptName,dbConn.CreateScriptVersion);
+
+                    if (existedDbConn != null) {
+                        _historyTenantServiceDbConnRepo.InsertHistoryDbConn(existedDbConn, DbConnActionTypeEnum.CreateOverride);
+                    }
+
+                    _tenantServiceDbConnRepository.InsertOrUpdate(dbConn);
+                }
+
+                _tenantServiceDbConnRepository.CommitTransaction();
+                success = true;
+            }
+            catch(Exception ex) {
+                success= false;
+                _logger.LogError(ex.Message);
+                _tenantServiceDbConnRepository.RollbackTransaction();
+            }
+
+            return success;
         }
 
         public bool ExchangeToAnotherDbServer(TenantServiceDbConnModel toUpdateDbConn, Int64 newDbServerId, string newEncryptedConnStr) {
@@ -38,9 +64,12 @@ namespace StartingMultiTenant.Business
             try {
                 _tenantServiceDbConnRepository.BeginTransaction();
 
-                _tenantServiceDbConnRepository.ExchangeDbServer(toUpdateDbConn.Id,newDbServerId,newEncryptedConnStr);
+                _historyTenantServiceDbConnRepo.InsertHistoryDbConn(toUpdateDbConn,DbConnActionTypeEnum.MigrateOverride);
 
-                _historyTenantServiceDbConnRepo.InsertHistoryDbConn(toUpdateDbConn);
+                toUpdateDbConn.DbServerId= newDbServerId;
+                toUpdateDbConn.EncryptedConnStr = newEncryptedConnStr;
+
+                _tenantServiceDbConnRepository.InsertOrUpdate(toUpdateDbConn);
 
                 _tenantServiceDbConnRepository.CommitTransaction();
                 success = true;

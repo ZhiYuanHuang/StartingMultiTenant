@@ -45,7 +45,7 @@ namespace StartingMultiTenant.Service
 
             string createDbTableScript = string.Empty;
 
-            string dbConnStr = generateDbConnStr();
+            string dbConnStr = generateDbConnStr(null,false);
             bool createDbResult = false;
             try {
                 uniqueDbName = SqlScriptHelper.GenerateRandomDbName(createDbScriptModel.DbIdentifier, tenantIdentifier);
@@ -61,13 +61,13 @@ namespace StartingMultiTenant.Service
             }
 
             createDbTableScript = originCreateDbScript;
-            dbConnStr = generateDbConnStr(uniqueDbName);
+            dbConnStr = generateDbConnStr(uniqueDbName,false);
             return executeScript(dbConnStr, createDbTableScript).GetAwaiter().GetResult();
         }
 
         public virtual async Task DeleteDb(string dbName) {
             string script= SqlScriptHelper.GenerateDeleteDbScript(dbName);
-            string dbConnStr = generateDbConnStr();
+            string dbConnStr = generateDbConnStr(null,false);
             await executeScript(dbConnStr, script);
         }
 
@@ -134,7 +134,7 @@ namespace StartingMultiTenant.Service
         }
 
         protected abstract string generateCreateDbStr(string dataBaseName);
-        protected abstract string generateDbConnStr( string database = null);
+        protected abstract string generateDbConnStr( string database = null,bool pooling=true);
         protected abstract string resolveDatabaseName(string dbConnStr);
         protected abstract Task<bool> executeScript(string dbConnStr, string dbScriptStr);
         protected abstract Task<bool> executeScript(string dbConnStr, string updateSchemaScript,string rollbackScript);
