@@ -82,7 +82,7 @@ namespace StartingMultiTenant.Service
                         serverAndDbDict.Add(dbserverExecutor,new List<string>() { createDbName});
                     }
 
-                    var schemaUpdateScripts=await _schemaUpdateScriptBusiness.GetSchemaUpdateScriptsByCreateScript(createScript.Name,createScript.MajorVersion);
+                    var schemaUpdateScripts=await _schemaUpdateScriptBusiness.GetSchemaUpdateScripts(createScript.Name,createScript.MajorVersion);
                     int lastMinorVersion = 0;
                     if (schemaUpdateScripts.Any()) {
                         schemaUpdateScripts = schemaUpdateScripts.OrderBy(x => x.MinorVersion).ToList();
@@ -147,15 +147,8 @@ namespace StartingMultiTenant.Service
             return true;
         }
 
-        public async Task<bool> UpdateTenantDb(TenantServiceDbConnModel tenantServiceDbConn, SchemaUpdateScriptModel schemaUpdateScript) {
-            //List<TenantServiceDbConnModel> tenantServiceDbConnList=await _tenantServiceDbConnBusiness.GetTenantServiceDbConns(tenantDomain,tenantIdentifier,schemaUpdateScript.CreateScriptName);
-            //var toUpdateSchemaDb= tenantServiceDbConnList.Where(x => x.CreateScriptVersion == schemaUpdateScript.BaseMajorVersion && x.CurSchemaVersion == (schemaUpdateScript.MinorVersion - 1)).FirstOrDefault();
-
-            //if (tenantServiceDbConn == null) {
-            //    _logger.LogError($"未找到 {tenantServiceDbConn.TenantDomain} {tenantIdentifier} {schemaUpdateScript.CreateScriptName} 创建的数据库链接");
-            //    return false;
-            //}
-            if (tenantServiceDbConn.CurSchemaVersion != schemaUpdateScript.MinorVersion - 1) {
+        public async Task<bool> UpdateTenantDbSchema(TenantServiceDbConnModel tenantServiceDbConn, SchemaUpdateScriptModel schemaUpdateScript) {
+            if (tenantServiceDbConn.CurSchemaVersion >= schemaUpdateScript.MinorVersion ) {
                 _logger.LogError($"TenantDomain {tenantServiceDbConn.TenantDomain} identifier: {tenantServiceDbConn.TenantIdentifier} updateScript :{schemaUpdateScript.Name} version is {schemaUpdateScript.MinorVersion} ,curSchemaVersion is {tenantServiceDbConn.CurSchemaVersion}");
                 return false;
             }
@@ -169,7 +162,12 @@ namespace StartingMultiTenant.Service
             DbServerModel theDbServer = dbServerList[0];
             IDbServerExecutor dbServerExecutor = _dbServerExecutorFactory.CreateDbServerExecutor(theDbServer);
 
-            return dbServerExecutor.UpdateSchemaByConnStr(tenantServiceDbConn.EncryptedConnStr,schemaUpdateScript);
+            var updateResult= dbServerExecutor.UpdateSchemaByConnStr(tenantServiceDbConn.EncryptedConnStr,schemaUpdateScript);
+            if (updateResult) {
+                tenantServiceDbConn.CurSchemaVersion=schemaUpdateScript.MinorVersion;
+                _tenantServiceDbConnBusiness.InsertOrUpdate(tenantServiceDbConn);
+            }
+            return updateResult;
         }
 
         public async Task<bool> ExchangeTenantConnDb(Int64 dbConnId,Int64 toUseDbServerId) {

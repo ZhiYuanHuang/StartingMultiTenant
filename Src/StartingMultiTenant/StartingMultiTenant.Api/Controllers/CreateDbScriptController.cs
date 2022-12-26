@@ -30,7 +30,7 @@ namespace StartingMultiTenant.Api.Controllers
                 _logger.LogError(ex,"read upload create script byte error");
             }
 
-            if(scriptContentByte==null && scriptContentByte.Length <= 0) {
+            if(scriptContentByte==null || scriptContentByte.Length <= 0) {
                 return new AppResponseDto(false);
             }
 

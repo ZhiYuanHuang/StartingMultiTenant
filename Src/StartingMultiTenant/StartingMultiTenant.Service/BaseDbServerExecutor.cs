@@ -104,16 +104,19 @@ namespace StartingMultiTenant.Service
             try {
                 connStr = generateDbConnStr( dataBaseName);
 
-                string dbNameWildcard = !string.IsNullOrEmpty(schemaUpdateScript.DbNameWildcard) ? schemaUpdateScript.DbNameWildcard : _sysConstService.DbNameWildcard;
-                var generateResult = SqlScriptHelper.GenerateUpdateSchemaScript(originUpdateSchemaScript, dbNameWildcard, dataBaseName);
-                if (generateResult.Item1) {
-                    updateSchemaScript = generateResult.Item2;
-                }
+                updateSchemaScript = originUpdateSchemaScript;
+                rollbackScript = originRollbackScript;
 
-                generateResult = SqlScriptHelper.GenerateRollbackSchemaScript(originRollbackScript, dbNameWildcard, dataBaseName);
-                if (generateResult.Item1) {
-                    updateSchemaScript = generateResult.Item2;
-                }
+                //string dbNameWildcard = !string.IsNullOrEmpty(schemaUpdateScript.DbNameWildcard) ? schemaUpdateScript.DbNameWildcard : _sysConstService.DbNameWildcard;
+                //var generateResult = SqlScriptHelper.GenerateUpdateSchemaScript(originUpdateSchemaScript, dbNameWildcard, dataBaseName);
+                //if (generateResult.Item1) {
+                //    updateSchemaScript = generateResult.Item2;
+                //}
+
+                //generateResult = SqlScriptHelper.GenerateRollbackSchemaScript(originRollbackScript, dbNameWildcard, dataBaseName);
+                //if (generateResult.Item1) {
+                //    updateSchemaScript = generateResult.Item2;
+                //}
             } catch (Exception ex) {
                 _logger.LogError($"generate create db script raise error,ex:{ex.Message}");
             }

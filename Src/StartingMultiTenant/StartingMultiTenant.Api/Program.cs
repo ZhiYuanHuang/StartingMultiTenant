@@ -43,6 +43,7 @@ namespace StartingMultiTenant.Api
             builder.Services.AddSingleton<SysConstService>();
             builder.Services.AddSingleton<EncryptService>();
             builder.Services.AddSingleton<SingleTenantService>();
+            builder.Services.AddSingleton<MultiTenantService>();
 
             builder.Services.AddSingleton<DbServerExecutorFactory>();
 

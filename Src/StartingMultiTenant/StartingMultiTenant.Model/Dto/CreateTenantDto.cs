@@ -4,10 +4,8 @@ using System.Text;
 
 namespace StartingMultiTenant.Model.Dto
 {
-    public class CreateTenantDto
+    public class CreateTenantDto: TenantInfoDto
     {
-        public string TenantDomain { get; set; }
-        public string TenantIdentifier { get; set; }
         public bool OverrideWhenExisted { get; set; }
         public List<string> CreateDbScripts { get; set; }
     }

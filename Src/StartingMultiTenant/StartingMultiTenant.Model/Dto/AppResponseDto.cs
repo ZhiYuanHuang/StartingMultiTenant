@@ -21,6 +21,10 @@ namespace StartingMultiTenant.Model.Dto
 
     public class AppResponseDto<T> : AppResponseDto
     {
+        public AppResponseDto():base() {
+        }
+        public AppResponseDto(bool result):base(result) {
+        }
         public List<T> ResultList { get; set; }
         public T Result { get; set; }
     }

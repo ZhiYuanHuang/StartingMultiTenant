@@ -26,6 +26,15 @@ namespace StartingMultiTenant.Repository
             });
         }
 
+        public CreateDbScriptModel GetByNameByVersion(string createScriptName,int majorVersion) {
+            Dictionary<string, object> p = new Dictionary<string, object>() {
+                { "Name",createScriptName},
+                { "MajorVersion",majorVersion}
+            };
+
+            return GetEntityByQuery(p);
+        }
+
         public bool Insert(CreateDbScriptModel createDbScript) {
             string sql = @"Insert into CreateDbScript (Name,MajorVersion,ServiceIdentifier,DbIdentifier,DbNameWildcard,BinaryContent,DbType)
                             Values (@name,@majorVersion,@serviceIdentifier,@dbIdentifier,@dbNameWildcard,@binaryContent,@dbType)";

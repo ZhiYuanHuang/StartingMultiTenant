@@ -21,9 +21,17 @@ namespace StartingMultiTenant.Business
             _historyTenantServiceDbConnRepo = historyTenantServiceDbConnRepo;
             _logger = logger;
         }
+
+        public List<TenantServiceDbConnModel> GetByTenant(string tenantDomain,string tenantIdentifier) {
+            return _tenantServiceDbConnRepository.GetTenantServiceDbConns(tenantDomain,tenantIdentifier);
+        }
        
         public async Task<List<TenantServiceDbConnModel>> GetTenantServiceDbConns(long? dbConnId = null) {
             return await Task.Factory.StartNew(() => _tenantServiceDbConnRepository.GetTenantServiceDbConns(dbConnId));
+        }
+
+        public bool InsertOrUpdate(TenantServiceDbConnModel tenantServiceDbConn) {
+            return _tenantServiceDbConnRepository.InsertOrUpdate(tenantServiceDbConn);
         }
 
         public bool BatchInsertDbConns(List<TenantServiceDbConnModel> dbConnList,bool overrideWhenExisted) {

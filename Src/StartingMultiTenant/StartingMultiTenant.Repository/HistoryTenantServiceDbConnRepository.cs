@@ -2,6 +2,7 @@
 using StartingMultiTenant.Model.Enum;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace StartingMultiTenant.Repository
@@ -29,6 +30,15 @@ namespace StartingMultiTenant.Repository
                     actionType=(int)dbConnActionType
                 }
                 )>0;
+        }
+
+        public List<HistoryTenantServiceDbConnModel> GetByDbConn(Int64 dbConnId) {
+            Dictionary<string, object> p = new Dictionary<string, object>() {
+                { "DbConnId",dbConnId}
+            };
+
+            var set= GetEntitiesByQuery(p);
+            return set.OrderBy(x => x.Id).ToList();
         }
     }
 }

@@ -16,6 +16,7 @@ namespace StartingMultiTenant.Repository
         public List<DbServerModel> GetDbServers(Int64? dbServerId = null) {
             Dictionary<string, object> dict = null;
             if (dbServerId.HasValue) {
+                dict=new Dictionary<string, object>();
                 dict.Add("Id",dbServerId.Value);
             }
 

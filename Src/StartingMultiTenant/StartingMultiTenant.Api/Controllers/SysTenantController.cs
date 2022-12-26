@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using StartingMultiTenant.Business;
 using StartingMultiTenant.Model.Domain;
 using StartingMultiTenant.Model.Dto;
+using StartingMultiTenant.Repository;
 using StartingMultiTenant.Service;
 
 namespace StartingMultiTenant.Api.Controllers
@@ -14,12 +15,21 @@ namespace StartingMultiTenant.Api.Controllers
         private readonly SingleTenantService _singleTenantService;
         private readonly TenantDomainBusiness _tenantDomainBusiness;
         private readonly TenantIdentifierBusiness _tenantIdentifierBusiness;
+        private readonly TenantServiceDbConnBusiness _tenantServiceDbConnBusiness;
+        private readonly ExternalTenantServiceDbConnRepository _externalTenantServiceDbConnRepo;
+        private readonly EncryptService _encryptService;
         public SysTenantController(SingleTenantService singleTenantService,
             TenantDomainBusiness tenantDomainBusiness,
-            TenantIdentifierBusiness tenantIdentifierBusiness) {
+            TenantIdentifierBusiness tenantIdentifierBusiness,
+            TenantServiceDbConnBusiness tenantServiceDbConnBusiness,
+            ExternalTenantServiceDbConnRepository externalTenantServiceDbConnRepo,
+            EncryptService encryptService) {
             _singleTenantService = singleTenantService;
             _tenantDomainBusiness = tenantDomainBusiness;
             _tenantIdentifierBusiness = tenantIdentifierBusiness;
+            _tenantServiceDbConnBusiness = tenantServiceDbConnBusiness;
+            _externalTenantServiceDbConnRepo = externalTenantServiceDbConnRepo;
+            _encryptService = encryptService;
         }
 
         [HttpPost]
@@ -66,6 +76,64 @@ namespace StartingMultiTenant.Api.Controllers
         public AppResponseDto<TenantIdentifierModel> GetPageByDomain(AppRequestDto<PagingParam<string>> requestDto) {
             var pageList = _tenantIdentifierBusiness.GetPageByDomain(requestDto.Data.Data,requestDto.Data.PageSize, requestDto.Data.PageIndex);
             return new AppResponseDto<TenantIdentifierModel>() { ResultList = pageList };
+        }
+
+        [HttpPost] 
+        public AppResponseDto<TenantServiceDbConnsDto> GetTenantDbConn(AppRequestDto<TenantInfoDto> requestDto) {
+            if (requestDto.Data == null) {
+                return new AppResponseDto<TenantServiceDbConnsDto>(false);
+            }
+
+            List<ExternalTenantServiceDbConnModel> externalList = _externalTenantServiceDbConnRepo.GetByTenantAndService(requestDto.Data.TenantDomain,requestDto.Data.TenantIdentifier);
+            List<ServiceDbConnsDto> externalDbConns = new List<ServiceDbConnsDto>();
+            List<ServiceDbConnsDto> mergeDbConns = new List<ServiceDbConnsDto>();
+            if (externalList.Any()) {
+                foreach(var externalDbConn in externalList) {
+                    ServiceDbConnsDto dbConn = new ServiceDbConnsDto() {
+                        Id=externalDbConn.Id,
+                        ServiceIdentifier = externalDbConn.ServiceIdentifier,
+                        DbIdentifier = externalDbConn.DbIdentifier,
+                    };
+                    dbConn.DecryptDbConn = _encryptService.Decrypt_DbConn(externalDbConn.EncryptedConnStr);
+
+                    if (!string.IsNullOrEmpty(externalDbConn.OverrideEncryptedConnStr)) {
+                        dbConn.OverrideDbConn = _encryptService.Decrypt_DbConn(externalDbConn.OverrideEncryptedConnStr);
+                    }
+
+                    externalDbConns.Add(dbConn);
+                    mergeDbConns.Add(dbConn);
+                }
+            }
+
+            List<TenantServiceDbConnModel> list = _tenantServiceDbConnBusiness.GetByTenant(requestDto.Data.TenantDomain, requestDto.Data.TenantIdentifier);
+            List<ServiceDbConnsDto> innerDbConns = new List<ServiceDbConnsDto>();
+            if (list.Any()) {
+                foreach (var tenantServiceDbConn in list) {
+                    ServiceDbConnsDto dbConn = new ServiceDbConnsDto() {
+                        Id=tenantServiceDbConn.Id,
+                        ServiceIdentifier = tenantServiceDbConn.ServiceIdentifier,
+                        DbIdentifier = tenantServiceDbConn.DbIdentifier,
+                        MajorVersion=tenantServiceDbConn.CreateScriptVersion,
+                        MinorVersion=tenantServiceDbConn.CurSchemaVersion
+                    };
+
+                    dbConn.DecryptDbConn = _encryptService.Decrypt_DbConn(tenantServiceDbConn.EncryptedConnStr);
+                    innerDbConns.Add(dbConn);
+                    if(mergeDbConns.FirstOrDefault(x=>x.ServiceIdentifier==tenantServiceDbConn.ServiceIdentifier && x.DbIdentifier == tenantServiceDbConn.DbIdentifier) == null) {
+                        mergeDbConns.Add(dbConn);
+                    }
+                }
+            }
+
+            return new AppResponseDto<TenantServiceDbConnsDto>() {
+                Result = new TenantServiceDbConnsDto() { 
+                    InnerDbConnList=innerDbConns,
+                    ExternalDbConnList=externalDbConns,
+                    MergeDbConnList=mergeDbConns,
+                    TenantDomain= requestDto.Data.TenantDomain,
+                    TenantIdentifier= requestDto.Data.TenantIdentifier,
+                }
+            };
         }
     }
 }

@@ -66,15 +66,16 @@ namespace StartingMultiTenant.Repository
             return GetEntitiesByQuery(p);
         }
 
-        public TenantServiceDbConnModel GetTenantServiceDbConns(string tenantDomain, string tenantIdentifier, string createScriptName,int createScriptVersion) {
+        public List<TenantServiceDbConnModel> GetTenantServiceDbConns(long? dbConnId = null) {
+            if (!dbConnId.HasValue) {
+                return GetEntitiesByQuery();
+            }
+
             Dictionary<string, object> p = new Dictionary<string, object>() {
-                { "TenantDomain",tenantDomain},
-                {"TenantIdentifier",tenantIdentifier },
-                {"CreateScriptName",createScriptName },
-                { "CreateScriptVersion",createScriptVersion}
+                { "Id",dbConnId.Value},
             };
 
-            return GetEntityByQuery(p);
+            return GetEntitiesByQuery(p);
         }
 
         public List<TenantServiceDbConnModel> GetTenantServiceDbConns(string createScriptName, int createScriptVersion) {
@@ -86,16 +87,38 @@ namespace StartingMultiTenant.Repository
             return GetEntitiesByQuery(p);
         }
 
-        public List<TenantServiceDbConnModel> GetTenantServiceDbConns(long? dbConnId = null) {
-            if(!dbConnId.HasValue) {
-                return GetEntitiesByQuery();
-            }
-
+        public List<TenantServiceDbConnModel> GetTenantServiceDbConns(string tenantDomain, string tenantIdentifier) {
+           
             Dictionary<string, object> p = new Dictionary<string, object>() {
-                { "Id",dbConnId.Value},
+                { "TenantIdentifier",tenantIdentifier},
+                { "TenantDomain",tenantDomain}
             };
 
             return GetEntitiesByQuery(p);
         }
+
+        public List<TenantServiceDbConnModel> GetTenantServiceDbConns(string tenantDomain, string tenantIdentifier,string serviceIdentifier) {
+
+            Dictionary<string, object> p = new Dictionary<string, object>() {
+                { "TenantIdentifier",tenantIdentifier},
+                { "TenantDomain",tenantDomain},
+                { "ServiceIdentifier",serviceIdentifier}
+            };
+
+            return GetEntitiesByQuery(p);
+        }
+
+        public TenantServiceDbConnModel GetTenantServiceDbConns(string tenantDomain, string tenantIdentifier, string createScriptName,int createScriptVersion) {
+            Dictionary<string, object> p = new Dictionary<string, object>() {
+                { "TenantDomain",tenantDomain},
+                {"TenantIdentifier",tenantIdentifier },
+                {"CreateScriptName",createScriptName },
+                { "CreateScriptVersion",createScriptVersion}
+            };
+
+            return GetEntityByQuery(p);
+        }
+
+        
     }
 }

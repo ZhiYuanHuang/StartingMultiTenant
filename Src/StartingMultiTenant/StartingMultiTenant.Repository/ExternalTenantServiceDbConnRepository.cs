@@ -45,6 +45,7 @@ namespace StartingMultiTenant.Repository
                 
                 p["serviceIdentifier"] = serviceIdentifier;
             }
-            return GetEntitiesByQuery(p);        }
+            return GetEntitiesByQuery(p);  
+        }
     }
 }
