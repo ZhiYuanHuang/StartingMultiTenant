@@ -6,24 +6,27 @@ namespace StartingMultiTenant.Model.Enum
 {
     public enum TenantActionTypeEnum
     {
-        StartCreate = 0,
-        Creating = 1,
-        CreatedSuccess = 2,
-        CreatedFailed = 3,
+        StartCreate = 1,
+        Creating = 2,
+        CreatedSuccess = 3,
+        CreatedFailed = 4,
 
-        StartUpdateDbSchema = 4,
-        UpdatingDbSchema = 5,
-        UpdatedDbSchemaSuccess = 6,
-        UpdatedDbSchemaFailed = 7,
+        StartUpdateDbSchema = 5,
+        UpdatingDbSchema = 6,
+        UpdatedDbSchemaSuccess = 7,
+        UpdatedDbSchemaFailed = 8,
 
-        StartExchangeDbServer = 8,
-        ExchangingDbServer = 9,
-        ExchangedDbServerSuccess = 10,
-        ExchangedDbServerFailed = 11,
+        StartExchangeDbServer = 9,
+        ExchangingDbServer = 10,
+        ExchangedDbServerSuccess = 11,
+        ExchangedDbServerFailed = 12,
 
-        StartDelete = 12,
-        Deleting = 13,
-        DeletedSuccess = 14,
-        DeletedFailed = 15,
+        StartDelete = 13,
+        Deleting = 14,
+        DeletedSuccess = 15,
+        DeletedFailed = 16,
+
+        ManualModify=17,
+        ManualAllModify = 18,
     }
 }

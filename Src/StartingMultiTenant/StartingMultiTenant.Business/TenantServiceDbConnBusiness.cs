@@ -30,6 +30,10 @@ namespace StartingMultiTenant.Business
             return await Task.Factory.StartNew(() => _tenantServiceDbConnRepository.GetTenantServiceDbConns(dbConnId));
         }
 
+        public List<TenantServiceDbConnModel> GetConnListByDbServer(Int64 dbServerId) {
+            return _tenantServiceDbConnRepository.GetConnListByDbServer(dbServerId);
+        }
+
         public bool InsertOrUpdate(TenantServiceDbConnModel tenantServiceDbConn) {
             return _tenantServiceDbConnRepository.InsertOrUpdate(tenantServiceDbConn);
         }

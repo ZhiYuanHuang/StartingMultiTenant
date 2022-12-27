@@ -19,6 +19,7 @@ namespace StartingMultiTenant.Service
         private readonly DbServerBusiness _dbServerBusiness;
         private readonly SchemaUpdateScriptBusiness _schemaUpdateScriptBusiness;
         private readonly TenantServiceDbConnBusiness _tenantServiceDbConnBusiness;
+        private readonly TenantActionNoticeService _actionNoticeService;
 
         private readonly Random _random;
 
@@ -27,6 +28,7 @@ namespace StartingMultiTenant.Service
             CreateDbScriptBusiness createDbScriptBusiness,
             DbServerBusiness dbServerBusiness,
             SchemaUpdateScriptBusiness schemaUpdateScriptBusiness,
+            TenantActionNoticeService actionNoticeService,
             TenantServiceDbConnBusiness tenantServiceDbConnBusiness) {
             _random = new Random();
             _dbServerExecutorFactory = dbServerExecutorFactory;
@@ -35,9 +37,21 @@ namespace StartingMultiTenant.Service
             _dbServerBusiness = dbServerBusiness;
             _schemaUpdateScriptBusiness = schemaUpdateScriptBusiness;
             _tenantServiceDbConnBusiness = tenantServiceDbConnBusiness;
+            _actionNoticeService = actionNoticeService;
         }
 
-        public async Task<bool> CreateTenantDbs(string tenantDomain,string tenantIdentifier,List<string> createScriptNameList,bool overrideWhenExisted) {
+        public async Task<bool> CreateTenantDbs(string tenantDomain, string tenantIdentifier, List<string> createScriptNameList, bool overrideWhenExisted) {
+            _actionNoticeService.PublishTenantStartCreate(tenantDomain,tenantIdentifier);
+
+            bool result = await createTenantDbs(tenantDomain,tenantIdentifier,createScriptNameList,overrideWhenExisted);
+
+            _actionNoticeService.PublishTenantCreated(tenantDomain,tenantIdentifier,result);
+
+            return result;
+        }
+
+        internal async Task<bool> createTenantDbs(string tenantDomain,string tenantIdentifier,List<string> createScriptNameList,bool overrideWhenExisted) {
+
             List<CreateDbScriptModel> createDbScriptList= await _createDbScriptBusiness.GetListByNames(createScriptNameList);
 
             if (createDbScriptList.Count != createScriptNameList.Count) {
@@ -148,6 +162,16 @@ namespace StartingMultiTenant.Service
         }
 
         public async Task<bool> UpdateTenantDbSchema(TenantServiceDbConnModel tenantServiceDbConn, SchemaUpdateScriptModel schemaUpdateScript) {
+            _actionNoticeService.PublishTenantStartUpdateSchema(tenantServiceDbConn.TenantDomain,tenantServiceDbConn.TenantIdentifier,tenantServiceDbConn.ServiceIdentifier);
+
+            bool result = await updateTenantDbSchema(tenantServiceDbConn,schemaUpdateScript);
+
+            _actionNoticeService.PublishTenantUpdated(tenantServiceDbConn.TenantDomain, tenantServiceDbConn.TenantIdentifier, tenantServiceDbConn.ServiceIdentifier, result);
+
+            return result;
+        }
+
+        internal async Task<bool> updateTenantDbSchema(TenantServiceDbConnModel tenantServiceDbConn, SchemaUpdateScriptModel schemaUpdateScript) {
             if (tenantServiceDbConn.CurSchemaVersion >= schemaUpdateScript.MinorVersion ) {
                 _logger.LogError($"TenantDomain {tenantServiceDbConn.TenantDomain} identifier: {tenantServiceDbConn.TenantIdentifier} updateScript :{schemaUpdateScript.Name} version is {schemaUpdateScript.MinorVersion} ,curSchemaVersion is {tenantServiceDbConn.CurSchemaVersion}");
                 return false;
@@ -170,37 +194,18 @@ namespace StartingMultiTenant.Service
             return updateResult;
         }
 
-        public async Task<bool> ExchangeTenantConnDb(Int64 dbConnId,Int64 toUseDbServerId) {
-            List<DbServerModel> toUseDbServers= _dbServerBusiness.GetDbServers(toUseDbServerId);
+        public async Task<bool> ExchangeTenantDbServer(TenantServiceDbConnModel toUpdateDbConn, DbServerModel toUseDbServer) {
+            _actionNoticeService.PublishTenantStartExchange(toUpdateDbConn.TenantDomain,toUpdateDbConn.TenantIdentifier,toUpdateDbConn.ServiceIdentifier);
 
-            if (!toUseDbServers.Any()) {
-                _logger.LogError($"cann't find id {toUseDbServerId} dbserver");
+            bool result = await exchangeTenantDbServer(toUpdateDbConn,toUseDbServer);
 
-                return false;
-            }
+            _actionNoticeService.PublishTenantExchanged(toUpdateDbConn.TenantDomain, toUpdateDbConn.TenantIdentifier, toUpdateDbConn.ServiceIdentifier,result);
 
-            DbServerModel toUseDbServer = toUseDbServers[0];
-            List<TenantServiceDbConnModel> tenantServiceDbConns= await _tenantServiceDbConnBusiness.GetTenantServiceDbConns(dbConnId);
+            return result;
+        }
 
-            if (!tenantServiceDbConns.Any()) {
-                _logger.LogError($"cann't find id {dbConnId} dbconn");
-                return false;
-            }
-
-            TenantServiceDbConnModel toUpdateDbConn = tenantServiceDbConns[0];
-            var createScripts= await _createDbScriptBusiness.GetListByNames(new List<string>() { toUpdateDbConn.CreateScriptName});
-
-            if(!createScripts.Any()) {
-                _logger.LogError($"cann't find {toUpdateDbConn.CreateScriptName} createDbScript");
-                return false;
-            }
-
-            CreateDbScriptModel theCreateScript = createScripts[0];
-            if (theCreateScript.DbType != toUseDbServer.DbType) {
-                _logger.LogError($"the dbtype of new dbServer is not equal to the origin create script dbtype");
-                return false;
-            }
-
+        internal async Task<bool> exchangeTenantDbServer(TenantServiceDbConnModel toUpdateDbConn,DbServerModel toUseDbServer) {
+            
             IDbServerExecutor dbServerExecutor = _dbServerExecutorFactory.CreateDbServerExecutor(toUseDbServer);
             string dbName= dbServerExecutor.ResolveDatabaseName(toUpdateDbConn.EncryptedConnStr);
             string encryptedConnStr= dbServerExecutor.GenerateEncryptDbConnStr(dbName);

@@ -3,6 +3,7 @@ using StartingMultiTenant.Business;
 using StartingMultiTenant.Model.Domain;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -13,17 +14,20 @@ namespace StartingMultiTenant.Service
 {
     public class MultiTenantService
     {
-        private readonly SingleTenantService _tenantDbOperaService;
+        private readonly SingleTenantService _singleTenantService;
         private readonly SchemaUpdateScriptBusiness _schemaUpdateScriptBusiness;
         private readonly ILogger<MultiTenantService> _logger;
         private readonly TenantServiceDbConnBusiness _tenantServiceDbConnBusiness;
-        public MultiTenantService(SingleTenantService tenantDbOperaService,
+        private readonly DbServerBusiness _dbServerBusiness;
+        public MultiTenantService(SingleTenantService singleTenantService,
             SchemaUpdateScriptBusiness schemaUpdateScriptBusiness,
             TenantServiceDbConnBusiness tenantServiceDbConnBusiness,
+            DbServerBusiness dbServerBusiness,
             ILogger<MultiTenantService> logger) { 
-            _tenantDbOperaService=tenantDbOperaService;
+            _singleTenantService=singleTenantService;
             _schemaUpdateScriptBusiness = schemaUpdateScriptBusiness;
             _tenantServiceDbConnBusiness = tenantServiceDbConnBusiness;
+            _dbServerBusiness = dbServerBusiness;
             _logger=logger;
         }
 
@@ -59,7 +63,7 @@ namespace StartingMultiTenant.Service
 
                     semaphore.WaitOne();
                     Interlocked.Increment(ref taskCount);
-                    _tenantDbOperaService.UpdateTenantDbSchema(tenantDbConn, updateScript).ContinueWith(t => {
+                    _singleTenantService.UpdateTenantDbSchema(tenantDbConn, updateScript).ContinueWith(t => {
                         
                         if (t.IsFaulted) {
                             Interlocked.Increment(ref failureCount);
@@ -87,6 +91,24 @@ namespace StartingMultiTenant.Service
             return Tuple.Create(failureCount==0,successCount,failureCount);
         }
 
+        public async Task<Tuple<bool,int,int>> ExchangeDbServer(DbServerModel oldDbServer, DbServerModel newDbServer) {
+            var toExchangeDbConns= _tenantServiceDbConnBusiness.GetConnListByDbServer(oldDbServer.Id);
+            if (!toExchangeDbConns.Any()) {
+                return Tuple.Create(true,0,0);
+            }
 
+            int successCount = 0;
+            int failureCount = 0;
+            foreach(var dbConn in toExchangeDbConns) {
+                bool success= await _singleTenantService.ExchangeTenantDbServer(dbConn,newDbServer);
+                if (success) {
+                    successCount++;
+                } else {
+                    failureCount++;
+                }
+            }
+
+            return Tuple.Create(failureCount==0,successCount,failureCount);
+        }
     }
 }

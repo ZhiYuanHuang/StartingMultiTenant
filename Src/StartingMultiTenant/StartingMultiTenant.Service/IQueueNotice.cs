@@ -36,10 +36,11 @@ namespace StartingMultiTenant.Service
                     }
                     break;
                 default:
+                    queueNotice = null;
                     break;
             }
 
-            return null;
+            return queueNotice;
         }
     }
 }

@@ -21,11 +21,13 @@ namespace StartingMultiTenant.Service
 
         protected override async Task<bool> executeScript(string dbConnStr, string dbScriptStr) {
             MySqlConnection conn = new MySqlConnection(dbConnStr);
+        
 
             bool result = false;
             try {
 
                 var mysqlCommand = new MySqlCommand(dbScriptStr, conn);
+                mysqlCommand.CommandTimeout = 60 * 10;
                 await conn.OpenAsync();
 
                 if (conn.State == System.Data.ConnectionState.Open) {
@@ -79,13 +81,16 @@ namespace StartingMultiTenant.Service
         }
 
         protected override string generateCreateDbStr(string dataBaseName) {
-            throw new NotImplementedException();
+            //CREATE DATABASE "Test_db" WITH OWNER = postgres ENCODING = 'UTF8' LOCALE_PROVIDER = libc LOCALE = 'en_US.utf8';
+            //CREATE DATABASE /*!32312 IF NOT EXISTS*/ `tunano.ldc.pfv` /*!40100 DEFAULT CHARACTER SET utf8 */;
+
+            return string.Format("CREATE DATABASE `{0}` DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_general_ci;", dataBaseName.ToLower());
         }
 
         protected override string generateDbConnStr(string database = null, bool pooling = true) {
             //Database=tenantstore.mulids;Data Source=127.0.0.1;Port=3307;User Id=root;Password=123456;Charset=utf8;
             string decryptUserPwd = _encryptService.Decrypt_DbServerPwd(_dbServer.EncryptUserpwd);
-            return $"Data Source={_dbServer.ServerHost};Port={_dbServer.ServerPort};User Id={_dbServer.UserName};Password={decryptUserPwd};Charset=utf8;{(string.IsNullOrEmpty(database) ? "" : $";Database={database}")}";
+            return $"Data Source={_dbServer.ServerHost};Port={_dbServer.ServerPort};User Id={_dbServer.UserName};Password={decryptUserPwd};Charset=utf8;{(pooling ? "" : "Pooling=false;")}{(string.IsNullOrEmpty(database) ? "" : $"Database={database};")}";
         }
 
         protected override string resolveDatabaseName(string dbConnStr) {

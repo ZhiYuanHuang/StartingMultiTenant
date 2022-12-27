@@ -20,4 +20,8 @@
     <ProjectReference Include="..\StartingMultiTenant.Service\StartingMultiTenant.Service.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Filters\" />
+  </ItemGroup>
+
 </Project>

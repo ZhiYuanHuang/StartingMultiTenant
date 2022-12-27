@@ -44,8 +44,10 @@ namespace StartingMultiTenant.Api
             builder.Services.AddSingleton<EncryptService>();
             builder.Services.AddSingleton<SingleTenantService>();
             builder.Services.AddSingleton<MultiTenantService>();
+            builder.Services.AddSingleton<TenantActionNoticeService>();
 
             builder.Services.AddSingleton<DbServerExecutorFactory>();
+            builder.Services.AddSingleton<QueueNoticeFactory>();
 
             var app = builder.Build();
 

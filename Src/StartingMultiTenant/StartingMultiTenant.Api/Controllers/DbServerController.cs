@@ -4,6 +4,7 @@ using StartingMultiTenant.Business;
 using StartingMultiTenant.Model.Domain;
 using StartingMultiTenant.Model.Dto;
 using StartingMultiTenant.Service;
+using System.Diagnostics;
 
 namespace StartingMultiTenant.Api.Controllers
 {
@@ -13,10 +14,13 @@ namespace StartingMultiTenant.Api.Controllers
     {
         private readonly DbServerBusiness _dbServerBusiness;
         private readonly EncryptService _encryptService;
+        private readonly MultiTenantService _multiTenantService;
         public DbServerController(DbServerBusiness dbServerBusiness,
-            EncryptService encryptService) {
+            EncryptService encryptService,
+            MultiTenantService multiTenantService) {
             _dbServerBusiness = dbServerBusiness;
             _encryptService = encryptService;
+            _multiTenantService = multiTenantService;
         }
 
         [HttpPost]
@@ -79,5 +83,31 @@ namespace StartingMultiTenant.Api.Controllers
                 ResultList= dtoList
             };
         }
+
+        [HttpPost]
+        public async Task<AppResponseDto> ExchangeDbServer(AppRequestDto<DbConnAndDbserverIdDto> requestDto) {
+            if (requestDto.Data == null) {
+                return new AppResponseDto(false);
+            }
+
+            bool sameDbType = _dbServerBusiness.CheckSameTypeDb(requestDto.Data.OldDbServerId,requestDto.Data.DbServerId,out DbServerModel oldDbServer,out DbServerModel newDbServer);
+
+            if (!sameDbType) {
+                return new AppResponseDto(false);
+            }
+
+            var resultTuple=await _multiTenantService.ExchangeDbServer(oldDbServer,newDbServer);
+            if (!resultTuple.Item1) {
+                if (resultTuple.Item2 > 0) {
+                    return new AppResponseDto(false) {
+                        ErrorMsg = $"part success,successCount:{resultTuple.Item2},failureCount:{resultTuple.Item3}"
+                    };
+                }
+                return new AppResponseDto(false);
+            }
+
+            return new AppResponseDto(true);
+        }
+
     }
 }

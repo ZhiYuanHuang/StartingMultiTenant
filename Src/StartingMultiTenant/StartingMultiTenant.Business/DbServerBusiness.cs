@@ -40,5 +40,43 @@ namespace StartingMultiTenant.Business
 
             return _dbServerRepository.Delete(dbServerId);
         }
+
+        public bool CheckSameTypeDbByConn(Int64 dbConnId,Int64 dbServerId,out TenantServiceDbConnModel dbConn,out DbServerModel newDbServer) {
+            dbConn = null;
+            newDbServer = null;
+
+            List<TenantServiceDbConnModel> tenantServiceDbConns = _tenantServiceDbConnRepository.GetTenantServiceDbConns(dbConnId);
+
+            if (!tenantServiceDbConns.Any()) {
+                _logger.LogError($"cann't find id {dbConnId} dbconn");
+                return false;
+            }
+
+            dbConn = tenantServiceDbConns[0];
+            Int64 oldDbServerId = dbConn.DbServerId;
+
+            return CheckSameTypeDb(oldDbServerId, dbServerId,out _,out newDbServer);
+        }
+
+        public bool CheckSameTypeDb(Int64 oldDbServerId,Int64 newDbServerId,out DbServerModel oldDbServer,out DbServerModel newDbServer) {
+            oldDbServer = null;
+            newDbServer = null;
+
+            List<DbServerModel> oldDbServers = _dbServerRepository.GetDbServers(oldDbServerId);
+            if (!oldDbServers.Any()) {
+                _logger.LogError($"cann't find id {oldDbServerId} old dbserver");
+                return false;
+            }
+            oldDbServer = oldDbServers[0];
+
+            List<DbServerModel> newDbServers = _dbServerRepository.GetDbServers(newDbServerId);
+            if (!newDbServers.Any()) {
+                _logger.LogError($"cann't find id {newDbServerId} new dbserver");
+                return false;
+            }
+            newDbServer = newDbServers[0];
+
+            return oldDbServer.DbType == newDbServer.DbType;
+        }
     }
 }

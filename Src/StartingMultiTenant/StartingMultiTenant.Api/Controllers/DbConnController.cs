@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using StartingMultiTenant.Business;
+using StartingMultiTenant.Model.Domain;
 using StartingMultiTenant.Model.Dto;
 using StartingMultiTenant.Repository;
 using StartingMultiTenant.Service;
@@ -13,12 +15,15 @@ namespace StartingMultiTenant.Api.Controllers
         private readonly SingleTenantService _singleTenantService;
         private readonly EncryptService _encryptService;
         private readonly HistoryTenantServiceDbConnRepository _historyTenantServiceDbConnRepo;
+        private readonly DbServerBusiness _dbServerBusiness;
         public DbConnController(SingleTenantService singleTenantService,
             EncryptService encryptService,
+            DbServerBusiness dbServerBusiness,
             HistoryTenantServiceDbConnRepository historyTenantServiceDbConnRepo) { 
             _singleTenantService = singleTenantService;
             _encryptService = encryptService;
             _historyTenantServiceDbConnRepo= historyTenantServiceDbConnRepo;
+            _dbServerBusiness = dbServerBusiness;
         }
 
         [HttpGet]
@@ -52,7 +57,11 @@ namespace StartingMultiTenant.Api.Controllers
                 return new AppResponseDto(false);
             }
 
-            var result = await _singleTenantService.ExchangeTenantConnDb(requestDto.Data.DbConnId, requestDto.Data.DbServerId);
+            bool sameDbType = _dbServerBusiness.CheckSameTypeDbByConn(requestDto.Data.DbConnId, requestDto.Data.DbServerId, out TenantServiceDbConnModel dbConn, out DbServerModel toExchangeDbServer);
+            if (!sameDbType) {
+                return new AppResponseDto(false);
+            }
+            var result = await _singleTenantService.ExchangeTenantDbServer(dbConn, toExchangeDbServer);
 
             return new AppResponseDto(result);
         }
