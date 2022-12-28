@@ -3,6 +3,7 @@ using StartingMultiTenant.Framework;
 using Microsoft.Extensions.Configuration;
 using StartingMultiTenant.Service;
 using StartingMultiTenant.Business;
+using StartingMultiTenant.Api.Security;
 
 namespace StartingMultiTenant.Api
 {
@@ -48,6 +49,10 @@ namespace StartingMultiTenant.Api
 
             builder.Services.AddSingleton<DbServerExecutorFactory>();
             builder.Services.AddSingleton<QueueNoticeFactory>();
+
+            builder.Services.AddSingleton<TokenBuilder>();
+            builder.Services.Configure<JwtTokenOptions>(
+                builder.Configuration.GetSection("JwtTokenOptions"));
 
             var app = builder.Build();
 

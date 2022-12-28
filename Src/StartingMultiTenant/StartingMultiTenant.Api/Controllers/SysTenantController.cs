@@ -18,11 +18,13 @@ namespace StartingMultiTenant.Api.Controllers
         private readonly TenantServiceDbConnBusiness _tenantServiceDbConnBusiness;
         private readonly ExternalTenantServiceDbConnRepository _externalTenantServiceDbConnRepo;
         private readonly EncryptService _encryptService;
+        private readonly TenantActionNoticeService _actionNoticeService;
         public SysTenantController(SingleTenantService singleTenantService,
             TenantDomainBusiness tenantDomainBusiness,
             TenantIdentifierBusiness tenantIdentifierBusiness,
             TenantServiceDbConnBusiness tenantServiceDbConnBusiness,
             ExternalTenantServiceDbConnRepository externalTenantServiceDbConnRepo,
+            TenantActionNoticeService actionNoticeService,
             EncryptService encryptService) {
             _singleTenantService = singleTenantService;
             _tenantDomainBusiness = tenantDomainBusiness;
@@ -30,6 +32,7 @@ namespace StartingMultiTenant.Api.Controllers
             _tenantServiceDbConnBusiness = tenantServiceDbConnBusiness;
             _externalTenantServiceDbConnRepo = externalTenantServiceDbConnRepo;
             _encryptService = encryptService;
+            _actionNoticeService = actionNoticeService;
         }
 
         [HttpPost]
@@ -134,6 +137,17 @@ namespace StartingMultiTenant.Api.Controllers
                     TenantIdentifier= requestDto.Data.TenantIdentifier,
                 }
             };
+        }
+
+        [HttpGet]
+        public AppResponseDto TriggerManualModify(string tenantDomain,string tenantIdentifier) {
+            if (string.IsNullOrEmpty(tenantIdentifier)) {
+                _actionNoticeService.PublishTenantManualModify();
+            } else {
+                _actionNoticeService.PublishTenantManualModify(tenantDomain,tenantIdentifier);
+            }
+
+            return new AppResponseDto(true);
         }
     }
 }

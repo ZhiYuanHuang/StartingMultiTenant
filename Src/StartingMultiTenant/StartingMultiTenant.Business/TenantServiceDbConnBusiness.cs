@@ -22,8 +22,8 @@ namespace StartingMultiTenant.Business
             _logger = logger;
         }
 
-        public List<TenantServiceDbConnModel> GetByTenant(string tenantDomain,string tenantIdentifier) {
-            return _tenantServiceDbConnRepository.GetTenantServiceDbConns(tenantDomain,tenantIdentifier);
+        public List<TenantServiceDbConnModel> GetByTenant(string tenantDomain,string tenantIdentifier,string serviceIdentifier=null) {
+            return _tenantServiceDbConnRepository.GetTenantServiceDbConns(tenantDomain,tenantIdentifier, serviceIdentifier);
         }
        
         public async Task<List<TenantServiceDbConnModel>> GetTenantServiceDbConns(long? dbConnId = null) {

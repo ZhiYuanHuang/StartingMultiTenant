@@ -87,23 +87,16 @@ namespace StartingMultiTenant.Repository
             return GetEntitiesByQuery(p);
         }
 
-        public List<TenantServiceDbConnModel> GetTenantServiceDbConns(string tenantDomain, string tenantIdentifier) {
+        public List<TenantServiceDbConnModel> GetTenantServiceDbConns(string tenantDomain, string tenantIdentifier,string serviceIdentifier=null) {
            
             Dictionary<string, object> p = new Dictionary<string, object>() {
                 { "TenantIdentifier",tenantIdentifier},
                 { "TenantDomain",tenantDomain}
             };
 
-            return GetEntitiesByQuery(p);
-        }
-
-        public List<TenantServiceDbConnModel> GetTenantServiceDbConns(string tenantDomain, string tenantIdentifier,string serviceIdentifier) {
-
-            Dictionary<string, object> p = new Dictionary<string, object>() {
-                { "TenantIdentifier",tenantIdentifier},
-                { "TenantDomain",tenantDomain},
-                { "ServiceIdentifier",serviceIdentifier}
-            };
+            if (!string.IsNullOrEmpty(serviceIdentifier)) {
+                p.Add("ServiceIdentifier",serviceIdentifier);
+            }
 
             return GetEntitiesByQuery(p);
         }
