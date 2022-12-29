@@ -12,7 +12,11 @@ namespace StartingMultiTenant.Repository
         }
 
         public bool Insert(string clientId,string encryptSecret) {
-            string sql = "Insert Into ApiClient (ClientId,ClientSecret) Values (@clientId,@clientSecret)";
+            string sql = @"Insert Into ApiClient (ClientId,ClientSecret) 
+                           Values (@clientId,@clientSecret)
+                           On CONFLICT (ClientId)
+                           Do Update Set
+                            ClientSecret=EXCLUDED.ClientSecret ";
             return _tenantDbDataContext.Master.ExecuteNonQuery(sql, new { clientId = clientId, clientSecret = encryptSecret }) > 0;
         }
 
@@ -24,7 +28,6 @@ namespace StartingMultiTenant.Repository
         public ApiClientModel Get(string clientId) {
             Dictionary<string, object> p = new Dictionary<string, object>() {
                 {"ClientId",clientId },
-                
             };
 
             return GetEntityByQuery(p);

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using StartingMultiTenant.Service;
 using StartingMultiTenant.Business;
 using StartingMultiTenant.Api.Security;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace StartingMultiTenant.Api
 {
@@ -33,6 +34,9 @@ namespace StartingMultiTenant.Api
             builder.Services.AddTransient<SchemaUpdateScriptRepository>();
             builder.Services.AddTransient<CreateDbScriptRepository>();
             builder.Services.AddTransient<HistoryTenantServiceDbConnRepository>();
+            builder.Services.AddTransient<ApiClientRepository>();
+            builder.Services.AddTransient<ApiScopeRepository>();
+            builder.Services.AddTransient<ClientDomainScopeRepository>();
 
             builder.Services.AddTransient<DbServerBusiness>();
             builder.Services.AddTransient<TenantDomainBusiness>();
@@ -40,6 +44,8 @@ namespace StartingMultiTenant.Api
             builder.Services.AddTransient<CreateDbScriptBusiness>();
             builder.Services.AddTransient<SchemaUpdateScriptBusiness>();
             builder.Services.AddTransient<TenantServiceDbConnBusiness>();
+            builder.Services.AddTransient<ApiClientBusiness>();
+            builder.Services.AddTransient<ApiScopeBusiness>();
 
             builder.Services.AddSingleton<SysConstService>();
             builder.Services.AddSingleton<EncryptService>();
@@ -54,6 +60,14 @@ namespace StartingMultiTenant.Api
             builder.Services.Configure<JwtTokenOptions>(
                 builder.Configuration.GetSection("JwtTokenOptions"));
 
+            JwtTokenOptions tokenOptions =builder.Configuration.GetSection("JwtTokenOptions").Get<JwtTokenOptions>();
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                  //开启Bearer服务认证
+                  .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options => {
+                      options.SaveToken = true;
+                      options.TokenValidationParameters = tokenOptions.ToTokenValidationParams();
+                  });
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -62,8 +76,8 @@ namespace StartingMultiTenant.Api
                 app.UseSwaggerUI();
             }
 
+            app.UseAuthentication();
             app.UseAuthorization();
-
 
             app.MapControllers();
 

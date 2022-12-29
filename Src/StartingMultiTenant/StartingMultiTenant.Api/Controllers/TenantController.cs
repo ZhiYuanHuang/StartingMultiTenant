@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using StartingMultiTenant.Business;
+using StartingMultiTenant.Model.Const;
 using StartingMultiTenant.Model.Domain;
 using StartingMultiTenant.Model.Dto;
 using StartingMultiTenant.Repository;
@@ -10,6 +12,7 @@ namespace StartingMultiTenant.Api.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
+    [Authorize]
     public class TenantController : ControllerBase
     {
         private readonly SingleTenantService _singleTenantService;
@@ -18,11 +21,13 @@ namespace StartingMultiTenant.Api.Controllers
         private readonly TenantServiceDbConnBusiness _tenantServiceDbConnBusiness;
         private readonly ExternalTenantServiceDbConnRepository _externalTenantServiceDbConnRepo;
         private readonly EncryptService _encryptService;
+        private readonly ApiClientBusiness _apiClientBusiness;
         public TenantController(SingleTenantService singleTenantService,
             TenantDomainBusiness tenantDomainBusiness,
             TenantIdentifierBusiness tenantIdentifierBusiness,
             TenantServiceDbConnBusiness tenantServiceDbConnBusiness,
             ExternalTenantServiceDbConnRepository externalTenantServiceDbConnRepo,
+            ApiClientBusiness apiClientBusiness,
             EncryptService encryptService) {
             _singleTenantService = singleTenantService;
             _tenantDomainBusiness = tenantDomainBusiness;
@@ -30,6 +35,7 @@ namespace StartingMultiTenant.Api.Controllers
             _tenantServiceDbConnBusiness = tenantServiceDbConnBusiness;
             _externalTenantServiceDbConnRepo = externalTenantServiceDbConnRepo;
             _encryptService = encryptService;
+            _apiClientBusiness = apiClientBusiness;
         }
 
         [HttpPost]
@@ -45,6 +51,10 @@ namespace StartingMultiTenant.Api.Controllers
 
             if (!_tenantDomainBusiness.Exist(createTenantDto.TenantDomain)) {
                 return new AppResponseDto(false) { ErrorMsg = $"tenantdomain {createTenantDto.TenantDomain} not exists" };
+            }
+
+            if(!_apiClientBusiness.CheckAuthorization(User.Identity.Name,createTenantDto.TenantDomain,ScopeNameConst.WriteScope)) {
+                return new AppResponseDto(false) { ErrorMsg="no enough authorization"};
             }
 
             bool existed = _tenantIdentifierBusiness.ExistTenant(createTenantDto.TenantDomain, createTenantDto.TenantIdentifier);
@@ -76,6 +86,10 @@ namespace StartingMultiTenant.Api.Controllers
         public AppResponseDto<TenantServiceDbConnsDto> GetTenantDbConn(AppRequestDto<TenantServiceInfoDto> requestDto) {
             if (requestDto.Data == null) {
                 return new AppResponseDto<TenantServiceDbConnsDto>(false);
+            }
+
+            if (!_apiClientBusiness.CheckAuthorization(User.Identity.Name, requestDto.Data.TenantDomain, ScopeNameConst.ReadScope)) {
+                return new AppResponseDto<TenantServiceDbConnsDto>(false) { ErrorMsg = "no enough authorization" };
             }
 
             List<ExternalTenantServiceDbConnModel> externalList = _externalTenantServiceDbConnRepo.GetByTenantAndService(requestDto.Data.TenantDomain, requestDto.Data.TenantIdentifier,requestDto.Data.ServiceIdentifier);
