@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using StartingMultiTenant.Business;
+using StartingMultiTenant.Model.Const;
 using StartingMultiTenant.Model.Dto;
 using StartingMultiTenant.Repository;
 using StartingMultiTenant.Service;
@@ -9,6 +11,7 @@ namespace StartingMultiTenant.Api.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
+    [Authorize(AuthorizePolicyConst.Sys_Policy)]
     public class ExternalDbConnController : ControllerBase
     {
         private readonly ExternalTenantServiceDbConnRepository _externalDbConnRepo;

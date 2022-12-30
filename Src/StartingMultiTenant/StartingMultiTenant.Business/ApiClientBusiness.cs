@@ -1,4 +1,5 @@
-﻿using StartingMultiTenant.Model.Domain;
+﻿using StartingMultiTenant.Model.Const;
+using StartingMultiTenant.Model.Domain;
 using StartingMultiTenant.Model.Dto;
 using StartingMultiTenant.Repository;
 using System;
@@ -26,8 +27,12 @@ namespace StartingMultiTenant.Business
             return _apiClientRepo.GetEntitiesByQuery();
         }
 
-        public bool Add(string clientId,string encryptSecret) {
-            return _apiClientRepo.Insert(clientId,encryptSecret);
+        public List<ApiClientModel> GetAdmins() {
+            return _apiClientRepo.GetAdmins();
+        }
+
+        public bool Add(string clientId,string encryptSecret,string role=RoleConst.Role_User) {
+            return _apiClientRepo.Insert(clientId,encryptSecret,role);
         }
 
         public bool Delete(string clientId) {

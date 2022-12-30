@@ -40,7 +40,7 @@ namespace StartingMultiTenant.Api.Controllers
                 return new AppResponseDto<string>(false);
             }
 
-            string token= _tokenBuilder.CreateJwtToken(requestDto.Data);
+            string token= _tokenBuilder.CreateJwtToken(existedClient);
             return new AppResponseDto<string>() { Result= token };
         }
     }

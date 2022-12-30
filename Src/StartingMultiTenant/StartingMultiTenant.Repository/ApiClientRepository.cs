@@ -1,4 +1,5 @@
-﻿using StartingMultiTenant.Model.Domain;
+﻿using StartingMultiTenant.Model.Const;
+using StartingMultiTenant.Model.Domain;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -11,13 +12,13 @@ namespace StartingMultiTenant.Repository
         public ApiClientRepository(TenantDbDataContext tenantDbDataContext) : base(tenantDbDataContext) {
         }
 
-        public bool Insert(string clientId,string encryptSecret) {
-            string sql = @"Insert Into ApiClient (ClientId,ClientSecret) 
-                           Values (@clientId,@clientSecret)
+        public bool Insert(string clientId,string encryptSecret,string role= RoleConst.Role_User) {
+            string sql = @"Insert Into ApiClient (ClientId,ClientSecret,Role) 
+                           Values (@clientId,@clientSecret,@role)
                            On CONFLICT (ClientId)
                            Do Update Set
-                            ClientSecret=EXCLUDED.ClientSecret ";
-            return _tenantDbDataContext.Master.ExecuteNonQuery(sql, new { clientId = clientId, clientSecret = encryptSecret }) > 0;
+                            ClientSecret=EXCLUDED.ClientSecret,Role=EXCLUDED.Role ";
+            return _tenantDbDataContext.Master.ExecuteNonQuery(sql, new { clientId = clientId, clientSecret = encryptSecret,role=role }) > 0;
         }
 
         public bool Delete(string clientId) {
@@ -31,6 +32,14 @@ namespace StartingMultiTenant.Repository
             };
 
             return GetEntityByQuery(p);
+        }
+
+        public List<ApiClientModel> GetAdmins() {
+            Dictionary<string, object> p = new Dictionary<string, object>() {
+                {"Role",RoleConst.Role_Admin },
+            };
+
+            return GetEntitiesByQuery(p);
         }
     }
 }

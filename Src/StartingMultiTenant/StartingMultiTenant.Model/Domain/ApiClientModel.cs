@@ -9,5 +9,6 @@ namespace StartingMultiTenant.Model.Domain
         public Int64 Id { get; set; }
         public string ClientId { get; set; }
         public string ClientSecret { get; set; }
+        public string? Role { get; set; }
     }
 }
