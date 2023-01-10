@@ -6,7 +6,7 @@ namespace StartingMultiTenant.Model.Dto
 {
     public class TenantInfoDto
     {
-        public string TenantDomain { get; set; }
-        public string TenantIdentifier { get; set; }
+        public string? TenantDomain { get; set; }
+        public string? TenantIdentifier { get; set; }
     }
 }

@@ -43,9 +43,10 @@ namespace StartingMultiTenant.Model.Dto
         }
     }
 
-    public class PagingParam<T>: PagingParam
+    public class PagingParam<T>: PagingParam 
     {
-        public T Data { get; set; }
+        public T Filter { get; set; }
 
     }
+
 }

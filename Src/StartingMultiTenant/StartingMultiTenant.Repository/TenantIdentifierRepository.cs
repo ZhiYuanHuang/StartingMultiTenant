@@ -1,4 +1,5 @@
 ﻿using StartingMultiTenant.Model.Domain;
+using StartingMultiTenant.Model.Dto;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -32,9 +33,30 @@ namespace StartingMultiTenant.Repository
             return GetEntitiesByQuery(p);
         }
 
-        public List<TenantIdentifierModel> GetPageByDomain(string tenantDomain,int pageSize,int pageIndex) {
-            string sql = $"Select * From TenantIdentifier Where TenantDomain=@tenantDomain Limit @pageSize OFFSET @offSet";
-            return _tenantDbDataContext.Slave.QueryList<TenantIdentifierModel>(sql, new { tenantDomain=tenantDomain,pageSize=pageSize,offSet= pageSize * pageIndex });
+        public PagingData<TenantIdentifierModel> GetPage(int pageSize,int pageIndex, string tenantDomain=null) {
+            StringBuilder countBuilder = new StringBuilder("Select Count(*) From TenantIdentifier ");
+            StringBuilder dataBuilder = new StringBuilder("Select * From TenantIdentifier ");
+
+            Dictionary<string,object> p= new Dictionary<string, object>() {
+                { "pageSize",pageSize},
+                { "offSet",pageSize*pageIndex}
+            };
+            if (!string.IsNullOrEmpty(tenantDomain)) {
+                countBuilder.Append(" Where TenantDomain=@tenantDomain ");
+                dataBuilder.Append(" Where TenantDomain=@tenantDomain ");
+                p["tenantDomain"] = tenantDomain;
+            }
+
+            dataBuilder.Append(" Limit @pageSize OFFSET @offSet");
+
+            int count=(int)((long) _tenantDbDataContext.Slave.ExecuteScalar(countBuilder.ToString(), p));
+
+            if (count == 0) {
+                return new PagingData<TenantIdentifierModel>(pageIndex,pageSize,0,new List<TenantIdentifierModel>());
+            }
+
+            var list= _tenantDbDataContext.Slave.QueryList<TenantIdentifierModel>(dataBuilder.ToString(),p);
+            return new PagingData<TenantIdentifierModel>(pageIndex,pageSize, count, list);
         }
     }
 }

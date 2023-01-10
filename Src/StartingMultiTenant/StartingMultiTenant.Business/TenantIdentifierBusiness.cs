@@ -1,4 +1,5 @@
 ﻿using StartingMultiTenant.Model.Domain;
+using StartingMultiTenant.Model.Dto;
 using StartingMultiTenant.Repository;
 using System;
 using System.Collections.Generic;
@@ -36,8 +37,8 @@ namespace StartingMultiTenant.Business
             return existTenant!= null;
         }
 
-        public List<TenantIdentifierModel> GetPageByDomain(string tenantDomain, int pageSize, int pageIndex) {
-            return _tenantIdentifierRepo.GetPageByDomain(tenantDomain,pageSize,pageIndex);
+        public PagingData<TenantIdentifierModel> GetPage(string tenantDomain, int pageSize, int pageIndex) {
+            return _tenantIdentifierRepo.GetPage(pageSize,pageIndex, tenantDomain);
         }
     }
 }

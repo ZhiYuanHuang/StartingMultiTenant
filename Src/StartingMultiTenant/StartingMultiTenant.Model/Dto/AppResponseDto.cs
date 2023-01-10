@@ -25,7 +25,7 @@ namespace StartingMultiTenant.Model.Dto
         }
         public AppResponseDto(bool result):base(result) {
         }
-        public List<T> ResultList { get; set; }
+        public List<T>? ResultList { get; set; }
         public T Result { get; set; }
     }
 }

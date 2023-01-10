@@ -41,6 +41,14 @@ namespace StartingMultiTenant.Api
                 });
             });
 
+            builder.Services.AddCors(options => {
+                options.AddPolicy("default", policy => {
+                    policy.AllowAnyOrigin();
+                    policy.AllowAnyHeader();
+                    policy.AllowAnyMethod();
+                });
+            });
+
             builder.Services.AddDbDataContext<TenantDbDataContext>(options => {
                 builder.Configuration.GetSection("StartingMultiTenantDbOption").Bind(options);
             });
@@ -111,6 +119,7 @@ namespace StartingMultiTenant.Api
                 app.UseSwaggerUI();
             }
 
+            app.UseCors("default");
             app.UseAuthentication();
             app.UseAuthorization();
 

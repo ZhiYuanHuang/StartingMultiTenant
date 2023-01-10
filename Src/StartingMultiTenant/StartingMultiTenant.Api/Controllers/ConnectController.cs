@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using StartingMultiTenant.Api.Security;
 using StartingMultiTenant.Business;
@@ -37,7 +38,7 @@ namespace StartingMultiTenant.Api.Controllers
 
             string encryptSecret= _encryptService.Encrypt_Aes(requestDto.Data.ClientSecret);
             if (string.Compare(encryptSecret, existedClient.ClientSecret) != 0) {
-                return new AppResponseDto<string>(false);
+                return new AppResponseDto<string>(false) { ErrorMsg="no exist user or error password"};
             }
 
             string token= _tokenBuilder.CreateJwtToken(existedClient);

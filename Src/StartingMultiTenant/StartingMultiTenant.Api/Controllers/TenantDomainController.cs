@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using StartingMultiTenant.Business;
 using StartingMultiTenant.Model.Const;
 using StartingMultiTenant.Model.Domain;
@@ -19,13 +20,13 @@ namespace StartingMultiTenant.Api.Controllers
         }
 
         [HttpPost]
-        public AppResponseDto Add(AppRequestDto<TenantDomainModel> requestDto) {
+        public AppResponseDto<Int64> Add(AppRequestDto<TenantDomainModel> requestDto) {
             if (requestDto?.Data == null) {
-                return new AppResponseDto(false);
+                return new AppResponseDto<Int64>(false);
             }
 
-            bool result= _tenantDomainBusiness.Insert(requestDto.Data);
-            return new AppResponseDto(result);
+            bool result= _tenantDomainBusiness.Insert(requestDto.Data,out Int64 id);
+            return new AppResponseDto<Int64>(result) { Result=id};
         }
 
         [HttpPost]
@@ -38,10 +39,14 @@ namespace StartingMultiTenant.Api.Controllers
             return new AppResponseDto(result);
         }
 
-        [HttpGet]
-        public AppResponseDto<TenantDomainModel> Get() {
-            List<TenantDomainModel> list = _tenantDomainBusiness.GetAll();
-            return new AppResponseDto<TenantDomainModel>() { ResultList = list };
+        [HttpPost]
+        public AppResponseDto<PagingData<TenantDomainModel>> GetList(AppRequestDto<PagingParam<Dictionary<string,string>>> requestDto) {
+            string tenantDomain = null;
+            if(requestDto.Data.Filter.Any() && requestDto.Data.Filter.ContainsKey("tenantDomain") && !string.IsNullOrEmpty(requestDto.Data.Filter["tenantDomain"])) {
+                tenantDomain = requestDto.Data.Filter["tenantDomain"];
+            }
+            var list = _tenantDomainBusiness.GetPage(tenantDomain,requestDto.Data.PageSize,requestDto.Data.PageIndex);
+            return new AppResponseDto<PagingData<TenantDomainModel>>() { Result = list };
         }
     }
 }
