@@ -6,6 +6,7 @@ using StartingMultiTenant.Business;
 using StartingMultiTenant.Model.Const;
 using StartingMultiTenant.Model.Domain;
 using StartingMultiTenant.Model.Dto;
+using System.Diagnostics;
 
 namespace StartingMultiTenant.Api.Controllers
 {
@@ -19,6 +20,23 @@ namespace StartingMultiTenant.Api.Controllers
             _tenantDomainBusiness = tenantDomainBusiness;
         }
 
+        [HttpGet]
+        public AppResponseDto<TenantDomainModel> Get(Int64 id) {
+            var domain= _tenantDomainBusiness.Get(id);
+            if (domain == null) {
+                return new AppResponseDto<TenantDomainModel>(false);
+            }
+
+            return new AppResponseDto<TenantDomainModel>() { Result=domain};
+        }
+
+        [HttpPost]
+        public AppResponseDto<TenantDomainModel> GetMany(AppRequestDto<List<Int64>> requestDto) {
+            var domains = _tenantDomainBusiness.Get(requestDto.Data);
+
+            return new AppResponseDto<TenantDomainModel>() { ResultList = domains };
+        }
+
         [HttpPost]
         public AppResponseDto<Int64> Add(AppRequestDto<TenantDomainModel> requestDto) {
             if (requestDto?.Data == null) {
@@ -29,14 +47,19 @@ namespace StartingMultiTenant.Api.Controllers
             return new AppResponseDto<Int64>(result) { Result=id};
         }
 
-        [HttpPost]
-        public AppResponseDto Delete(AppRequestDto<string> requestDto) {
-            if (string.IsNullOrEmpty(requestDto?.Data)) {
-                return new AppResponseDto(false);
-            }
+        [HttpDelete]
+        public AppResponseDto Delete(AppRequestDto<Int64> requestDto) {
+            Tuple<bool,string> resultTuple = _tenantDomainBusiness.Delete(requestDto.Data);
+            return new AppResponseDto(resultTuple.Item1) { ErrorMsg=resultTuple.Item2};
+        }
 
-            bool result = _tenantDomainBusiness.Delete(requestDto.Data);
-            return new AppResponseDto(result);
+        [HttpDelete]
+        public AppResponseDto<List<Int64>> DeleteMany(AppRequestDto<List<Int64>> requestDto) {
+            var resultTuple = _tenantDomainBusiness.DeleteMany(requestDto.Data);
+            return new AppResponseDto<List<Int64>>(resultTuple.Item1) {
+                Result = resultTuple.Item2,
+                ErrorMsg = resultTuple.Item3
+            };
         }
 
         [HttpPost]

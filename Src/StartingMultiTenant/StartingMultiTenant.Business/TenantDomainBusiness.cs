@@ -9,17 +9,15 @@ using System.Text;
 
 namespace StartingMultiTenant.Business
 {
-    public class TenantDomainBusiness
+    public class TenantDomainBusiness: BaseBusiness<TenantDomainModel>
     {
         private readonly TenantDomainRepository _tenantDomainRepo;
         private readonly TenantIdentifierRepository _tenantIdentifierRepo;
-        private readonly ILogger<TenantDomainBusiness> _logger;
         public TenantDomainBusiness(TenantDomainRepository tenantDomainRepo,
             TenantIdentifierRepository tenantIdentifierRepo,
-            ILogger<TenantDomainBusiness> logger) { 
+            ILogger<TenantDomainBusiness> logger):base(tenantDomainRepo,logger) { 
             _tenantDomainRepo = tenantDomainRepo;
             _tenantIdentifierRepo = tenantIdentifierRepo;
-            _logger = logger;
         }
 
         public bool Exist(string tenantDomain) {
@@ -36,23 +34,33 @@ namespace StartingMultiTenant.Business
             }
         }
 
-        public bool Delete(string tenantDomain) {
-            List<TenantIdentifierModel> tenantList= _tenantIdentifierRepo.GetTenantListByDomain(tenantDomain);
-            if (tenantList.Any()) {
-                _logger.LogError($"tenantDomain {tenantDomain} still has {tenantList.Count} tenant");
-                
-                return false;
+        public override Tuple<bool,string> Delete(Int64 id) {
+            var domain= Get(id);
+            if (domain == null) {
+                return Tuple.Create(false,"domain no exist") ;
             }
 
-            return _tenantDomainRepo.Delete(tenantDomain);
+            return Delete(domain);
         }
 
-        public TenantDomainModel Get(Int64 id) {
-            return _tenantDomainRepo.GetEntityById(id);
-        }
+        public Tuple<bool,string> Delete(TenantDomainModel model) {
+            List<TenantIdentifierModel> tenantList= _tenantIdentifierRepo.GetTenantListByDomain(model.TenantDomain);
+            if (tenantList.Any()) {
+                _logger.LogError($"tenantDomain {model.TenantDomain} still has {tenantList.Count} tenant");
+                
+                return Tuple.Create(false, $"tenantDomain {model.TenantDomain} still has {tenantList.Count} tenant");
+            }
 
-        public List<TenantDomainModel> GetAll() {
-            return _tenantDomainRepo.GetEntitiesByQuery();
+            bool result = false;
+            try {
+                result= _tenantDomainRepo.Delete(model.Id);
+            }
+            catch(Exception ex) {
+                _logger.LogError($"delete domain {model.TenantDomain} raise error", ex);
+                return Tuple.Create(false, $"delete domain {model.TenantDomain} raise error");
+            }
+
+            return Tuple.Create(result,string.Empty);
         }
 
         public PagingData<TenantDomainModel> GetPage(string tenantDomain,int pageSize,int pageIndex) {

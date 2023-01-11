@@ -1,4 +1,5 @@
-﻿using StartingMultiTenant.Model.Const;
+﻿using Microsoft.Extensions.Logging;
+using StartingMultiTenant.Model.Const;
 using StartingMultiTenant.Model.Domain;
 using StartingMultiTenant.Model.Dto;
 using StartingMultiTenant.Repository;
@@ -9,30 +10,37 @@ using System.Text;
 
 namespace StartingMultiTenant.Business
 {
-    public class ApiClientBusiness
+    public class ApiClientBusiness:BaseBusiness<ApiClientModel>
     {
         private readonly ApiClientRepository _apiClientRepo;
         private readonly ClientDomainScopeRepository _clientDomainScopeRepo;
         public ApiClientBusiness(ApiClientRepository apiClientRepo,
-            ClientDomainScopeRepository clientDomainScopeRepo) {
+            ClientDomainScopeRepository clientDomainScopeRepo,
+            ILogger<ApiClientBusiness> logger):base(apiClientRepo,logger) {
             _apiClientRepo= apiClientRepo;
             _clientDomainScopeRepo= clientDomainScopeRepo;
+        }
+
+        public PagingData<ApiClientModel> GetPage(string clientId,int pageSize,int pageIndex) {
+            return _apiClientRepo.GetPage(pageSize,pageIndex,clientId);
         }
 
         public ApiClientModel Get(string clientId) {
             return _apiClientRepo.Get(clientId);
         }
 
-        public List<ApiClientModel> GetAll() {
-            return _apiClientRepo.GetEntitiesByQuery();
-        }
-
         public List<ApiClientModel> GetAdmins() {
             return _apiClientRepo.GetAdmins();
         }
 
-        public bool Add(string clientId,string encryptSecret,string role=RoleConst.Role_User) {
-            return _apiClientRepo.Insert(clientId,encryptSecret,role);
+        public bool Insert(string clientId,string encryptSecret,out Int64 id,string role=RoleConst.Role_User) {
+            id = 0;
+            try {
+                return _apiClientRepo.Insert(clientId, encryptSecret,out id, role);
+            }
+            catch{
+                return false;
+            }
         }
 
         public bool Delete(string clientId) {

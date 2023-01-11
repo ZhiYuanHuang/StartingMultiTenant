@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using StartingMultiTenant.Model.Domain;
+using StartingMultiTenant.Model.Dto;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -13,7 +16,8 @@ namespace StartingMultiTenant.Repository
     {
         protected readonly TenantDbDataContext _tenantDbDataContext;
         public abstract string TableName { get; }
-        public BaseRepository(TenantDbDataContext tenantDbDataContext) {
+        public BaseRepository(TenantDbDataContext tenantDbDataContext
+            ) {
             _tenantDbDataContext = tenantDbDataContext;
         }
 
@@ -29,14 +33,6 @@ namespace StartingMultiTenant.Repository
             _tenantDbDataContext.Master.RollbackTransaction();
         }
 
-        //public virtual int ExecuteNonQuery(string sql, Dictionary<string, object> p) {
-        //    return _tenantDbDataContext.Master.ExecuteNonQuery(sql,p);
-        //}
-
-        //public virtual object ExecuteScalar(string sql, Dictionary<string, object> p) {
-        //    return _tenantDbDataContext.Master.ExecuteScalar(sql,p);
-        //}
-        
         public List<T> GetEntitiesByQuery(Dictionary<string, object> fieldValueDict = null) {
             CheckTableNameNotNull();
 
@@ -85,6 +81,40 @@ namespace StartingMultiTenant.Repository
         public T GetEntityById(Int64 Id) {
             string sql = $"Select * From {TableName} Where Id=@id";
             return _tenantDbDataContext.Slave.Query<T>(sql,new { id=Id});
+        }
+
+        public List<T> GetEntitiesByIds(List<Int64> ids) {
+            if(ids==null || !ids.Any()) {
+                return new List<T>();
+            }
+            string sql = $"Select * From {TableName} Where Id=ANY(@ids)";
+            return _tenantDbDataContext.Slave.QueryList<T>(sql, new { ids = ids.ToArray() });
+        }
+
+        public bool Delete(Int64 id) {
+            string sql = $"Delete From {TableName} Where Id=@id";
+    
+            return _tenantDbDataContext.Master.ExecuteNonQuery(sql, new { id = id })>0;
+        }
+
+        public PagingData<T> GetPage(int pageSize,int pageIndex) {
+            StringBuilder countBuilder = new StringBuilder($"Select Count(*) From {TableName} ");
+            StringBuilder dataBuilder = new StringBuilder($"Select * From {TableName} ");
+
+            Dictionary<string, object> p = new Dictionary<string, object>() {
+                { "pageSize",pageSize},
+                { "offSet",pageSize*pageIndex}
+            };
+
+            dataBuilder.Append(" Limit @pageSize OFFSET @offSet");
+
+            int count = (int)((long)_tenantDbDataContext.Slave.ExecuteScalar(countBuilder.ToString(), p));
+            if (count == 0) {
+                return new PagingData<T>(pageIndex, pageSize, 0, new List<T>());
+            }
+
+            var list = _tenantDbDataContext.Slave.QueryList<T>(dataBuilder.ToString(), p);
+            return new PagingData<T>(pageIndex, pageSize, count, list);
         }
 
         public void CheckTableNameNotNull() {
