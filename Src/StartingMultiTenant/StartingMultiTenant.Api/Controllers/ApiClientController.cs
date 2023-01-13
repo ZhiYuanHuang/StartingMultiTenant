@@ -65,9 +65,12 @@ namespace StartingMultiTenant.Api.Controllers
         [Authorize(AuthorizePolicyConst.Sys_Policy)]
         public AppResponseDto<ApiClientModel> Get(Int64 id) {
             var model = _apiClientBusiness.Get(id);
+
             if (model == null) {
                 return new AppResponseDto<ApiClientModel>(false);
             }
+
+            model.ClientSecret = _encryptService.Decrypt_Aes(model.ClientSecret);
             return new AppResponseDto<ApiClientModel>() { Result = model };
         }
 
@@ -76,6 +79,15 @@ namespace StartingMultiTenant.Api.Controllers
         public AppResponseDto<ApiClientModel> GetMany(AppRequestDto<List<Int64>> requestDto) {
             var models = _apiClientBusiness.Get(requestDto.Data);
             return new AppResponseDto<ApiClientModel>() { ResultList = models };
+        }
+
+        [HttpPut]
+        public AppResponseDto<ApiClientModel> Update(AppRequestDto<ApiClientModel> requestDto) {
+            ApiClientModel apiClient = requestDto.Data;
+
+            apiClient.ClientSecret = _encryptService.Encrypt_Aes(apiClient.ClientSecret);
+            bool result = _apiClientBusiness.Insert(apiClient.ClientId, apiClient.ClientSecret, out Int64 id);
+            return new AppResponseDto<ApiClientModel>(result) { Result = apiClient };
         }
 
         [HttpPost]
@@ -117,6 +129,7 @@ namespace StartingMultiTenant.Api.Controllers
             } else {
                 pagingData=_apiClientBusiness.GetPage(clientId,requestDto.Data.PageSize, requestDto.Data.PageIndex);
             }
+            
             foreach (var client in pagingData.Data) {
                 client.ClientSecret = _encryptService.Decrypt_Aes(client.ClientSecret);
             }
