@@ -22,7 +22,7 @@ namespace StartingMultiTenant.Api.Controllers
 
         [HttpGet(Name = "GetWeatherForecast")]
         public IEnumerable<WeatherForecast> Get() {
-            string ss= _tokenBuilder.CreateJwtToken(new Model.Domain.ApiClientModel() { ClientId="sdfds"}) ;
+           
             return Enumerable.Range(1, 5).Select(index => new WeatherForecast {
                 Date = DateTime.Now.AddDays(index),
                 TemperatureC = Random.Shared.Next(-20, 55),

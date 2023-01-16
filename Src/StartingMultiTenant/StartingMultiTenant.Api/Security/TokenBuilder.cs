@@ -2,6 +2,7 @@
 using Microsoft.IdentityModel.Tokens;
 using StartingMultiTenant.Model.Const;
 using StartingMultiTenant.Model.Domain;
+using StartingMultiTenant.Model.Dto;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -14,13 +15,16 @@ namespace StartingMultiTenant.Api.Security
             _tokenOptions = tokenOptions.Value;
         }
 
-        public string CreateJwtToken(ApiClientModel apiClientModel) {
+        public string CreateJwtToken(ApiClientDto apiClientDto) {
             List<Claim> claimList = new List<Claim>()
                     {
-                        new Claim(type: ClaimTypes.Name, value: apiClientModel.ClientId), 
+                        new Claim(type: ClaimTypes.Name, value: apiClientDto.ClientId), 
                     };
-            if (!string.IsNullOrEmpty(apiClientModel.Role)) {
-                claimList.Add(new Claim(ClaimTypes.Role, apiClientModel.Role));
+            if (apiClientDto.Scopes!=null && apiClientDto.Scopes.Any()) {
+                apiClientDto.Scopes.ForEach(x => claimList.Add(new Claim("scope",x)));
+            }
+            if (!string.IsNullOrEmpty(apiClientDto.Role)) {
+                claimList.Add(new Claim(ClaimTypes.Role, apiClientDto.Role));
             }
             JwtSecurityToken jwtSecurityToken = new JwtSecurityToken(
                 issuer:_tokenOptions.Issuer,

@@ -9,11 +9,11 @@ namespace StartingMultiTenant.Business
     public class ApiScopeBusiness
     {
         private readonly ApiScopeRepository _apiScopeRepo;
-        private readonly ClientDomainScopeRepository _clientDomainScopeRepo;
+        private readonly ClientScopesRepository _clientScopesRepo;
         public ApiScopeBusiness(ApiScopeRepository apiScopeRepo,
-            ClientDomainScopeRepository clientDomainScopeRepo) {
+            ClientScopesRepository clientScopesRepo) {
             _apiScopeRepo = apiScopeRepo;
-            _clientDomainScopeRepo= clientDomainScopeRepo;
+            _clientScopesRepo= clientScopesRepo;
         }
 
         public List<ApiScopeModel> GetAll() {
@@ -25,7 +25,7 @@ namespace StartingMultiTenant.Business
         }
 
         public bool Delete(string name) {
-            int count= _clientDomainScopeRepo.GetCountByScope(name);
+            int count= _clientScopesRepo.GetCountByScope(name);
             if (count > 0) {
                 return false;
             }

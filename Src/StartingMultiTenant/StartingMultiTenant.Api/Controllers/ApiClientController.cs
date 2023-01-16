@@ -13,6 +13,7 @@ namespace StartingMultiTenant.Api.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
+    [Authorize(AuthorizePolicyConst.Sys_Policy)]
     public class ApiClientController : ControllerBase {
         private readonly ApiClientBusiness _apiClientBusiness;
         private readonly EncryptService _encryptService;
@@ -26,6 +27,7 @@ namespace StartingMultiTenant.Api.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public IActionResult Init() {
             var adminClients = _apiClientBusiness.GetAdmins();
 
@@ -51,6 +53,7 @@ namespace StartingMultiTenant.Api.Controllers
         }
 
         [HttpPost]
+        [AllowAnonymous]
         public IActionResult Init([FromForm] string clientId, [FromForm] string clientSecret) {
             string encryptSecret = _encryptService.Encrypt_Aes(clientSecret);
             var result = _apiClientBusiness.Insert(clientId, encryptSecret, out _, RoleConst.Role_Admin);
@@ -62,7 +65,6 @@ namespace StartingMultiTenant.Api.Controllers
         }
 
         [HttpGet]
-        [Authorize(AuthorizePolicyConst.Sys_Policy)]
         public AppResponseDto<ApiClientModel> Get(Int64 id) {
             var model = _apiClientBusiness.Get(id);
 
@@ -75,7 +77,17 @@ namespace StartingMultiTenant.Api.Controllers
         }
 
         [HttpGet]
-        [Authorize(AuthorizePolicyConst.Sys_Policy)]
+        public AppResponseDto<ApiClientDto> GetWithScopes(Int64 id) {
+            var model = _apiClientBusiness.GetWithScopes(id);
+
+            if (model == null) {
+                return new AppResponseDto<ApiClientDto>(false);
+            }
+
+            return new AppResponseDto<ApiClientDto>() { Result = model };
+        }
+
+        [HttpGet]
         public AppResponseDto<ApiClientModel> GetMany(AppRequestDto<List<Int64>> requestDto) {
             var models = _apiClientBusiness.Get(requestDto.Data);
             return new AppResponseDto<ApiClientModel>() { ResultList = models };
@@ -91,7 +103,6 @@ namespace StartingMultiTenant.Api.Controllers
         }
 
         [HttpPost]
-        [Authorize(AuthorizePolicyConst.Sys_Policy)]
         public AppResponseDto<Int64> Add(AppRequestDto<ApiClientModel> requestDto) {
             ApiClientModel apiClient = requestDto.Data;
 
@@ -101,7 +112,6 @@ namespace StartingMultiTenant.Api.Controllers
         }
 
         [HttpDelete]
-        [Authorize(AuthorizePolicyConst.Sys_Policy)]
         public AppResponseDto Delete(AppRequestDto<Int64> requestDto) {
             var result = _apiClientBusiness.Delete(requestDto.Data);
             return new AppResponseDto(result.Item1) { ErrorMsg = result.Item2 };
@@ -138,21 +148,18 @@ namespace StartingMultiTenant.Api.Controllers
 
 
         [HttpPost]
-        [Authorize(AuthorizePolicyConst.Sys_Policy)]
         public AppResponseDto AddScope(AppRequestDto<ApiScopeModel> requestDto) {
             bool result = _apiScopeBusiness.Insert(requestDto.Data);
             return new AppResponseDto(result);
         }
 
         [HttpGet]
-        [Authorize(AuthorizePolicyConst.Sys_Policy)]
         public AppResponseDto DeleteScope(string scopeName) {
             var result = _apiScopeBusiness.Delete(scopeName);
             return new AppResponseDto(result);
         }
 
         [HttpGet]
-        [Authorize(AuthorizePolicyConst.Sys_Policy)]
         public AppResponseDto<ApiClientModel> GetClients() {
             var clients= _apiClientBusiness.GetAll();
             foreach(var client in clients) {
@@ -164,7 +171,6 @@ namespace StartingMultiTenant.Api.Controllers
         }
 
         [HttpGet]
-        [Authorize(AuthorizePolicyConst.Sys_Policy)]
         public AppResponseDto<ApiScopeModel> GetScopes() {
             var scopes = _apiScopeBusiness.GetAll();
             
@@ -173,10 +179,9 @@ namespace StartingMultiTenant.Api.Controllers
             };
         }
 
-        [HttpPost]
-        [Authorize(AuthorizePolicyConst.Sys_Policy)]
-        public AppResponseDto Authorize(ClientDomainScopesDto clientDomainScopesDto) {
-            var result= _apiClientBusiness.Authorize(clientDomainScopesDto);
+        [HttpPut]
+        public AppResponseDto Authorize(AppRequestDto< ApiClientDto> requestDto) {
+            var result= _apiClientBusiness.Authorize(requestDto.Data);
             return new AppResponseDto(result);
         }
     }

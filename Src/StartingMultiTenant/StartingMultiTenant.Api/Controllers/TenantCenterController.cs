@@ -13,7 +13,6 @@ namespace StartingMultiTenant.Api.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
-    [Authorize]
     public class TenantCenterController : ControllerBase
     {
         private readonly SingleTenantService _singleTenantService;
@@ -40,6 +39,7 @@ namespace StartingMultiTenant.Api.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy =AuthorizePolicyConst.User_Write_Policy)]
         public async Task<AppResponseDto> CreateTenant(AppRequestDto<CreateTenantDto> requestDto) {
             if (requestDto.Data == null) {
                 return new AppResponseDto(false);
@@ -52,10 +52,6 @@ namespace StartingMultiTenant.Api.Controllers
 
             if (!_tenantDomainBusiness.Exist(createTenantDto.TenantDomain)) {
                 return new AppResponseDto(false) { ErrorMsg = $"tenantdomain {createTenantDto.TenantDomain} not exists" };
-            }
-
-            if(!_apiClientBusiness.CheckAuthorization(User.Identity.Name,createTenantDto.TenantDomain,ScopeNameConst.WriteScope)) {
-                return new AppResponseDto(false) { ErrorMsg="no enough authorization"};
             }
 
             bool existed = _tenantIdentifierBusiness.ExistTenant(createTenantDto.TenantDomain, createTenantDto.TenantIdentifier);
@@ -84,13 +80,10 @@ namespace StartingMultiTenant.Api.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = AuthorizePolicyConst.User_Read_Policy)]
         public AppResponseDto<TenantServiceDbConnsDto> GetTenantDbConn(AppRequestDto<TenantServiceInfoDto> requestDto) {
             if (requestDto.Data == null) {
                 return new AppResponseDto<TenantServiceDbConnsDto>(false);
-            }
-
-            if (!_apiClientBusiness.CheckAuthorization(User.Identity.Name, requestDto.Data.TenantDomain, ScopeNameConst.ReadScope)) {
-                return new AppResponseDto<TenantServiceDbConnsDto>(false) { ErrorMsg = "no enough authorization" };
             }
 
             List<ExternalTenantServiceDbConnModel> externalList = _externalTenantServiceDbConnRepo.GetByTenantAndService(requestDto.Data.TenantDomain, requestDto.Data.TenantIdentifier,requestDto.Data.ServiceIdentifier);

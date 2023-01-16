@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using StartingMultiTenant.Model.Const;
 using Microsoft.OpenApi.Models;
+using System.Security.Claims;
 
 namespace StartingMultiTenant.Api
 {
@@ -65,7 +66,7 @@ namespace StartingMultiTenant.Api
             builder.Services.AddTransient<HistoryTenantServiceDbConnRepository>();
             builder.Services.AddTransient<ApiClientRepository>();
             builder.Services.AddTransient<ApiScopeRepository>();
-            builder.Services.AddTransient<ClientDomainScopeRepository>();
+            builder.Services.AddTransient<ClientScopesRepository>();
 
             builder.Services.AddTransient<DbServerBusiness>();
             builder.Services.AddTransient<TenantDomainBusiness>();
@@ -105,9 +106,15 @@ namespace StartingMultiTenant.Api
                     builder.RequireRole(RoleConst.Role_Admin);
                 });
 
-                options.AddPolicy(AuthorizePolicyConst.User_Policy, builder => {
+                options.AddPolicy(AuthorizePolicyConst.User_Read_Policy, builder => {
                     builder.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
                     builder.RequireAuthenticatedUser();
+                    builder.RequireClaim("scope",ScopeNameConst.ReadScope);
+                });
+                options.AddPolicy(AuthorizePolicyConst.User_Write_Policy, builder => {
+                    builder.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
+                    builder.RequireAuthenticatedUser();
+                    builder.RequireClaim("scope", ScopeNameConst.WriteScope);
                 });
             });
 

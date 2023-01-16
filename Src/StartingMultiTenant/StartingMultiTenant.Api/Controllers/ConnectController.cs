@@ -31,7 +31,7 @@ namespace StartingMultiTenant.Api.Controllers
                 return new AppResponseDto<string>(false);
             }
 
-            var existedClient= _apiClientBusiness.Get(requestDto.Data.ClientId);
+            var existedClient= _apiClientBusiness.GetWithScopes(requestDto.Data.ClientId);
             if (existedClient == null) {
                 return new AppResponseDto<string>(false);
             }
