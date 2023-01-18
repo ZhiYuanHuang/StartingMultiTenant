@@ -87,7 +87,7 @@ namespace StartingMultiTenant.Api.Controllers
             return new AppResponseDto<ApiClientDto>() { Result = model };
         }
 
-        [HttpGet]
+        [HttpPost]
         public AppResponseDto<ApiClientModel> GetMany(AppRequestDto<List<Int64>> requestDto) {
             var models = _apiClientBusiness.Get(requestDto.Data);
             return new AppResponseDto<ApiClientModel>() { ResultList = models };
@@ -134,29 +134,18 @@ namespace StartingMultiTenant.Api.Controllers
             }
 
             PagingData<ApiClientModel> pagingData = null;
-            if (string.IsNullOrEmpty(clientId)) {
-                pagingData= _apiClientBusiness.GetPage(requestDto.Data.PageSize,requestDto.Data.PageIndex);
-            } else {
-                pagingData=_apiClientBusiness.GetPage(clientId,requestDto.Data.PageSize, requestDto.Data.PageIndex);
-            }
-            
+            //if (string.IsNullOrEmpty(clientId)) {
+            //    pagingData= _apiClientBusiness.GetPage(requestDto.Data.PageSize,requestDto.Data.PageIndex);
+            //} else {
+            //    pagingData=_apiClientBusiness.GetPage(clientId,requestDto.Data.PageSize, requestDto.Data.PageIndex);
+            //}
+
+            pagingData = _apiClientBusiness.GetPage(clientId, requestDto.Data.PageSize, requestDto.Data.PageIndex);
+
             foreach (var client in pagingData.Data) {
                 client.ClientSecret = _encryptService.Decrypt_Aes(client.ClientSecret);
             }
             return new AppResponseDto<PagingData<ApiClientModel>>() { Result = pagingData };
-        }
-
-
-        [HttpPost]
-        public AppResponseDto AddScope(AppRequestDto<ApiScopeModel> requestDto) {
-            bool result = _apiScopeBusiness.Insert(requestDto.Data);
-            return new AppResponseDto(result);
-        }
-
-        [HttpGet]
-        public AppResponseDto DeleteScope(string scopeName) {
-            var result = _apiScopeBusiness.Delete(scopeName);
-            return new AppResponseDto(result);
         }
 
         [HttpGet]
@@ -167,15 +156,6 @@ namespace StartingMultiTenant.Api.Controllers
             }
             return new AppResponseDto<ApiClientModel>() {
                 ResultList = clients
-            };
-        }
-
-        [HttpGet]
-        public AppResponseDto<ApiScopeModel> GetScopes() {
-            var scopes = _apiScopeBusiness.GetAll();
-            
-            return new AppResponseDto<ApiScopeModel>() {
-                ResultList = scopes
             };
         }
 

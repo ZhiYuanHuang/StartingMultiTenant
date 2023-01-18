@@ -22,7 +22,7 @@ namespace StartingMultiTenant.Repository
             return GetEntityByQuery(p);
         }
 
-        public bool Insert(TenantDomainModel tenantDomain,out Int64 id) {
+        public override bool Insert(TenantDomainModel tenantDomain,out Int64 id) {
             string sql = "Insert Into TenantDomain (TenantDomain) Values (@tenantDomain) RETURNING Id";
             id=(long) _tenantDbDataContext.Master.ExecuteScalar(sql,tenantDomain);
             return true;

@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using StartingMultiTenant.Model.Const;
 using Microsoft.OpenApi.Models;
 using System.Security.Claims;
+using StartingMultiTenant.Model.Domain;
 
 namespace StartingMultiTenant.Api
 {
@@ -76,6 +77,8 @@ namespace StartingMultiTenant.Api
             builder.Services.AddTransient<TenantServiceDbConnBusiness>();
             builder.Services.AddTransient<ApiClientBusiness>();
             builder.Services.AddTransient<ApiScopeBusiness>();
+            builder.Services.AddTransient<ServiceInfoBusiness>();
+            builder.Services.AddTransient<DbInfoBusiness>();
 
             builder.Services.AddSingleton<SysConstService>();
             builder.Services.AddSingleton<EncryptService>();

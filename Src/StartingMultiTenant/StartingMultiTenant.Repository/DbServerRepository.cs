@@ -1,4 +1,5 @@
 ﻿using StartingMultiTenant.Model.Domain;
+using StartingMultiTenant.Model.Dto;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -23,18 +24,24 @@ namespace StartingMultiTenant.Repository
             return GetEntitiesByQuery(dict);
         }
 
-        public bool Insert(DbServerModel dbServer) {
+        public override bool Insert(DbServerModel dbServer,out Int64 id) {
             string sql = @"Insert into DbServer (DbType,ServerHost,ServerPort,UserName,EncryptUserpwd,CanCreateNew)
-                           Values (@dbType,@serverHost,@serverPort,@userName,@encryptUserpwd,true)";
+                           Values (@dbType,@serverHost,@serverPort,@userName,@encryptUserpwd,true) RETURNING Id";
 
-
-            return _tenantDbDataContext.Master.ExecuteNonQuery(sql,dbServer)>0;
+            id = (Int64)_tenantDbDataContext.Master.ExecuteScalar(sql, dbServer);
+            return true;
         }
 
-        public bool Delete(Int64 dbServerId) {
-            string sql = "delete from dbserver where Id=@id";
+        public PagingData<DbServerModel> GetPage(int pageSize, int pageIndex, string serverHost,int? dbType) {
+            Dictionary<string, object> p = new Dictionary<string, object>();
+            if (!string.IsNullOrEmpty(serverHost)) {
+                p["serverHost"] = serverHost;
+            }
+            if (dbType.HasValue) {
+                p["dbType"] = dbType.Value;
+            }
 
-            return _tenantDbDataContext.Master.ExecuteNonQuery(sql,new { id=dbServerId})>0;
+            return GetPage(pageSize, pageIndex, p);
         }
     }
 }

@@ -6,10 +6,10 @@ namespace StartingMultiTenant.Model.Domain
 {
     public class DbInfoModel
     {
-        public int Id { get; set; }
+        public Int64 Id { get; set; }
         public string Name { get; set; }
         public string Identifier { get; set; }
-        public string ServiceIdentifier { get; set; }
+        public Int64 ServiceInfoId { get; set; }
         public string Description { get; set; }
 
     }

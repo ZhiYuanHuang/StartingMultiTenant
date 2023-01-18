@@ -6,7 +6,7 @@ namespace StartingMultiTenant.Model.Domain
 {
     public class ServiceInfoModel
     {
-        public int Id { get; set; }
+        public Int64 Id { get; set; }
         public string Name { get; set; }
         public string Identifier { get; set; }
         public string Description { get; set; }

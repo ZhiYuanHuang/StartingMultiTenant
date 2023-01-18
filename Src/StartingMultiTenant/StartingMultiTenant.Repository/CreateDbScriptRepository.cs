@@ -1,4 +1,5 @@
 ﻿using StartingMultiTenant.Model.Domain;
+using StartingMultiTenant.Model.Dto;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -11,9 +12,15 @@ namespace StartingMultiTenant.Repository
         public CreateDbScriptRepository(TenantDbDataContext tenantDbDataContext) : base(tenantDbDataContext) {
         }
 
-        public List<CreateDbScriptModel> GetPageScriptsWithNoContent(int pageSize,int pageIndex) {
-            string sql = $"Select Id,Name,MajorVersion,ServiceIdentifier,DbIdentifier,DbNameWildcard,DbType From CreateDbScript Limit {pageSize} OFFSET {pageSize*pageIndex}";
-            return _tenantDbDataContext.Slave.QueryList<CreateDbScriptModel>(sql);
+        public PagingData<CreateDbScriptModel> GetPageNoContent(int pageSize,int pageIndex,string name=null) {
+            Dictionary<string, object> p = new Dictionary<string, object>();
+            if (!string.IsNullOrEmpty(name)) {
+                p["Name"] = name;
+            }
+
+            var pagingData= GetPage(pageSize, pageIndex, p);
+            pagingData.Data.ForEach(x=>x.BinaryContent=null);
+            return pagingData;
         }
 
         public List<CreateDbScriptModel> GetListByNames(List<string> nameList) {
@@ -35,16 +42,12 @@ namespace StartingMultiTenant.Repository
             return GetEntityByQuery(p);
         }
 
-        public bool Insert(CreateDbScriptModel createDbScript) {
+        public override bool Insert(CreateDbScriptModel createDbScript,out Int64 id) {
             string sql = @"Insert into CreateDbScript (Name,MajorVersion,ServiceIdentifier,DbIdentifier,DbNameWildcard,BinaryContent,DbType)
-                            Values (@name,@majorVersion,@serviceIdentifier,@dbIdentifier,@dbNameWildcard,@binaryContent,@dbType)";
+                            Values (@name,@majorVersion,@serviceIdentifier,@dbIdentifier,@dbNameWildcard,@binaryContent,@dbType) RETURNING Id";
            
-            return _tenantDbDataContext.Master.ExecuteNonQuery(sql,createDbScript)>0;
-        }
-
-        public bool Delete(Int64 scriptId) {
-            string sql = "Delete From CreateDbScript Where Id=@id";
-            return _tenantDbDataContext.Master.ExecuteNonQuery(sql, new { id = scriptId }) > 0;
+            id=(Int64) _tenantDbDataContext.Master.ExecuteScalar(sql,createDbScript);
+            return true; 
         }
 
          

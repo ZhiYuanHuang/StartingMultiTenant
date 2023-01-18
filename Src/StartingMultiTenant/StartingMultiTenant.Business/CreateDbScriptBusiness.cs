@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using StartingMultiTenant.Model.Domain;
+using StartingMultiTenant.Model.Dto;
 using StartingMultiTenant.Repository;
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace StartingMultiTenant.Business
 {
-    public class CreateDbScriptBusiness 
+    public class CreateDbScriptBusiness :BaseBusiness<CreateDbScriptModel>
     {
         private readonly CreateDbScriptRepository _createDbScriptRepo;
         private readonly SchemaUpdateScriptRepository _schemaUpdateScriptRepo;
@@ -18,7 +19,7 @@ namespace StartingMultiTenant.Business
         public CreateDbScriptBusiness(CreateDbScriptRepository createDbScriptRepo,
             SchemaUpdateScriptRepository schemaUpdateScriptRepo,
             TenantServiceDbConnRepository tenantServiceDbConnRepo,
-            ILogger<CreateDbScriptBusiness> logger) {
+            ILogger<CreateDbScriptBusiness> logger):base(createDbScriptRepo,logger) {
             _createDbScriptRepo=createDbScriptRepo;
             _schemaUpdateScriptRepo=schemaUpdateScriptRepo;
             _tenantServiceDbConnRepo = tenantServiceDbConnRepo;
@@ -29,30 +30,18 @@ namespace StartingMultiTenant.Business
             return _createDbScriptRepo.GetEntityById(scriptId);
         }
 
-        public bool Insert(CreateDbScriptModel createDbScript) {
-            bool result= false;
-            try {
-                result=_createDbScriptRepo.Insert(createDbScript);
-                
-            } catch(Exception ex) {
-                result = false;
-                _logger.LogError(ex,"insert create script error");
-            }
-
-            return result;
-        }
-
-        public bool Delete(Int64 scriptId) {
+        public override Tuple<bool,string> Delete(Int64 scriptId) {
             bool result = false;
 
             var createScript = _createDbScriptRepo.GetEntityById(scriptId);
             if (createScript == null) {
-                return false;
+                return Tuple.Create(false,"not found");
             }
 
             string createScriptName = createScript.Name;
             int majorVersion = createScript.MajorVersion;
 
+            string errMsg = string.Empty;
             try {
                 _createDbScriptRepo.BeginTransaction();
 
@@ -74,16 +63,17 @@ namespace StartingMultiTenant.Business
                 _createDbScriptRepo.CommitTransaction();
             } catch (Exception ex) {
                 result = false;
-                _logger.LogError(ex,"delete create db script error");
+                errMsg = "delete create db script error";
+                _logger.LogError(ex, errMsg);
                 _createDbScriptRepo.RollbackTransaction();
                 
             }
 
-            return result;
+            return Tuple.Create(result,errMsg);
         }
 
-        public List<CreateDbScriptModel> GetPageScriptsWithNoContent(int pageSize, int pageIndex) {
-            return _createDbScriptRepo.GetPageScriptsWithNoContent(pageSize,pageIndex);
+        public PagingData<CreateDbScriptModel> GetPageNoContent(string name,int pageSize, int pageIndex) {
+            return _createDbScriptRepo.GetPageNoContent(pageSize,pageIndex,name);
         }
 
         public async Task<List<CreateDbScriptModel>> GetListByNames(List<string> nameList) {

@@ -1,10 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using StartingMultiTenant.Business;
 using StartingMultiTenant.Model.Const;
 using StartingMultiTenant.Model.Domain;
 using StartingMultiTenant.Model.Dto;
 using StartingMultiTenant.Repository;
+using StartingMultiTenant.Service;
+using System.Reflection.Metadata.Ecma335;
 
 namespace StartingMultiTenant.Api.Controllers
 {
@@ -13,90 +16,89 @@ namespace StartingMultiTenant.Api.Controllers
     [Authorize(AuthorizePolicyConst.Sys_Policy)]
     public class ServiceInfoController : ControllerBase
     {
-        private readonly ServiceInfoRepository _serviceInfoRepository;
-        private readonly DbInfoRepository _dbInfoRepo;
-        public ServiceInfoController(ServiceInfoRepository serviceInfoRepository,
-            DbInfoRepository dbInfoRepository) {
-            _serviceInfoRepository = serviceInfoRepository;
-            _dbInfoRepo = dbInfoRepository;
+        private readonly ServiceInfoBusiness _serviceInfoBusiness;
+        public ServiceInfoController(
+            ServiceInfoBusiness serviceInfoBusiness) {
+            _serviceInfoBusiness= serviceInfoBusiness;
+        }
+
+        [HttpGet]
+        public AppResponseDto<ServiceInfoModel> Get(Int64 id) {
+            var model = _serviceInfoBusiness.Get(id);
+
+            if (model == null) {
+                return new AppResponseDto<ServiceInfoModel>(false);
+            }
+
+            return new AppResponseDto<ServiceInfoModel>() { Result = model };
         }
 
         [HttpPost]
-        public AppResponseDto AddServiceInfo(AppRequestDto<ServiceInfoModel> requestDto) {
+        public AppResponseDto<ServiceInfoModel> GetMany(AppRequestDto<List<Int64>> requestDto) {
+            var models = _serviceInfoBusiness.Get(requestDto.Data);
+            return new AppResponseDto<ServiceInfoModel>() { ResultList = models };
+        }
+
+        [HttpPost]
+        public AppResponseDto<Int64> Add(AppRequestDto<ServiceInfoModel> requestDto) {
 
             if (requestDto.Data == null) {
-                return new AppResponseDto(false);
+                return new AppResponseDto<Int64>(false);
             }
 
-            bool result= _serviceInfoRepository.Insert(requestDto.Data);
-            return new AppResponseDto(result);
+            bool result= _serviceInfoBusiness.Insert(requestDto.Data,out Int64 id);
+            return new AppResponseDto<Int64>(result) { Result=id};
         }
 
-        [HttpPost]
-        public AppResponseDto UpdateServiceInfo(AppRequestDto<ServiceInfoModel> requestDto) {
+        [HttpPut]
+        public AppResponseDto<ServiceInfoModel> Update(AppRequestDto<ServiceInfoModel> requestDto) {
 
             if (requestDto.Data == null || requestDto.Data.Id<=0) {
-                return new AppResponseDto(false);
+                return new AppResponseDto<ServiceInfoModel>(false);
             }
 
-            bool result = _serviceInfoRepository.Update(requestDto.Data);
-            return new AppResponseDto(result);
+            bool result = _serviceInfoBusiness.Update(requestDto.Data);
+            return new AppResponseDto<ServiceInfoModel>(result) {Result=requestDto.Data};
         }
 
-        [HttpPost]
-        public AppResponseDto DeleteServiceInfo(AppRequestDto<ServiceInfoModel> requestDto) {
+        [HttpDelete]
+        public AppResponseDto Delete(AppRequestDto<ServiceInfoModel> requestDto) {
 
             if (requestDto.Data == null || requestDto.Data.Id <= 0) {
                 return new AppResponseDto(false);
             }
 
-            bool result = _serviceInfoRepository.Delete(requestDto.Data.Id);
-            return new AppResponseDto(result);
+            var result = _serviceInfoBusiness.Delete(requestDto.Data.Id);
+            return new AppResponseDto(result.Item1) { ErrorMsg=result.Item2};
+        }
+
+        [HttpDelete]
+        public AppResponseDto<List<Int64>> DeleteMany(AppRequestDto<List<Int64>> requestDto) {
+            var resultTuple = _serviceInfoBusiness.DeleteMany(requestDto.Data);
+            return new AppResponseDto<List<Int64>>(resultTuple.Item1) {
+                Result = resultTuple.Item2,
+                ErrorMsg = resultTuple.Item3
+            };
         }
 
         [HttpGet]
-        public AppResponseDto<ServiceInfoModel> GetServiceInfos() {
-            var result= _serviceInfoRepository.GetEntitiesByQuery();
+        public AppResponseDto<ServiceInfoModel> GetAll() {
+            var result= _serviceInfoBusiness.GetAll();
             return new AppResponseDto<ServiceInfoModel>() { ResultList=result};
         }
 
         [HttpPost]
-        public AppResponseDto AddServiceDbInfo(AppRequestDto<DbInfoModel> requestDto) {
-            if(requestDto.Data==null || string.IsNullOrEmpty(requestDto.Data.Identifier) || string.IsNullOrEmpty(requestDto.Data.ServiceIdentifier)) {
-                return new AppResponseDto(false);
+        public AppResponseDto<PagingData<ServiceInfoModel>> GetList(AppRequestDto<PagingParam<Dictionary<string, string>>> requestDto) {
+            string name = null;
+            if (requestDto.Data.Filter.Any() && requestDto.Data.Filter.ContainsKey("name") && !string.IsNullOrEmpty(requestDto.Data.Filter["name"])) {
+                name = requestDto.Data.Filter["name"];
             }
-            bool result= _dbInfoRepo.Insert(requestDto.Data);
-            return new AppResponseDto(result);
-        }
-
-        [HttpPost]
-        public AppResponseDto UpdateServiceDbInfo(AppRequestDto<DbInfoModel> requestDto) {
-            if (requestDto.Data == null || requestDto.Data.Id<=0 || string.IsNullOrEmpty(requestDto.Data.Identifier) || string.IsNullOrEmpty(requestDto.Data.ServiceIdentifier)) {
-                return new AppResponseDto(false);
+            string identifier = null;
+            if (requestDto.Data.Filter.Any() && requestDto.Data.Filter.ContainsKey("identifier") && !string.IsNullOrEmpty(requestDto.Data.Filter["identifier"])) {
+                identifier = requestDto.Data.Filter["identifier"];
             }
-            bool result = _dbInfoRepo.Update(requestDto.Data);
-            return new AppResponseDto(result);
-        }
-
-        [HttpPost]
-        public AppResponseDto DeleteServiceDbInfo(AppRequestDto<DbInfoModel> requestDto) {
-
-            if (requestDto.Data == null || requestDto.Data.Id <= 0) {
-                return new AppResponseDto(false);
-            }
-
-            bool result = _dbInfoRepo.Delete(requestDto.Data.Id);
-            return new AppResponseDto(result);
-        }
-
-        [HttpGet]
-        public AppResponseDto<DbInfoModel> GetDbInfosByService(string serviceInfo) {
-            if (string.IsNullOrEmpty(serviceInfo)) {
-                return new AppResponseDto<DbInfoModel>() { ResultList=new List<DbInfoModel>()};
-            }
-
-            var list= _dbInfoRepo.GetDbInfosByService(serviceInfo);
-            return new AppResponseDto<DbInfoModel>() { ResultList=list};
+            var list = _serviceInfoBusiness.GetPage(name, identifier, requestDto.Data.PageSize, requestDto.Data.PageIndex);
+            return new AppResponseDto<PagingData<ServiceInfoModel>>() { Result = list };
         }
     }
 }

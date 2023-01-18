@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using StartingMultiTenant.Model.Domain;
+using StartingMultiTenant.Model.Dto;
 using StartingMultiTenant.Repository;
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace StartingMultiTenant.Business
 {
-    public class DbServerBusiness
+    public class DbServerBusiness:BaseBusiness<DbServerModel>
     {
         private readonly DbServerRepository _dbServerRepository;
         private readonly TenantServiceDbConnRepository _tenantServiceDbConnRepository;
@@ -17,7 +18,7 @@ namespace StartingMultiTenant.Business
 
         public DbServerBusiness(DbServerRepository dbServerRepository,
             TenantServiceDbConnRepository tenantServiceDbConnRepository,
-            ILogger<DbServerBusiness> logger) {
+            ILogger<DbServerBusiness> logger):base(dbServerRepository,logger) {
             _dbServerRepository = dbServerRepository;
             _tenantServiceDbConnRepository=tenantServiceDbConnRepository;
             _logger = logger;
@@ -27,18 +28,18 @@ namespace StartingMultiTenant.Business
             return _dbServerRepository.GetDbServers(dbServerId);
         }
 
-        public bool Insert(DbServerModel dbServer) {
-            return _dbServerRepository.Insert(dbServer);
-        }
-
-        public bool Delete(Int64 dbServerId) {
+        public override Tuple<bool,string> Delete(Int64 dbServerId) {
             var dbConnList= _tenantServiceDbConnRepository.GetConnListByDbServer(dbServerId);
             if (dbConnList.Any()) {
                 _logger.LogError($"dbserver {dbServerId} still has {dbConnList.Count} dbconn refered");
-                return false;
+                return Tuple.Create(false,"still has use");
             }
 
-            return _dbServerRepository.Delete(dbServerId);
+            return Delete(dbServerId);
+        }
+
+        public PagingData<DbServerModel> GetPage(string serverHost,int? dbType, int pageSize, int pageIndex) {
+            return _dbServerRepository.GetPage(pageSize,pageIndex,serverHost,dbType);
         }
 
         public bool CheckSameTypeDbByConn(Int64 dbConnId,Int64 dbServerId,out TenantServiceDbConnModel dbConn,out DbServerModel newDbServer) {

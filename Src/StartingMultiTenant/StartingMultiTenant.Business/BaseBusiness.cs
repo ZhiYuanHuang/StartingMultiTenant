@@ -26,6 +26,19 @@ namespace StartingMultiTenant.Business
             _logger = logger;
         }
 
+        public virtual bool Insert(T t,out Int64 id) {
+            id = 0;
+            try {
+                return selfRepo.Insert(t, out id);
+            } catch {
+                return false;
+            }
+        }
+
+        public virtual bool Update(T t) {
+            return selfRepo.Update(t);
+        }
+
         public virtual Tuple<bool, string> Delete(long id) {
             bool result = false;
             string errMsg = string.Empty;
