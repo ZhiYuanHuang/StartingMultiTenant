@@ -112,9 +112,13 @@ namespace StartingMultiTenant.Repository
             return GetPage(countBuilder.ToString(),dataBuilder.ToString(),p,pageSize,pageIndex);
         }
 
-        public PagingData<T> GetPage(int pageSize,int pageIndex,Dictionary<string,object> whereFieldDict,Dictionary<string,bool> orderFieldDict=null) {
+        public PagingData<T> GetPage(int pageSize,int pageIndex,Dictionary<string,object> whereFieldDict,Dictionary<string,bool> orderFieldDict=null,List<string> selectFields=null) {
             StringBuilder countBuilder = new StringBuilder($"Select Count(Id) From {TableName} ");
             StringBuilder dataBuilder = new StringBuilder($"Select * From {TableName} ");
+
+            if(selectFields!=null && selectFields.Any()) {
+                dataBuilder = new StringBuilder(string.Format("Select {0} From {1} ",string.Join(',', selectFields),TableName));
+            }
 
             Dictionary<string, object> p = new Dictionary<string, object>() {
                 { "pageSize",pageSize},
@@ -174,6 +178,9 @@ namespace StartingMultiTenant.Repository
                         orderBuilder.Append($" {pair.Key} Desc");
                     }
                 }
+
+                string orderStr = orderBuilder.ToString();
+                dataBuilder.Append(orderStr);
             }
 
             dataBuilder.Append(" Limit @pageSize OFFSET @offSet");

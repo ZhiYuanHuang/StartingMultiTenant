@@ -2,6 +2,7 @@
 using StartingMultiTenant.Model.Dto;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace StartingMultiTenant.Repository
@@ -18,9 +19,28 @@ namespace StartingMultiTenant.Repository
                 p["Name"] = name;
             }
 
-            var pagingData= GetPage(pageSize, pageIndex, p);
-            pagingData.Data.ForEach(x=>x.BinaryContent=null);
+            var orderDict = new Dictionary<string, bool>() { 
+                { "Name", true },
+                { "MajorVersion",true}
+            };
+            List<string> selectFields = new List<string>() {
+                "Id","Name","MajorVersion","ServiceIdentifier","DbIdentifier","DbNameWildcard","DbType"
+            };
+            var pagingData= GetPage(pageSize, pageIndex, p, orderDict,selectFields);
             return pagingData;
+        }
+
+        public CreateDbScriptModel GetNoContent(Int64 id) {
+            string sql = $"Select Id,Name,MajorVersion,ServiceIdentifier,DbIdentifier,DbNameWildcard,DbType From {TableName} Where Id=@id";
+            return _tenantDbDataContext.Slave.Query<CreateDbScriptModel>(sql, new { id = id });
+        }
+
+        public List<CreateDbScriptModel> GetNoContent(List<Int64> ids) {
+            if (ids == null || !ids.Any()) {
+                return new List<CreateDbScriptModel>();
+            }
+            string sql = $"Select Id,Name,MajorVersion,ServiceIdentifier,DbIdentifier,DbNameWildcard,DbType From {TableName} Where Id=ANY(@ids)";
+            return _tenantDbDataContext.Slave.QueryList<CreateDbScriptModel>(sql, new { ids = ids.ToArray() });
         }
 
         public List<CreateDbScriptModel> GetListByNames(List<string> nameList) {
@@ -43,7 +63,14 @@ namespace StartingMultiTenant.Repository
         }
 
         public override bool Insert(CreateDbScriptModel createDbScript,out Int64 id) {
-            string sql = @"Insert into CreateDbScript (Name,MajorVersion,ServiceIdentifier,DbIdentifier,DbNameWildcard,BinaryContent,DbType)
+            string sql = @"Select Max(MajorVersion) From CreateDbScript Where Name=@name";
+            object curMajorVersionObj = _tenantDbDataContext.Master.ExecuteScalar(sql,new { name=createDbScript.Name});
+            int majorVersion = 1;
+            if (curMajorVersionObj != null) {
+                majorVersion= Convert.ToInt32(curMajorVersionObj)+1;
+            }
+            createDbScript.MajorVersion= majorVersion;
+            sql = @"Insert into CreateDbScript (Name,MajorVersion,ServiceIdentifier,DbIdentifier,DbNameWildcard,BinaryContent,DbType)
                             Values (@name,@majorVersion,@serviceIdentifier,@dbIdentifier,@dbNameWildcard,@binaryContent,@dbType) RETURNING Id";
            
             id=(Int64) _tenantDbDataContext.Master.ExecuteScalar(sql,createDbScript);

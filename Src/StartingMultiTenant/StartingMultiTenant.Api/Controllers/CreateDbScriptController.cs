@@ -133,7 +133,7 @@ namespace StartingMultiTenant.Api.Controllers
             return dto;
         }
 
-        [HttpGet]
+        [HttpPost]
         public AppResponseDto<CreateDbScriptModel> GetMany(AppRequestDto<List<Int64>> requestDto) {
             var models = _createDbScriptBusiness.Get(requestDto.Data);
             models.ForEach(x=>x.BinaryContent=null);
@@ -141,9 +141,8 @@ namespace StartingMultiTenant.Api.Controllers
         }
 
         [HttpGet]
-        [AllowAnonymous]
         public IActionResult GetScriptContent(Int64 scriptId) {
-            var createScript= _createDbScriptBusiness.GetById(scriptId);
+            var createScript= _createDbScriptBusiness.Get(scriptId);
             if (createScript == null) {
                 return NotFound();
             }

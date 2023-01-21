@@ -19,15 +19,18 @@ namespace StartingMultiTenant.Service
         private readonly ILogger<MultiTenantService> _logger;
         private readonly TenantServiceDbConnBusiness _tenantServiceDbConnBusiness;
         private readonly DbServerBusiness _dbServerBusiness;
+        private readonly CreateDbScriptBusiness _createDbScriptBusiness;
         public MultiTenantService(SingleTenantService singleTenantService,
             SchemaUpdateScriptBusiness schemaUpdateScriptBusiness,
             TenantServiceDbConnBusiness tenantServiceDbConnBusiness,
             DbServerBusiness dbServerBusiness,
+            CreateDbScriptBusiness createDbScriptBusiness,
             ILogger<MultiTenantService> logger) { 
             _singleTenantService=singleTenantService;
             _schemaUpdateScriptBusiness = schemaUpdateScriptBusiness;
             _tenantServiceDbConnBusiness = tenantServiceDbConnBusiness;
             _dbServerBusiness = dbServerBusiness;
+            _createDbScriptBusiness = createDbScriptBusiness;
             _logger=logger;
         }
 
@@ -38,10 +41,12 @@ namespace StartingMultiTenant.Service
                 return Tuple.Create(false, 0,0);
             }
 
-            List<TenantServiceDbConnModel> tenantServiceDbConnList=await _tenantServiceDbConnBusiness.GetTenantServiceDbConns(updateScript.CreateScriptName,updateScript.BaseMajorVersion);
+            var createDbScript = _createDbScriptBusiness.Get(updateScript.Id);
+
+            List<TenantServiceDbConnModel> tenantServiceDbConnList=await _tenantServiceDbConnBusiness.GetTenantServiceDbConns(createDbScript.Name, createDbScript.MajorVersion);
 
             if (!tenantServiceDbConnList.Any()) {
-                _logger.LogError($"cann't find createScript:{updateScript.CreateScriptName} majorversion:{updateScript.BaseMajorVersion} db conn");
+                _logger.LogError($"cann't find createScript:{createDbScript.Name} majorversion:{createDbScript.MajorVersion} db conn");
                 return Tuple.Create(false,0,0);
             }
 

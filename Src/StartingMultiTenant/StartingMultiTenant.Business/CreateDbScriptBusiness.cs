@@ -26,8 +26,13 @@ namespace StartingMultiTenant.Business
             _logger=logger;
         }
 
-        public CreateDbScriptModel GetById(Int64 scriptId) {
-            return _createDbScriptRepo.GetEntityById(scriptId);
+        public override CreateDbScriptModel Get(long id) {
+            return _createDbScriptRepo.GetNoContent(id);
+        }
+
+        public override List<CreateDbScriptModel> Get(List<long> ids) {
+            return _createDbScriptRepo.GetNoContent(ids);
+
         }
 
         public override Tuple<bool,string> Delete(Int64 scriptId) {
@@ -50,7 +55,7 @@ namespace StartingMultiTenant.Business
                     throw new Exception($"create db script {createScriptName} version {majorVersion} still has {connList.Count} dbconn");
                 }
 
-                var schemaUpdateScriptList = _schemaUpdateScriptRepo.GetSchemaUpdateScripts(createScriptName,majorVersion);
+                var schemaUpdateScriptList = _schemaUpdateScriptRepo.GetSchemaUpdateScripts(createScript.Id);
                 if (schemaUpdateScriptList.Any()) {
                     throw new Exception($"create db script {createScriptName} version {majorVersion} still has {schemaUpdateScriptList.Count} update scripts");
                 }

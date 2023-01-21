@@ -96,7 +96,7 @@ namespace StartingMultiTenant.Service
                         serverAndDbDict.Add(dbserverExecutor,new List<string>() { createDbName});
                     }
 
-                    var schemaUpdateScripts=await _schemaUpdateScriptBusiness.GetSchemaUpdateScripts(createScript.Name,createScript.MajorVersion);
+                    var schemaUpdateScripts= _schemaUpdateScriptBusiness.GetSchemaUpdateScripts(createScript.Id);
                     int lastMinorVersion = 0;
                     if (schemaUpdateScripts.Any()) {
                         schemaUpdateScripts = schemaUpdateScripts.OrderBy(x => x.MinorVersion).ToList();
@@ -179,7 +179,7 @@ namespace StartingMultiTenant.Service
 
             List<DbServerModel> dbServerList = _dbServerBusiness.GetDbServers(tenantServiceDbConn.DbServerId);
             if(!dbServerList.Any()) {
-                _logger.LogError($"未找到 {tenantServiceDbConn.TenantDomain} {tenantServiceDbConn.TenantIdentifier} {schemaUpdateScript.CreateScriptName} 创建的数据库链接对应的数据库服务器");
+                _logger.LogError($"未找到 {tenantServiceDbConn.TenantDomain} {tenantServiceDbConn.TenantIdentifier} {schemaUpdateScript.CreateDbScriptId} 创建的数据库链接对应的数据库服务器");
                 return false;
             }
 

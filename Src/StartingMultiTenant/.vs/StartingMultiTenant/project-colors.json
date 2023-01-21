@@ -35,7 +35,17 @@
       "ProjectGuid": "2194e78e-212f-4bba-b119-967f9537c8f4",
       "DisplayName": "StartingMultiTenant.Repository",
       "ColorIndex": 5
+    },
+    "aed2e4a2-fc95-46da-a11d-83c8fcf97df4": {
+      "ProjectGuid": "aed2e4a2-fc95-46da-a11d-83c8fcf97df4",
+      "DisplayName": "StartingMultiTenant.Api",
+      "ColorIndex": 6
+    },
+    "c92a38cc-1202-432e-8528-3ae68770c927": {
+      "ProjectGuid": "c92a38cc-1202-432e-8528-3ae68770c927",
+      "DisplayName": "StartingMultiTenant.Business",
+      "ColorIndex": 7
     }
   },
-  "NextColorIndex": 6
+  "NextColorIndex": 8
 }
