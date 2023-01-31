@@ -1,4 +1,5 @@
 ﻿using StartingMultiTenant.Model.Domain;
+using StartingMultiTenant.Model.Dto;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
@@ -112,6 +113,29 @@ namespace StartingMultiTenant.Repository
             return GetEntityByQuery(p);
         }
 
-        
+        public PagingData<TenantServiceDbConnDto> GetPage(int pageSize, int pageIndex,Func<TenantServiceDbConnModel,TenantServiceDbConnDto> mappingFunc, string tenantDomain = null, string tenantIdentifier = null, string serviceIdentifier = null, string dbIdentifier = null) {
+            Dictionary<string, object> p = new Dictionary<string, object>();
+            if (!string.IsNullOrEmpty(tenantIdentifier)) {
+                p["TenantIdentifier"] = tenantIdentifier;
+            }
+            if (!string.IsNullOrEmpty(tenantDomain)) {
+                p["TenantDomain"] = tenantDomain;
+            }
+            if (!string.IsNullOrEmpty(serviceIdentifier)) {
+                p["ServiceIdentifier"] = serviceIdentifier;
+            }
+            if (!string.IsNullOrEmpty(dbIdentifier)) {
+                p["DbIdentifier"] = dbIdentifier;
+            }
+            //return GetPage(pageSize, pageIndex, p,mappingFunc);
+
+            Dictionary<string, bool> orderDict = new Dictionary<string, bool>() {
+                { "CreateScriptName",true},
+                { "CreateScriptVersion",true},
+                { "CurSchemaVersion",true},
+            };
+
+            return GetPageWithMaping<TenantServiceDbConnDto>(pageSize, pageIndex, p, mappingFunc, orderDict);
+        }
     }
 }

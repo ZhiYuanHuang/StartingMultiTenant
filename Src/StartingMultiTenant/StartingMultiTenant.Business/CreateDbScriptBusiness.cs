@@ -81,6 +81,10 @@ namespace StartingMultiTenant.Business
             return _createDbScriptRepo.GetPageNoContent(pageSize,pageIndex,name);
         }
 
+        public List<CreateDbScriptModel> GetAllNoContent() {
+            return _createDbScriptRepo.GetAllNoContent();
+        }
+
         public async Task<List<CreateDbScriptModel>> GetListByNames(List<string> nameList) {
             return _createDbScriptRepo.GetListByNames(nameList);
         }

@@ -9,5 +9,8 @@ namespace StartingMultiTenant.Model.Dto
     {
         public string? DbConnStr { get; set; }
         public string? OverrideDbConnStr { get; set; }
+        public Int64 TenantDomainId { get; set; }
+        public Int64 ServiceInfoId { get; set; }
+        public Int64 DbInfoId { get; set; }
     }
 }

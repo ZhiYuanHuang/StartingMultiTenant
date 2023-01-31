@@ -20,6 +20,13 @@ namespace StartingMultiTenant.Repository
             return _tenantDbDataContext.Master.ExecuteNonQuery(sql,tenantIdentifier)>0;
         }
 
+        public override bool Insert(TenantIdentifierModel tenantIdentifier,out Int64 id) {
+            string sql = "Insert Into TenantIdentifier (TenantGuid,TenantIdentifier,TenantDomain) Values (@tenantGuid,@tenantIdentifier,@tenantDomain) RETURNING Id";
+
+            id=(Int64) _tenantDbDataContext.Master.ExecuteScalar(sql, tenantIdentifier);
+            return true;
+        }
+
         public bool Delete(string tenantGuid) {
             string sql = "Delete From TenantIdentifier Where TenantGuid=@tenantGuid";
             return _tenantDbDataContext.Master.ExecuteNonQuery(sql, new { tenantGuid = tenantGuid })>0;

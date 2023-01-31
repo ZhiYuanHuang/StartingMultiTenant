@@ -79,6 +79,7 @@ namespace StartingMultiTenant.Api
             builder.Services.AddTransient<ApiScopeBusiness>();
             builder.Services.AddTransient<ServiceInfoBusiness>();
             builder.Services.AddTransient<DbInfoBusiness>();
+            builder.Services.AddTransient<ExternalTenantServiceDbConnBusiness>();
 
             builder.Services.AddSingleton<SysConstService>();
             builder.Services.AddSingleton<EncryptService>();

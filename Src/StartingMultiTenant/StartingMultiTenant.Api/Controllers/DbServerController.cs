@@ -81,7 +81,7 @@ namespace StartingMultiTenant.Api.Controllers
             return new AppResponseDto<DbServerDto>() { Result = dto };
         }
 
-        [HttpGet]
+        [HttpPost]
         public AppResponseDto<DbServerDto> GetMany(AppRequestDto<List<Int64>> requestDto) {
             var models = _dbServerBusiness.Get(requestDto.Data);
 

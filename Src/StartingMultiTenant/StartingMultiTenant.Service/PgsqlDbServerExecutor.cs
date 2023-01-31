@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using StartingMultiTenant.Util;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
+using System.Data.Common;
 
 namespace StartingMultiTenant.Service
 {
@@ -31,6 +32,7 @@ namespace StartingMultiTenant.Service
 
                 if (conn.State == System.Data.ConnectionState.Open) {
                     //CREATE DATABASE "Test_db" WITH OWNER = postgres ENCODING = 'UTF8' LOCALE_PROVIDER = libc LOCALE = 'en_US.utf8';
+                    
                     npgsqlCommand = new NpgsqlCommand(dbScriptStr, conn);
                     await npgsqlCommand.ExecuteNonQueryAsync();
                     result = true;
@@ -51,24 +53,35 @@ namespace StartingMultiTenant.Service
             NpgsqlConnection conn = new NpgsqlConnection(dbConnStr);
 
             bool result = false;
+            NpgsqlTransaction trans = null;
             try {
 
-                var npgsqlCommand = new NpgsqlCommand(updateSchemaScript, conn);
                 await conn.OpenAsync();
 
                 if (conn.State == System.Data.ConnectionState.Open) {
+                    trans = conn.BeginTransaction(System.Data.IsolationLevel.RepeatableRead);
+                    var npgsqlCommand = new NpgsqlCommand(updateSchemaScript, conn, trans);
                     try {
                         await npgsqlCommand.ExecuteNonQueryAsync();
+                        trans.Commit();
                         result = true;
                     } catch {
+                        trans.Rollback();
                         result = false;
+                    } finally {
+                        trans?.Dispose();
                     }
 
                     if (!result) {
                         try {
-                            npgsqlCommand = new NpgsqlCommand(rollbackScript,conn);
+                            trans = conn.BeginTransaction(System.Data.IsolationLevel.RepeatableRead);
+                            npgsqlCommand = new NpgsqlCommand(rollbackScript,conn,trans);
                             await npgsqlCommand.ExecuteNonQueryAsync();
+                            trans.Commit();
                         } catch {
+                            trans.Rollback();
+                        } finally {
+                            trans?.Dispose();
                         }
                     }
                    

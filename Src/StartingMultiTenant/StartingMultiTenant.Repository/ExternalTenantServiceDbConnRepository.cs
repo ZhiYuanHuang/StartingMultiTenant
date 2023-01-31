@@ -1,9 +1,11 @@
 ﻿using StartingMultiTenant.Model.Domain;
+using StartingMultiTenant.Model.Dto;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Xml.Linq;
 
 namespace StartingMultiTenant.Repository
 {
@@ -15,7 +17,7 @@ namespace StartingMultiTenant.Repository
 
         }
 
-        public bool InsertOrUpdate(ExternalTenantServiceDbConnModel externalTenantServiceDbConn) {
+        public override bool Insert(ExternalTenantServiceDbConnModel externalTenantServiceDbConn,out Int64 id) {
             string sql = @"Insert Into ExternalTenantServiceDbConn
                            (TenantIdentifier,TenantDomain,ServiceIdentifier,DbIdentifier,EncryptedConnStr,UpdateTime)
                            Values 
@@ -24,14 +26,36 @@ namespace StartingMultiTenant.Repository
                            Do Update Set
                              OverrideEncryptedConnStr=ExternalTenantServiceDbConn.EncryptedConnStr,
                              EncryptedConnStr=EXCLUDED.EncryptedConnStr,
-                             UpdateTime=now()";
+                             UpdateTime=now()
+                            RETURNING Id";
 
-            return _tenantDbDataContext.Master.ExecuteNonQuery(sql,externalTenantServiceDbConn)>0;
+            id=(Int64) _tenantDbDataContext.Master.ExecuteScalar(sql,externalTenantServiceDbConn);
+            return true;
         }
 
-        public bool Delete(Int64 dbConnId) {
-            string sql = "Delete From ExternalTenantServiceDbConn Where Id=@id";
-            return _tenantDbDataContext.Master.ExecuteNonQuery(sql, new { id=dbConnId})>0;
+        public override bool Update(ExternalTenantServiceDbConnModel t) {
+            string sql = @"Update ExternalTenantServiceDbConn 
+                             Set OverrideEncryptedConnStr=ExternalTenantServiceDbConn.EncryptedConnStr,
+                             EncryptedConnStr=@encryptedConnStr,
+                             UpdateTime=now() Where Id=@id";
+            return _tenantDbDataContext.Master.ExecuteNonQuery(sql, t) > 0;
+        }
+
+        public PagingData<ExternalTenantServiceDbConnModel> GetPage(int pageSize,int pageIndex,string tenantDomain=null,string tenantIdentifier=null,string serviceIdentifier=null,string dbIdentifier=null) {
+            Dictionary<string, object> p = new Dictionary<string, object>();
+            if (!string.IsNullOrEmpty(tenantIdentifier)) {
+                p["TenantIdentifier"] = tenantIdentifier;
+            }
+            if (!string.IsNullOrEmpty(tenantDomain)) {
+                p["TenantDomain"] = tenantDomain;
+            }
+            if (!string.IsNullOrEmpty(serviceIdentifier)) {
+                p["ServiceIdentifier"] = serviceIdentifier;
+            }
+            if (!string.IsNullOrEmpty(dbIdentifier)) {
+                p["DbIdentifier"] = dbIdentifier;
+            }
+            return GetPage(pageSize,pageIndex,p);
         }
 
         public List<ExternalTenantServiceDbConnModel> GetByTenantAndService(string tenantDomain,string tenantIdentifier,string serviceIdentifier = null) {

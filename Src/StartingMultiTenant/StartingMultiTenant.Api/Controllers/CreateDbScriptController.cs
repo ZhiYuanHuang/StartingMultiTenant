@@ -105,6 +105,13 @@ namespace StartingMultiTenant.Api.Controllers
             PagingData<CreateDbScriptDto> pageDtoList = new PagingData<CreateDbScriptDto>(pageList.PageSize, pageList.PageIndex, pageList.RecordCount, pageList.Data.Select(x => ConvertFromModel(x, serviceDict,dbDict)).ToList());
             return new AppResponseDto<PagingData<CreateDbScriptDto>>() {Result= pageDtoList };
         }
+
+        [HttpGet]
+        public AppResponseDto<CreateDbScriptModel> GetAll() {
+            var allCreateDbScripts= _createDbScriptBusiness.GetAllNoContent();
+            return new AppResponseDto<CreateDbScriptModel>() { ResultList=allCreateDbScripts};
+        }
+
         [HttpGet]
         public AppResponseDto<CreateDbScriptDto> Get(Int64 id) {
             var model = _createDbScriptBusiness.Get(id);

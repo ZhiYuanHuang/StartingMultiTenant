@@ -25,6 +25,10 @@ namespace StartingMultiTenant.Business
             return model!= null;
         }
 
+        public TenantDomainModel Get(string tenantDomain) {
+            return _tenantDomainRepo.Get(tenantDomain);
+        }
+
         public bool Insert(TenantDomainModel tenantDomain,out Int64 id) {
             id = 0;
             try {

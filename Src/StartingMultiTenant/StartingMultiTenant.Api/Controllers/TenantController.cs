@@ -39,35 +39,39 @@ namespace StartingMultiTenant.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<AppResponseDto> CreateTenant(AppRequestDto<CreateTenantDto> requestDto) {
+        public async Task<AppResponseDto<Int64>> Add(AppRequestDto<CreateTenantDto> requestDto) {
             if (requestDto.Data == null) {
-                return new AppResponseDto(false);
+                return new AppResponseDto<Int64>(false);
             }
 
             CreateTenantDto createTenantDto = requestDto.Data;
-            if (string.IsNullOrEmpty(createTenantDto.TenantDomain) || string.IsNullOrEmpty(createTenantDto.TenantIdentifier) || createTenantDto.CreateDbScripts==null || !createTenantDto.CreateDbScripts.Any()) {
-                return new AppResponseDto(false);
+            var domainModel = _tenantDomainBusiness.Get(requestDto.Data.TenantDomainId);
+            if (domainModel != null) {
+                createTenantDto.TenantDomain = domainModel.TenantDomain;
+            } else {
+                return new AppResponseDto<Int64>(false) { ErrorMsg = $"tenantdomain {requestDto.Data.TenantDomainId} not exists" };
             }
 
-            if (!_tenantDomainBusiness.Exist(createTenantDto.TenantDomain)) {
-                return new AppResponseDto(false) { ErrorMsg=$"tenantdomain {createTenantDto.TenantDomain} not exists"};
+            if (string.IsNullOrEmpty(createTenantDto.TenantDomain) || string.IsNullOrEmpty(createTenantDto.TenantIdentifier) || createTenantDto.CreateDbScriptIds==null || !createTenantDto.CreateDbScriptIds.Any()) {
+                return new AppResponseDto<Int64>(false);
             }
 
             bool existed = _tenantIdentifierBusiness.ExistTenant(createTenantDto.TenantDomain, createTenantDto.TenantIdentifier);
             if(existed && !createTenantDto.OverrideWhenExisted) {
-                return new AppResponseDto(false) { ErrorMsg = $"tenantdomain {createTenantDto.TenantDomain} identifier {createTenantDto.TenantIdentifier} had existed" };
+                return new AppResponseDto<Int64>(false) { ErrorMsg = $"tenantdomain {createTenantDto.TenantDomain} identifier {createTenantDto.TenantIdentifier} had existed" };
             }
 
             string tenantGuid = string.Empty;
+            Int64 id = 0;
             if (!existed) {
                 tenantGuid = Guid.NewGuid().ToString("N");
-                bool toInsertSuccess = _tenantIdentifierBusiness.Insert(new TenantIdentifierModel() { TenantDomain=createTenantDto.TenantDomain,TenantIdentifier=createTenantDto.TenantIdentifier,TenantGuid=tenantGuid});
+                bool toInsertSuccess = _tenantIdentifierBusiness.Insert(new TenantIdentifierModel() { TenantDomain=createTenantDto.TenantDomain,TenantIdentifier=createTenantDto.TenantIdentifier,TenantGuid=tenantGuid},out id);
                 if(!toInsertSuccess) {
-                    return new AppResponseDto(false);
+                    return new AppResponseDto<Int64>(false);
                 }
             }
 
-            var result=await _singleTenantService.CreateTenantDbs(createTenantDto.TenantDomain,createTenantDto.TenantIdentifier,createTenantDto.CreateDbScripts,createTenantDto.OverrideWhenExisted);
+            var result=await _singleTenantService.CreateTenantDbs(createTenantDto.TenantDomain,createTenantDto.TenantIdentifier,createTenantDto.CreateDbScriptIds,createTenantDto.OverrideWhenExisted);
 
             if (!result) {
                 if (!existed) {
@@ -75,7 +79,7 @@ namespace StartingMultiTenant.Api.Controllers
                 }
             }
 
-            return new AppResponseDto(result);
+            return new AppResponseDto<Int64>(result) {Result=id};
         }
 
         [HttpPost]

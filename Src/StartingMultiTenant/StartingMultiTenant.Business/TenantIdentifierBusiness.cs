@@ -1,4 +1,5 @@
-﻿using StartingMultiTenant.Model.Domain;
+﻿using Microsoft.Extensions.Logging;
+using StartingMultiTenant.Model.Domain;
 using StartingMultiTenant.Model.Dto;
 using StartingMultiTenant.Repository;
 using System;
@@ -8,12 +9,13 @@ using System.Text;
 
 namespace StartingMultiTenant.Business
 {
-    public class TenantIdentifierBusiness
+    public class TenantIdentifierBusiness:BaseBusiness<TenantIdentifierModel>
     {
         private readonly TenantIdentifierRepository _tenantIdentifierRepo;
         private readonly TenantDomainRepository _tenantDomainRepo;
         public TenantIdentifierBusiness(TenantDomainRepository tenantDomainRepo,
-            TenantIdentifierRepository tenantIdentifierRepo) {
+            TenantIdentifierRepository tenantIdentifierRepo,
+            ILogger<TenantIdentifierBusiness> logger):base(tenantIdentifierRepo,logger) {
             _tenantDomainRepo= tenantDomainRepo;
             _tenantIdentifierRepo= tenantIdentifierRepo;
         }

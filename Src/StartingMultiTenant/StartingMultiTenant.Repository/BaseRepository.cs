@@ -198,6 +198,113 @@ namespace StartingMultiTenant.Repository
             return new PagingData<T>(pageIndex, pageSize, count, list);
         }
 
+        public PagingData<TDto> GetPageWithMaping<TDto>(int pageSize, int pageIndex, Func<T, TDto> mappingFunc)
+            where TDto:new()
+        {
+            StringBuilder countBuilder = new StringBuilder($"Select Count(Id) From {TableName} ");
+            StringBuilder dataBuilder = new StringBuilder($"Select * From {TableName} ");
+
+            Dictionary<string, object> p = new Dictionary<string, object>() {
+                { "pageSize",pageSize},
+                { "offSet",pageSize*pageIndex}
+            };
+
+            dataBuilder.Append(" Limit @pageSize OFFSET @offSet");
+
+            return GetPageWithMaping(countBuilder.ToString(), dataBuilder.ToString(), p, pageSize, pageIndex,mappingFunc);
+        }
+
+        public PagingData<TDto> GetPageWithMaping<TDto>(int pageSize, int pageIndex, Dictionary<string, object> whereFieldDict,Func<T, TDto> mappingFunc, Dictionary<string, bool> orderFieldDict = null, List<string> selectFields = null)
+            where TDto : new() 
+        {
+            StringBuilder countBuilder = new StringBuilder($"Select Count(Id) From {TableName} ");
+            StringBuilder dataBuilder = new StringBuilder($"Select * From {TableName} ");
+
+            if (selectFields != null && selectFields.Any()) {
+                dataBuilder = new StringBuilder(string.Format("Select {0} From {1} ", string.Join(',', selectFields), TableName));
+            }
+
+            Dictionary<string, object> p = new Dictionary<string, object>() {
+                { "pageSize",pageSize},
+                { "offSet",pageSize*pageIndex}
+            };
+
+            if (whereFieldDict != null && whereFieldDict.Any()) {
+                bool first = true;
+                StringBuilder whereBuilder = new StringBuilder();
+
+                foreach (var pair in whereFieldDict) {
+                    if (!first) {
+                        whereBuilder.Append(" And ");
+                    } else {
+                        first = false;
+                        whereBuilder.Append(" Where ");
+                    }
+
+                    string paramName = pair.Key.ToLower();
+
+                    if (pair.Value == null) {
+                        whereBuilder.Append($" {pair.Key} Is NULL ");
+                    } else if (pair.Value is ICollection) {
+                        ICollection? objects = pair.Value as ICollection;
+                        if (objects != null && objects.Count > 0) {
+                            whereBuilder.Append($" {pair.Key}=ANY(@{paramName}) ");
+                            object[] objArr = new object[objects.Count];
+                            objects.CopyTo(objArr, 0);
+                            p[paramName] = objArr;
+                        }
+                    } else {
+                        whereBuilder.Append($" {pair.Key}=@{paramName} ");
+                        p[paramName] = pair.Value;
+                    }
+                }
+
+                string whereStr = whereBuilder.ToString();
+                countBuilder.Append(whereStr);
+                dataBuilder.Append(whereStr);
+            }
+
+            if (orderFieldDict != null && orderFieldDict.Any()) {
+                StringBuilder orderBuilder = new StringBuilder();
+                bool first = true;
+                foreach (var pair in orderFieldDict) {
+                    if (!first) {
+                        orderBuilder.Append(",");
+                    } else {
+                        first = false;
+                        orderBuilder.Append(" Order By ");
+                    }
+
+                    //true:asc,false:desc
+                    if (pair.Value) {
+                        orderBuilder.Append($" {pair.Key}");
+                    } else {
+                        orderBuilder.Append($" {pair.Key} Desc");
+                    }
+                }
+
+                string orderStr = orderBuilder.ToString();
+                dataBuilder.Append(orderStr);
+            }
+
+            dataBuilder.Append(" Limit @pageSize OFFSET @offSet");
+
+            return GetPageWithMaping(countBuilder.ToString(), dataBuilder.ToString(), p, pageSize, pageIndex,mappingFunc);
+        }
+
+        public PagingData<TDto> GetPageWithMaping<TDto>(string countSqlStr, string getPageStr, Dictionary<string, object> p, int pageSize, int pageIndex, Func<T, TDto> mappingFunc)
+            where TDto : new()
+        { 
+            int count = (int)((long)_tenantDbDataContext.Slave.ExecuteScalar(countSqlStr, p));
+            if (count == 0) {
+                return new PagingData<TDto>(pageIndex, pageSize, 0, new List<TDto>());
+            }
+
+            var list = _tenantDbDataContext.Slave.QueryList<T>(getPageStr, p);
+            var list2= list.Select(x => mappingFunc(x)).ToList();
+            return new PagingData<TDto>(pageIndex, pageSize, count, list2);
+        }
+
         public void CheckTableNameNotNull() {
             if (string.IsNullOrEmpty(TableName)) {
                 throw new Exception("tableName is empty,cann't auto generate sql");

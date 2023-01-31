@@ -43,6 +43,12 @@ namespace StartingMultiTenant.Repository
             return _tenantDbDataContext.Slave.QueryList<CreateDbScriptModel>(sql, new { ids = ids.ToArray() });
         }
 
+        public List<CreateDbScriptModel> GetAllNoContent() {
+            
+            string sql = $"Select Id,Name,MajorVersion,ServiceIdentifier,DbIdentifier,DbNameWildcard,DbType From {TableName} Order By Name,MajorVersion Desc";
+            return _tenantDbDataContext.Slave.QueryList<CreateDbScriptModel>(sql);
+        }
+
         public List<CreateDbScriptModel> GetListByNames(List<string> nameList) {
             string sql = @"Select * From CreateDbScript Where Name = ANY( @names)";
             //return _tenantDbDataContext.Slave.QueryList<CreateDbScriptModel>(sql, new { 

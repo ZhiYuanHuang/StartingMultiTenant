@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using StartingMultiTenant.Model.Domain;
+using StartingMultiTenant.Model.Dto;
 using StartingMultiTenant.Model.Enum;
 using StartingMultiTenant.Repository;
 using System;
@@ -9,17 +10,21 @@ using System.Threading.Tasks;
 
 namespace StartingMultiTenant.Business
 {
-    public class TenantServiceDbConnBusiness 
+    public class TenantServiceDbConnBusiness:BaseBusiness<TenantServiceDbConnModel>
     {
         private readonly TenantServiceDbConnRepository _tenantServiceDbConnRepository;
         private readonly HistoryTenantServiceDbConnRepository _historyTenantServiceDbConnRepo;
         private readonly ILogger<TenantServiceDbConnBusiness> _logger;
         public TenantServiceDbConnBusiness(TenantServiceDbConnRepository tenantServiceDbConnRepository,
             HistoryTenantServiceDbConnRepository historyTenantServiceDbConnRepo,
-            ILogger<TenantServiceDbConnBusiness> logger) {
+            ILogger<TenantServiceDbConnBusiness> logger):base(tenantServiceDbConnRepository,logger) {
             _tenantServiceDbConnRepository = tenantServiceDbConnRepository;
             _historyTenantServiceDbConnRepo = historyTenantServiceDbConnRepo;
             _logger = logger;
+        }
+
+        public PagingData<TenantServiceDbConnDto> GetPage(Func<TenantServiceDbConnModel, TenantServiceDbConnDto> mappingFunc,string tenantDomain, string tenantIdentifier, string serviceIdentifier, int pageSize, int pageIndex) {
+            return _tenantServiceDbConnRepository.GetPage(pageSize, pageIndex, mappingFunc, tenantDomain, tenantIdentifier, serviceIdentifier);
         }
 
         public List<TenantServiceDbConnModel> GetByTenant(string tenantDomain,string tenantIdentifier,string serviceIdentifier=null) {
