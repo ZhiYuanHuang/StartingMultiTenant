@@ -13,11 +13,14 @@ namespace StartingMultiTenant.Business
     {
         private readonly TenantIdentifierRepository _tenantIdentifierRepo;
         private readonly TenantDomainRepository _tenantDomainRepo;
+        private readonly CreateDbScriptRepository _createDbScriptRepo;
         public TenantIdentifierBusiness(TenantDomainRepository tenantDomainRepo,
             TenantIdentifierRepository tenantIdentifierRepo,
+            CreateDbScriptRepository createDbScriptRepository,
             ILogger<TenantIdentifierBusiness> logger):base(tenantIdentifierRepo,logger) {
             _tenantDomainRepo= tenantDomainRepo;
             _tenantIdentifierRepo= tenantIdentifierRepo;
+            _createDbScriptRepo = createDbScriptRepository;
         }
 
         public bool Insert(TenantIdentifierModel tenantIdentifier) {
@@ -39,8 +42,31 @@ namespace StartingMultiTenant.Business
             return existTenant!= null;
         }
 
-        public PagingData<TenantIdentifierModel> GetPage(string tenantDomain, int pageSize, int pageIndex) {
-            return _tenantIdentifierRepo.GetPage(pageSize,pageIndex, tenantDomain);
+        public PagingData<TenantIdentifierDto> GetPage(string tenantDomain, int pageSize, int pageIndex) {
+            var pageData= _tenantIdentifierRepo.GetPage(pageSize,pageIndex, ConvertFromModel,tenantDomain);
+
+            //if (pageData.Data.Any()) {
+            //    List<Int64> tenantIds= pageData.Data.Select(x => x.Id).ToList();
+            //    var tenantsCreateScriptDict= _createDbScriptRepo.GetTenantCreateScripts(tenantIds);
+            //    pageData.Data.ForEach(x => {
+            //        if (tenantsCreateScriptDict.ContainsKey(x.Id) && tenantsCreateScriptDict[x.Id].Any()) {
+            //            x.CreateDbScriptIds=new List<long>(tenantsCreateScriptDict[x.Id]);
+
+            //        }
+            //    });
+            //}
+
+            return pageData;
+        }
+
+        public TenantIdentifierDto ConvertFromModel(TenantIdentifierModel model) {
+            return new TenantIdentifierDto() {
+                Id = model.Id,
+                TenantIdentifier = model.TenantIdentifier,
+                TenantDomain = model.TenantDomain,
+                TenantGuid = model.TenantGuid,
+                CreateDbScriptIds = new List<long>()
+            };
         }
     }
 }

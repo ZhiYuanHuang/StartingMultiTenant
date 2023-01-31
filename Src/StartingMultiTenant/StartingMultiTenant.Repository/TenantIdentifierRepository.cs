@@ -40,6 +40,21 @@ namespace StartingMultiTenant.Repository
             return GetEntitiesByQuery(p);
         }
 
+        public PagingData<TenantIdentifierDto> GetPage(int pageSize, int pageIndex, Func<TenantIdentifierModel, TenantIdentifierDto> mappingFunc, string tenantDomain = null) {
+            Dictionary<string, object> p = new Dictionary<string, object>();
+            if (!string.IsNullOrEmpty(tenantDomain)) {
+                p["TenantDomain"] = tenantDomain;
+            }
+            //return GetPage(pageSize, pageIndex, p,mappingFunc);
+
+            Dictionary<string, bool> orderDict = new Dictionary<string, bool>() {
+                { "TenantDomain",true},
+                { "TenantIdentifier",true}
+            };
+
+            return GetPageWithMaping<TenantIdentifierDto>(pageSize, pageIndex, p, mappingFunc, orderDict);
+        } 
+
         public PagingData<TenantIdentifierModel> GetPage(int pageSize,int pageIndex, string tenantDomain=null) {
             StringBuilder countBuilder = new StringBuilder("Select Count(*) From TenantIdentifier ");
             StringBuilder dataBuilder = new StringBuilder("Select * From TenantIdentifier ");

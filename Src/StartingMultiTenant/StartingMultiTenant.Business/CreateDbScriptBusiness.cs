@@ -35,6 +35,17 @@ namespace StartingMultiTenant.Business
 
         }
 
+        public List<Int64> GetTenantCreateScripts(Int64 tenantId) {
+            var dict= _createDbScriptRepo.GetTenantCreateScripts(new List<long>() { tenantId});
+            if (dict.ContainsKey(tenantId)) {
+                return dict[tenantId];
+            }
+            return new List<long>();
+        }
+
+        public Dictionary<Int64, List<Int64>> GetTenantCreateScripts(List<Int64> tenantIds) {
+            return _createDbScriptRepo.GetTenantCreateScripts(tenantIds);
+        }
         public override Tuple<bool,string> Delete(Int64 scriptId) {
             bool result = false;
 

@@ -83,6 +83,15 @@ namespace StartingMultiTenant.Repository
             return true; 
         }
 
-         
+        public Dictionary<Int64,List<Int64>> GetTenantCreateScripts(List<Int64> tenantIds) {
+            string sql = @"Select b.Id As TenantId,c.Id As CreateScriptId From TenantServiceDbConn a
+                            Inner Join TenantIdentifier b Using(TenantIdentifier,TenantDomain)
+                            Inner Join CreateDbScript c
+                                On (a.CreateScriptName=c.Name And a.CreateScriptVersion=c.MajorVersion)
+                            Where b.Id = Any(@tenantIds)";
+            var dtos= _tenantDbDataContext.Slave.QueryList<TenantCreateScriptDto>(sql,new { tenantIds =tenantIds.ToArray()});
+            return dtos.GroupBy(x => x.TenantId).ToDictionary(x => x.Key, v => v.Select(x => x.CreateScriptId).ToList());
+        }
+
     }
 }

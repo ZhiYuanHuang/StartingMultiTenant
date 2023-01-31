@@ -22,12 +22,14 @@ namespace StartingMultiTenant.Api.Controllers
         private readonly ExternalTenantServiceDbConnRepository _externalTenantServiceDbConnRepo;
         private readonly EncryptService _encryptService;
         private readonly TenantActionNoticeService _actionNoticeService;
+        private readonly CreateDbScriptBusiness _createDbScriptBusiness;
         public TenantController(SingleTenantService singleTenantService,
             TenantDomainBusiness tenantDomainBusiness,
             TenantIdentifierBusiness tenantIdentifierBusiness,
             TenantServiceDbConnBusiness tenantServiceDbConnBusiness,
             ExternalTenantServiceDbConnRepository externalTenantServiceDbConnRepo,
             TenantActionNoticeService actionNoticeService,
+            CreateDbScriptBusiness createDbScriptBusiness,
             EncryptService encryptService) {
             _singleTenantService = singleTenantService;
             _tenantDomainBusiness = tenantDomainBusiness;
@@ -35,6 +37,7 @@ namespace StartingMultiTenant.Api.Controllers
             _tenantServiceDbConnBusiness = tenantServiceDbConnBusiness;
             _externalTenantServiceDbConnRepo = externalTenantServiceDbConnRepo;
             _encryptService = encryptService;
+            _createDbScriptBusiness = createDbScriptBusiness;
             _actionNoticeService = actionNoticeService;
         }
 
@@ -82,8 +85,31 @@ namespace StartingMultiTenant.Api.Controllers
             return new AppResponseDto<Int64>(result) {Result=id};
         }
 
+        //[HttpPut]
+        //public AppResponseDto<TenantIdentifierDto> Update(AppRequestDto<CreateTenantDto> requestDto) {
+        //    ApiClientModel apiClient = requestDto.Data;
+
+        //    apiClient.ClientSecret = _encryptService.Encrypt_Aes(apiClient.ClientSecret);
+        //    bool result = _apiClientBusiness.Insert(apiClient.ClientId, apiClient.ClientSecret, out Int64 id);
+        //    return new AppResponseDto<ApiClientModel>(result) { Result = apiClient };
+        //}
+
+        [HttpGet]
+        public AppResponseDto<TenantIdentifierDto> Get(Int64 id) {
+            var model = _tenantIdentifierBusiness.Get(id);
+
+            if (model == null) {
+                return new AppResponseDto<TenantIdentifierDto>(false);
+            }
+            var createScriptIds= _createDbScriptBusiness.GetTenantCreateScripts(model.Id);
+            var dto=_tenantIdentifierBusiness.ConvertFromModel(model);
+            dto.CreateDbScriptIds = createScriptIds;
+            
+            return new AppResponseDto<TenantIdentifierDto>() { Result = dto };
+        }
+
         [HttpPost]
-        public AppResponseDto<PagingData<TenantIdentifierModel>> GetList(AppRequestDto<PagingParam<Dictionary<string,object>>> requestDto) {
+        public AppResponseDto<PagingData<TenantIdentifierDto>> GetList(AppRequestDto<PagingParam<Dictionary<string,object>>> requestDto) {
             string tenantDomain = null;
             if (requestDto.Data.Filter.Any() && requestDto.Data.Filter.ContainsKey("tenantDomain") && requestDto.Data.Filter["tenantDomain"]!=null) {
                 string idStr= requestDto.Data.Filter["tenantDomain"].ToString();
@@ -96,7 +122,7 @@ namespace StartingMultiTenant.Api.Controllers
             }
 
             var pageList = _tenantIdentifierBusiness.GetPage(tenantDomain, requestDto.Data.PageSize, requestDto.Data.PageIndex);
-            return new AppResponseDto<PagingData<TenantIdentifierModel>>() { 
+            return new AppResponseDto<PagingData<TenantIdentifierDto>>() { 
                 Result= pageList
             };
         }
