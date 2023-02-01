@@ -47,7 +47,7 @@ namespace StartingMultiTenant.Repository
                            Values (@tenantIdentifier,@tenantDomain,@serviceIdentifier,@dbIdentifier,@createScriptName,@createScriptVersion,@curSchemaVersion,@dbServerId,@encryptedConnStr)
                            ON CONFLICT ON CONSTRAINT u_tenantservicedbconn_1
                            DO Update Set
-                             ServiceIdentifier=@serviceIdentifier,DbIdentifier=@dbIdentifier,CurSchemaVersion=@curSchemaVersion,DbServerId=@dbServerId,EncryptedConnStr=@encryptedConnStr";
+                             ServiceIdentifier=@serviceIdentifier,DbIdentifier=@dbIdentifier,CreateScriptVersion=@createScriptVersion,CurSchemaVersion=@curSchemaVersion,DbServerId=@dbServerId,EncryptedConnStr=@encryptedConnStr";
 
             return _tenantDbDataContext.Master.ExecuteNonQuery(sql,dbConn)>0;
            
@@ -88,7 +88,7 @@ namespace StartingMultiTenant.Repository
             return GetEntitiesByQuery(p);
         }
 
-        public List<TenantServiceDbConnModel> GetTenantServiceDbConns(string tenantDomain, string tenantIdentifier,string serviceIdentifier=null) {
+        public List<TenantServiceDbConnModel> GetConnByTenantAndService(string tenantDomain, string tenantIdentifier,string serviceIdentifier=null) {
            
             Dictionary<string, object> p = new Dictionary<string, object>() {
                 { "TenantIdentifier",tenantIdentifier},
@@ -102,12 +102,11 @@ namespace StartingMultiTenant.Repository
             return GetEntitiesByQuery(p);
         }
 
-        public TenantServiceDbConnModel GetTenantServiceDbConns(string tenantDomain, string tenantIdentifier, string createScriptName,int createScriptVersion) {
+        public TenantServiceDbConnModel GetConnByTenantAndCreateScript(string tenantDomain, string tenantIdentifier, string createScriptName) {
             Dictionary<string, object> p = new Dictionary<string, object>() {
                 { "TenantDomain",tenantDomain},
                 {"TenantIdentifier",tenantIdentifier },
                 {"CreateScriptName",createScriptName },
-                { "CreateScriptVersion",createScriptVersion}
             };
 
             return GetEntityByQuery(p);

@@ -4,9 +4,9 @@ using System.Text;
 
 namespace StartingMultiTenant.Model.Dto
 {
-    public class TenantCreateScriptDto
+    public class TenantCreateScriptDto: CreateDbScriptDto
     {
         public Int64 TenantId { get; set; }
-        public Int64 CreateScriptId { get; set; }
+        //public Int64 CreateScriptId { get; set; }
     }
 }

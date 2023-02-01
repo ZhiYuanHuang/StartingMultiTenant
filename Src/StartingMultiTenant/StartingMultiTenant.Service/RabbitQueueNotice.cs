@@ -53,9 +53,11 @@ namespace StartingMultiTenant.Service
 
 
         public async Task NoticeTenantAction(TenantActionInfoDto tenantActionInfo) {
-            checkConnection();
+            bool connected= await checkConnectionAsync();
+            if (!connected) {
+                return;
+            }
             await Task.Factory.StartNew(() => {
-               
                 try {
                     var jsonContent = Newtonsoft.Json.JsonConvert.SerializeObject(tenantActionInfo);
                     var body = Encoding.UTF8.GetBytes(jsonContent);
@@ -75,10 +77,14 @@ namespace StartingMultiTenant.Service
         }
 
         public async Task NoticeTenantAction<T>(TenantActionInfoDto<T> tenantActionInfo) {
-            checkConnection();
+            bool connected = await checkConnectionAsync();
+            if (!connected) {
+                return;
+            }
             await Task.Factory.StartNew(() => {
                
                 try {
+                    
                     var jsonContent = Newtonsoft.Json.JsonConvert.SerializeObject(tenantActionInfo);
                     var body = Encoding.UTF8.GetBytes(jsonContent);
 
@@ -95,7 +101,25 @@ namespace StartingMultiTenant.Service
             });
         }
 
-        private void checkConnection() {
+        private async Task<bool> checkConnectionAsync(int timeoutMilliSec=1000*10) {
+            Task timeoutTask = Task.Delay(timeoutMilliSec);
+            var checkTask= Task.Factory.StartNew<bool>(() => {
+                try {
+                    return checkConnection();
+
+                } catch {
+                    return false;
+                }
+            });
+
+            var completeTask= await Task.WhenAny(timeoutTask, checkTask);
+            if (completeTask == timeoutTask) {
+                return false;
+            }
+            return checkTask.Result;
+        }
+
+        private bool checkConnection() {
             if (_conn == null) {
                 lock (_lockObj) {
                     if (_conn == null) {
@@ -114,6 +138,8 @@ namespace StartingMultiTenant.Service
                     }
                 }
             }
+            
+            return _conn?.IsOpen??false;
         }
     }
 }

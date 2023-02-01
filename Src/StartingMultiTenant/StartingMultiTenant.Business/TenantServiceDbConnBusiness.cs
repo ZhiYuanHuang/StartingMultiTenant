@@ -28,7 +28,7 @@ namespace StartingMultiTenant.Business
         }
 
         public List<TenantServiceDbConnModel> GetByTenant(string tenantDomain,string tenantIdentifier,string serviceIdentifier=null) {
-            return _tenantServiceDbConnRepository.GetTenantServiceDbConns(tenantDomain,tenantIdentifier, serviceIdentifier);
+            return _tenantServiceDbConnRepository.GetConnByTenantAndService(tenantDomain,tenantIdentifier, serviceIdentifier);
         }
        
         public async Task<List<TenantServiceDbConnModel>> GetTenantServiceDbConns(long? dbConnId = null) {
@@ -54,7 +54,7 @@ namespace StartingMultiTenant.Business
                 _tenantServiceDbConnRepository.BeginTransaction();
 
                 foreach (var dbConn in dbConnList) {
-                    var existedDbConn= _tenantServiceDbConnRepository.GetTenantServiceDbConns(dbConn.TenantDomain,dbConn.TenantIdentifier,dbConn.CreateScriptName,dbConn.CreateScriptVersion);
+                    var existedDbConn= _tenantServiceDbConnRepository.GetConnByTenantAndCreateScript(dbConn.TenantDomain,dbConn.TenantIdentifier,dbConn.CreateScriptName);
 
                     if (existedDbConn != null) {
                         _historyTenantServiceDbConnRepo.InsertHistoryDbConn(existedDbConn, DbConnActionTypeEnum.CreateOverride);

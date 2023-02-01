@@ -55,7 +55,7 @@ namespace StartingMultiTenant.Api.Controllers
                 return new AppResponseDto<Int64>(false) { ErrorMsg = $"tenantdomain {requestDto.Data.TenantDomainId} not exists" };
             }
 
-            if (string.IsNullOrEmpty(createTenantDto.TenantDomain) || string.IsNullOrEmpty(createTenantDto.TenantIdentifier) || createTenantDto.CreateDbScriptIds==null || !createTenantDto.CreateDbScriptIds.Any()) {
+            if (string.IsNullOrEmpty(createTenantDto.TenantDomain) || string.IsNullOrEmpty(createTenantDto.TenantIdentifier)) {
                 return new AppResponseDto<Int64>(false);
             }
 
@@ -74,7 +74,13 @@ namespace StartingMultiTenant.Api.Controllers
                 }
             }
 
-            var result=await _singleTenantService.CreateTenantDbs(createTenantDto.TenantDomain,createTenantDto.TenantIdentifier,createTenantDto.CreateDbScriptIds,createTenantDto.OverrideWhenExisted);
+            bool result = true;
+            if (createTenantDto.CreateDbs != null) {
+                List<Int64> createDbScriptIds = createTenantDto.CreateDbs.Values.ToList();
+                if (createDbScriptIds.Any()) {
+                    result = await _singleTenantService.CreateTenantDbs(createTenantDto.TenantDomain, createTenantDto.TenantIdentifier, createDbScriptIds, createTenantDto.OverrideWhenExisted);
+                }
+            }
 
             if (!result) {
                 if (!existed) {
@@ -85,14 +91,36 @@ namespace StartingMultiTenant.Api.Controllers
             return new AppResponseDto<Int64>(result) {Result=id};
         }
 
-        //[HttpPut]
-        //public AppResponseDto<TenantIdentifierDto> Update(AppRequestDto<CreateTenantDto> requestDto) {
-        //    ApiClientModel apiClient = requestDto.Data;
+        [HttpPut]
+        public async Task<AppResponseDto<TenantIdentifierDto>> Update(AppRequestDto<CreateTenantDto> requestDto) {
+            CreateTenantDto createTenantDto = requestDto.Data;
 
-        //    apiClient.ClientSecret = _encryptService.Encrypt_Aes(apiClient.ClientSecret);
-        //    bool result = _apiClientBusiness.Insert(apiClient.ClientId, apiClient.ClientSecret, out Int64 id);
-        //    return new AppResponseDto<ApiClientModel>(result) { Result = apiClient };
-        //}
+            TenantIdentifierDto tenantIdentifierDto = new TenantIdentifierDto() {
+                Id = createTenantDto.Id,
+                TenantDomain = createTenantDto.TenantDomain,
+                TenantIdentifier = createTenantDto.TenantIdentifier,
+                TenantGuid = createTenantDto.TenantGuid,
+            };
+
+            //don't change
+            if (createTenantDto.CreateDbs==null || !createTenantDto.CreateDbs.Any()) {
+                return new AppResponseDto<TenantIdentifierDto>() { Result = tenantIdentifierDto };
+            }
+
+            List<Int64> newCreateDbScriptIds = createTenantDto.CreateDbs.Values.ToList();
+            var createdScripts = _createDbScriptBusiness.GetTenantCreateScripts(createTenantDto.Id);
+            var createdScriptIds = createdScripts.Select(x => x.Id);
+            newCreateDbScriptIds = newCreateDbScriptIds.Except(createdScriptIds).ToList();
+
+            if (!newCreateDbScriptIds.Any()) {
+                return new AppResponseDto<TenantIdentifierDto>() { Result = tenantIdentifierDto };
+            }
+
+            var result = await _singleTenantService.CreateTenantDbs(createTenantDto.TenantDomain, createTenantDto.TenantIdentifier, newCreateDbScriptIds, true);
+            
+          
+            return new AppResponseDto<TenantIdentifierDto>(result) { Result = tenantIdentifierDto };
+        }
 
         [HttpGet]
         public AppResponseDto<TenantIdentifierDto> Get(Int64 id) {
@@ -101,9 +129,10 @@ namespace StartingMultiTenant.Api.Controllers
             if (model == null) {
                 return new AppResponseDto<TenantIdentifierDto>(false);
             }
-            var createScriptIds= _createDbScriptBusiness.GetTenantCreateScripts(model.Id);
+            var createScripts= _createDbScriptBusiness.GetTenantCreateScripts(model.Id);
             var dto=_tenantIdentifierBusiness.ConvertFromModel(model);
-            dto.CreateDbScriptIds = createScriptIds;
+            dto.CreateDbScriptIds = createScripts.Select(x=>x.Id).ToList();
+            dto.CreateDbs = createScripts.ToDictionary(x => x.Name, v => v.Id);
             
             return new AppResponseDto<TenantIdentifierDto>() { Result = dto };
         }

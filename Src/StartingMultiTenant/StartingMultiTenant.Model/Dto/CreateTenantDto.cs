@@ -11,5 +11,6 @@ namespace StartingMultiTenant.Model.Dto
         public List<Int64>? CreateDbScriptIds { get; set; }
         public List<Int64>? NewCreateDbScriptIds { get; set; }
         public Int64 TenantDomainId { get; set; }
+        public Dictionary<string, Int64>? CreateDbs { get; set; }
     }
 }

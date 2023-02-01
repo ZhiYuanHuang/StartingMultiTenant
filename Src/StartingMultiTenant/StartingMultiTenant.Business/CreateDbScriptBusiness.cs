@@ -26,24 +26,24 @@ namespace StartingMultiTenant.Business
             _logger=logger;
         }
 
-        public override CreateDbScriptModel Get(long id) {
+        public CreateDbScriptModel GetNoContent(long id) {
             return _createDbScriptRepo.GetNoContent(id);
         }
 
-        public override List<CreateDbScriptModel> Get(List<long> ids) {
+        public List<CreateDbScriptModel> GetNoContent(List<long> ids) {
             return _createDbScriptRepo.GetNoContent(ids);
 
         }
 
-        public List<Int64> GetTenantCreateScripts(Int64 tenantId) {
+        public List<CreateDbScriptDto> GetTenantCreateScripts(Int64 tenantId) {
             var dict= _createDbScriptRepo.GetTenantCreateScripts(new List<long>() { tenantId});
             if (dict.ContainsKey(tenantId)) {
                 return dict[tenantId];
             }
-            return new List<long>();
+            return new List<CreateDbScriptDto>();
         }
 
-        public Dictionary<Int64, List<Int64>> GetTenantCreateScripts(List<Int64> tenantIds) {
+        public Dictionary<Int64, List<CreateDbScriptDto>> GetTenantCreateScripts(List<Int64> tenantIds) {
             return _createDbScriptRepo.GetTenantCreateScripts(tenantIds);
         }
         public override Tuple<bool,string> Delete(Int64 scriptId) {
@@ -96,8 +96,12 @@ namespace StartingMultiTenant.Business
             return _createDbScriptRepo.GetAllNoContent();
         }
 
-        public async Task<List<CreateDbScriptModel>> GetListByNames(List<string> nameList) {
-            return _createDbScriptRepo.GetListByNames(nameList);
+        public List<VersionScriptDto> GetVersionScripts() {
+            return _createDbScriptRepo.GetVersionScripts();
+        }
+
+        public List<CreateDbScriptModel> GetListByNames(List<string> nameList,bool onlyNewest=false) {
+            return _createDbScriptRepo.GetListByNames(nameList,onlyNewest);
         }
 
         public byte[] GetScriptContent(Int64 scriptId) {

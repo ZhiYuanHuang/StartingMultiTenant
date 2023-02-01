@@ -161,7 +161,14 @@ namespace StartingMultiTenant.Api.Controllers
             }
 
             byte[] byteArr = _schemaUpdateScriptBusiness.GetScriptContent(scriptId,true);
-            MemoryStream memoryStream = new MemoryStream(byteArr);
+            MemoryStream memoryStream = null;
+            if (byteArr == null) {
+                memoryStream = new MemoryStream();
+            }
+            else {
+                memoryStream = new MemoryStream(byteArr);
+            }
+             
             return File(memoryStream, "application/octet-stream", createScript.Name + ".sql");
         }
     }

@@ -24,13 +24,15 @@ namespace StartingMultiTenant.Service
         
 
             bool result = false;
+            MySqlCommand mysqlCommand=null;
             try {
 
-                var mysqlCommand = new MySqlCommand(dbScriptStr, conn);
-                mysqlCommand.CommandTimeout = 60 * 10;
+                
                 await conn.OpenAsync();
 
                 if (conn.State == System.Data.ConnectionState.Open) {
+                    mysqlCommand = new MySqlCommand(dbScriptStr, conn);
+                    mysqlCommand.CommandTimeout = CmdTimeoutSec;
                     await mysqlCommand.ExecuteNonQueryAsync();
                     result = true;
                 }
@@ -38,6 +40,8 @@ namespace StartingMultiTenant.Service
                 result = false;
                 _logger.LogError($"execute script raise error,ex:{ex.Message}");
             } finally {
+                mysqlCommand?.Dispose();
+                conn?.Close();
                 conn?.Dispose();
             }
 
@@ -50,20 +54,24 @@ namespace StartingMultiTenant.Service
             bool result = false;
             try {
 
-                var mysqlCommand = new MySqlCommand(updateSchemaScript, conn);
                 await conn.OpenAsync();
 
                 if (conn.State == System.Data.ConnectionState.Open) {
+
+                    var mysqlCommand = new MySqlCommand(updateSchemaScript, conn);
+                    mysqlCommand.CommandTimeout = CmdTimeoutSec;
                     try {
+
                         await mysqlCommand.ExecuteNonQueryAsync();
                         result = true;
                     } catch {
                         result = false;
                     }
 
-                    if (!result) {
+                    if (!result && !string.IsNullOrWhiteSpace(rollbackScript)) {
                         try {
                             mysqlCommand = new MySqlCommand(rollbackScript, conn);
+                            mysqlCommand.CommandTimeout = CmdTimeoutSec;
                             await mysqlCommand.ExecuteNonQueryAsync();
                         } catch {
                         }

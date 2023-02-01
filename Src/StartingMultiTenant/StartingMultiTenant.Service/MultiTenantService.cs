@@ -41,7 +41,7 @@ namespace StartingMultiTenant.Service
                 return Tuple.Create(false, 0,0);
             }
 
-            var createDbScript = _createDbScriptBusiness.Get(updateScript.Id);
+            var createDbScript = _createDbScriptBusiness.GetNoContent(updateScript.Id);
 
             List<TenantServiceDbConnModel> tenantServiceDbConnList=await _tenantServiceDbConnBusiness.GetTenantServiceDbConns(createDbScript.Name, createDbScript.MajorVersion);
 

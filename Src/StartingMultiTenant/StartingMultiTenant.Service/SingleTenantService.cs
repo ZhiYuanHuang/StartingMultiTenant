@@ -41,40 +41,41 @@ namespace StartingMultiTenant.Service
         }
 
         public async Task<bool> CreateTenantDbs(string tenantDomain, string tenantIdentifier, List<string> createScriptNameList, bool overrideWhenExisted) {
-            _actionNoticeService.PublishTenantStartCreate(tenantDomain,tenantIdentifier);
-
-            bool result = await createTenantDbs(tenantDomain,tenantIdentifier,createScriptNameList,overrideWhenExisted);
-
-            _actionNoticeService.PublishTenantCreated(tenantDomain,tenantIdentifier,result);
+            var distinctNameList= createScriptNameList.Distinct().ToList();
+            var createScriptList= _createDbScriptBusiness.GetListByNames(distinctNameList, true);
+            if (createScriptList.Count != distinctNameList.Count) {
+                return false;
+            }
+            bool result = await createTenantDbsAndNotify(tenantDomain,tenantIdentifier, createScriptList, overrideWhenExisted);
 
             return result;
         }
 
         public async Task<bool> CreateTenantDbs(string tenantDomain, string tenantIdentifier, List<Int64> createScriptIdList, bool overrideWhenExisted) {
-            _actionNoticeService.PublishTenantStartCreate(tenantDomain, tenantIdentifier);
+            var distinctIdList= createScriptIdList.Distinct().ToList();
+            List<CreateDbScriptModel> createDbScriptList = _createDbScriptBusiness.Get(distinctIdList);
+            if (createDbScriptList.Count != distinctIdList.Count) {
+                return false;
+            }
 
-            bool result = await createTenantDbs(tenantDomain, tenantIdentifier, createScriptIdList, overrideWhenExisted);
-
-            _actionNoticeService.PublishTenantCreated(tenantDomain, tenantIdentifier, result);
+            bool result = await createTenantDbsAndNotify(tenantDomain, tenantIdentifier, createDbScriptList, overrideWhenExisted);
 
             return result;
         }
 
-        internal async Task<bool> createTenantDbs(string tenantDomain, string tenantIdentifier, List<Int64> createScriptIdList, bool overrideWhenExisted) {
+        internal async Task<bool> createTenantDbsAndNotify(string tenantDomain, string tenantIdentifier, List<CreateDbScriptModel> createDbScriptList, bool overrideWhenExisted) {
+            _actionNoticeService.PublishTenantStartCreate(tenantDomain, tenantIdentifier);
 
-            List<CreateDbScriptModel> createDbScriptList = _createDbScriptBusiness.Get(createScriptIdList);
+            bool result = false;
+            try {
+                result = await createTenantDbs(tenantDomain, tenantIdentifier, createDbScriptList, overrideWhenExisted);
+            } finally {
+                _actionNoticeService.PublishTenantCreated(tenantDomain, tenantIdentifier, result);
+            }
+            return result;
+        }
 
-            if (createDbScriptList.Count != createScriptIdList.Count) {
-                var noexistScriptList = createScriptIdList.Except(createDbScriptList.Select(x => x.Id)).ToList();
-                _logger.LogError($"create db scripts {string.Join(',', noexistScriptList)} no exist");
-                return false;
-            }
-            foreach (var createScriptId in createScriptIdList) {
-                if (createDbScriptList.FirstOrDefault(x => x.Id == createScriptId) == null) {
-                    _logger.LogError($"create db script {createScriptId} no exist");
-                    return false;
-                }
-            }
+        internal async Task<bool> createTenantDbs(string tenantDomain, string tenantIdentifier, List<CreateDbScriptModel> createDbScriptList, bool overrideWhenExisted) {
 
             List<DbServerModel> dbServerList = _dbServerBusiness.GetDbServers();
             dbServerList = dbServerList.Where(x => x.CanCreateNew).Select(x => x).ToList();
@@ -144,135 +145,21 @@ namespace StartingMultiTenant.Service
                 }
             }
 
-            if (!success && serverAndDbDict.Values.Any()) {
-                foreach (var pair in serverAndDbDict) {
-                    var dbExecutor = pair.Key;
-                    var createDbList = pair.Value;
-                    foreach (var createDb in createDbList) {
-                        await dbExecutor.DeleteDb(createDb).ConfigureAwait(false);
+            if (!success) {
+
+                if (serverAndDbDict.Values.Any()) {
+                    foreach (var pair in serverAndDbDict) {
+                        var dbExecutor = pair.Key;
+                        var createDbList = pair.Value;
+                        foreach (var createDb in createDbList) {
+                            await dbExecutor.DeleteDb(createDb).ConfigureAwait(false);
+                        }
                     }
                 }
                 return false;
             }
 
             success = _tenantServiceDbConnBusiness.BatchInsertDbConns(createDbSet, overrideWhenExisted);
-            if (!success) {
-                foreach (var pair in serverAndDbDict) {
-                    var dbExecutor = pair.Key;
-                    var createDbList = pair.Value;
-                    foreach (var createDb in createDbList) {
-                        await dbExecutor.DeleteDb(createDb).ConfigureAwait(false);
-                    }
-                }
-
-                return false;
-            }
-
-            return true;
-        }
-
-
-        internal async Task<bool> createTenantDbs(string tenantDomain,string tenantIdentifier,List<string> createScriptNameList,bool overrideWhenExisted) {
-
-            List<CreateDbScriptModel> originCreateDbScriptList= await _createDbScriptBusiness.GetListByNames(createScriptNameList);
-
-            List<CreateDbScriptModel> createDbScriptList= originCreateDbScriptList.GroupBy(x => x.Name).Select(g => {
-                int tmpMaxVersion = g.Max(x => x.MajorVersion);
-                return g.First(x => x.MajorVersion == tmpMaxVersion);
-            }).ToList();
-
-            if (createDbScriptList.Count != createScriptNameList.Count) {
-                var noexistScriptList= createScriptNameList.Except(createDbScriptList.Select(x => x.Name)).ToList();
-                _logger.LogError($"create db scripts {string.Join(',',noexistScriptList)} no exist");
-                return false;
-            }
-            foreach(var createScriptName in createScriptNameList) {
-                if (createDbScriptList.FirstOrDefault(x => x.Name == createScriptName) == null) {
-                    _logger.LogError($"create db script {createScriptName} no exist");
-                    return false;
-                }
-            }
-
-            List<DbServerModel> dbServerList= _dbServerBusiness.GetDbServers();
-            dbServerList= dbServerList.Where(x => x.CanCreateNew).Select(x => x).ToList();
-            if(!dbServerList.Any()) {
-                _logger.LogError($"no exist any db server");
-                return false;
-            }
-
-            List<int> toUseDbTypes= createDbScriptList.Select(x => x.DbType).Distinct().ToList();
-            List<int> existDbTypes = dbServerList.Select(x => x.DbType).Distinct().ToList();
-            List<int> lackDbTypes= toUseDbTypes.Except(existDbTypes).ToList();
-            if (lackDbTypes.Any()) {
-                _logger.LogError($"lack {(DbTypeEnum)lackDbTypes[0]} type db");
-                return false;
-            }
-
-            Dictionary<IDbServerExecutor, List<string>> serverAndDbDict = new Dictionary<IDbServerExecutor, List<string>>();
-
-            bool success = true;
-            List<TenantServiceDbConnModel> createDbSet = new List<TenantServiceDbConnModel>();
-            foreach(var createScript in createDbScriptList) {
-                var theDbServer = getRandomServer(createScript.DbType, dbServerList);
-                var dbserverExecutor= _dbServerExecutorFactory.CreateDbServerExecutor(theDbServer);
-                bool createResult = dbserverExecutor.CreateDb(createScript, tenantIdentifier, out string createDbName);
-                if (createResult) {
-                    if (serverAndDbDict.ContainsKey(dbserverExecutor)) {
-                        serverAndDbDict[dbserverExecutor].Add(createDbName);
-                    } else {
-                        serverAndDbDict.Add(dbserverExecutor,new List<string>() { createDbName});
-                    }
-
-                    var schemaUpdateScripts= _schemaUpdateScriptBusiness.GetSchemaUpdateScripts(createScript.Id);
-                    int lastMinorVersion = 0;
-                    if (schemaUpdateScripts.Any()) {
-                        schemaUpdateScripts = schemaUpdateScripts.OrderBy(x => x.MinorVersion).ToList();
-                        bool updateSchemaError = false;
-                        foreach(var schemaUpdateScript in schemaUpdateScripts) {
-                            lastMinorVersion = schemaUpdateScript.MinorVersion;
-                            if (!dbserverExecutor.UpdateSchemaByDatabase(createDbName, schemaUpdateScript)) {
-                                updateSchemaError = true;
-                                break;
-                            }
-                        }
-                        if (updateSchemaError) {
-                            success = false;
-                            break;
-                        }
-                    }
-
-                    createDbSet.Add(new TenantServiceDbConnModel() { 
-                        TenantDomain=tenantDomain,
-                        TenantIdentifier=tenantIdentifier,
-                        ServiceIdentifier=createScript.ServiceIdentifier,
-                        DbIdentifier=createScript.DbIdentifier,
-                        CreateScriptName=createScript.Name,
-                        CreateScriptVersion=createScript.MajorVersion,
-                        CurSchemaVersion=lastMinorVersion,
-                        DbServerId=theDbServer.Id,
-                        EncryptedConnStr=dbserverExecutor.GenerateEncryptDbConnStr(createDbName),
-                    });
-                } else {
-                    success = false;
-                    if (!string.IsNullOrEmpty(createDbName)) {
-                        await dbserverExecutor.DeleteDb(createDbName).ConfigureAwait(false);
-                    }
-                    break;
-                }
-            }
-
-            if(!success && serverAndDbDict.Values.Any()) {
-                foreach(var pair in serverAndDbDict) {
-                    var dbExecutor = pair.Key;
-                    var createDbList = pair.Value;
-                    foreach(var createDb in createDbList) {
-                        await dbExecutor.DeleteDb(createDb).ConfigureAwait(false);
-                    }
-                }
-                return false;
-            }
-
-            success= _tenantServiceDbConnBusiness.BatchInsertDbConns(createDbSet,overrideWhenExisted);
             if (!success) {
                 foreach (var pair in serverAndDbDict) {
                     var dbExecutor = pair.Key;

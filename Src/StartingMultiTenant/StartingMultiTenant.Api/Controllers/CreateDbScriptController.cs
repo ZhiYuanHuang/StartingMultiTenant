@@ -113,8 +113,27 @@ namespace StartingMultiTenant.Api.Controllers
         }
 
         [HttpGet]
+        public AppResponseDto<GroupCreateDbScriptDto> GetAllGroup() {
+            var allVersionScripts = _createDbScriptBusiness.GetVersionScripts();
+            List<GroupCreateDbScriptDto> groupList = allVersionScripts.GroupBy(x => x.Name).Select(g => {
+                
+                var gDto= new GroupCreateDbScriptDto() {
+                    Name = g.Key,
+                    ServiceName=g.FirstOrDefault(x=>!string.IsNullOrEmpty(x.ServiceName))?.ServiceName??g.First().ServiceIdentifier,
+                    DbName = g.FirstOrDefault(x => !string.IsNullOrEmpty(x.DbName))?.DbName ?? g.First().DbIdentifier,
+                };
+                gDto.VersionScripts=g.GroupBy(x => x.MajorVersion).Select(g2 => {
+                    int g2MaxMinorVersion = g2.Max(x => x.MinorVersion);
+                    return g2.First(x => x.MinorVersion == g2MaxMinorVersion);
+                }).ToList();
+                return gDto;
+            }).ToList();
+            return new AppResponseDto<GroupCreateDbScriptDto>() { ResultList = groupList };
+        }
+
+        [HttpGet]
         public AppResponseDto<CreateDbScriptDto> Get(Int64 id) {
-            var model = _createDbScriptBusiness.Get(id);
+            var model = _createDbScriptBusiness.GetNoContent(id);
             if (model == null) {
                 return new AppResponseDto<CreateDbScriptDto>(false);
             }
@@ -142,14 +161,14 @@ namespace StartingMultiTenant.Api.Controllers
 
         [HttpPost]
         public AppResponseDto<CreateDbScriptModel> GetMany(AppRequestDto<List<Int64>> requestDto) {
-            var models = _createDbScriptBusiness.Get(requestDto.Data);
+            var models = _createDbScriptBusiness.GetNoContent(requestDto.Data);
             models.ForEach(x=>x.BinaryContent=null);
             return new AppResponseDto<CreateDbScriptModel>() { ResultList = models };
         }
 
         [HttpGet]
         public IActionResult GetScriptContent(Int64 scriptId) {
-            var createScript= _createDbScriptBusiness.Get(scriptId);
+            var createScript= _createDbScriptBusiness.GetNoContent(scriptId);
             if (createScript == null) {
                 return NotFound();
             }

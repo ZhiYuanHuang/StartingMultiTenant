@@ -63,7 +63,7 @@ namespace StartingMultiTenant.Util
         }
 
         public static string GenerateRandomDbName(string dbIdentifier,string tenantIdentifier) {
-            return string.Format("{0}_{1}", dbIdentifier, HashUtil.Hash_8(tenantIdentifier + $"_{DateTimeOffset.Now.ToUnixTimeSeconds()}"));
+            return string.Format("{0}_{1}", dbIdentifier, HashUtil.Hash_8(tenantIdentifier + $"_{DateTimeOffset.Now.ToUnixTimeSeconds()}")).Replace('.','_').ToLower();
         }
     }
 }

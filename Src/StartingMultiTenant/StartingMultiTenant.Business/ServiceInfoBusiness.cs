@@ -44,5 +44,14 @@ namespace StartingMultiTenant.Business
             var models= _serviceInfoRepo.GetByIdentifier(identifierList);
             return models.ToDictionary(x => x.Identifier, x => x.Id);
         }
+
+        public override Tuple<bool, string> Delete(long id) {
+            bool isReferenced= _dbInfoRepository.GetDbInfosByService(id).Any();
+            if (isReferenced) {
+                return Tuple.Create(false,"be referenced");
+            }
+
+            return base.Delete(id);
+        }
     }
 }

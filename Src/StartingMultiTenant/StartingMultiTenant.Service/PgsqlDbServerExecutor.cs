@@ -34,6 +34,7 @@ namespace StartingMultiTenant.Service
                     //CREATE DATABASE "Test_db" WITH OWNER = postgres ENCODING = 'UTF8' LOCALE_PROVIDER = libc LOCALE = 'en_US.utf8';
                     
                     npgsqlCommand = new NpgsqlCommand(dbScriptStr, conn);
+                    npgsqlCommand.CommandTimeout = CmdTimeoutSec;
                     await npgsqlCommand.ExecuteNonQueryAsync();
                     result = true;
                 }
@@ -61,24 +62,27 @@ namespace StartingMultiTenant.Service
                 if (conn.State == System.Data.ConnectionState.Open) {
                     trans = conn.BeginTransaction(System.Data.IsolationLevel.RepeatableRead);
                     var npgsqlCommand = new NpgsqlCommand(updateSchemaScript, conn, trans);
+                    npgsqlCommand.CommandTimeout = CmdTimeoutSec;
                     try {
                         await npgsqlCommand.ExecuteNonQueryAsync();
                         trans.Commit();
                         result = true;
-                    } catch {
+                    } catch(Exception ex) {
                         trans.Rollback();
                         result = false;
+
                     } finally {
                         trans?.Dispose();
                     }
 
-                    if (!result) {
+                    if (!result && !string.IsNullOrWhiteSpace(rollbackScript)) {
                         try {
                             trans = conn.BeginTransaction(System.Data.IsolationLevel.RepeatableRead);
                             npgsqlCommand = new NpgsqlCommand(rollbackScript,conn,trans);
+                            npgsqlCommand.CommandTimeout = CmdTimeoutSec;
                             await npgsqlCommand.ExecuteNonQueryAsync();
                             trans.Commit();
-                        } catch {
+                        } catch(Exception ex) {
                             trans.Rollback();
                         } finally {
                             trans?.Dispose();

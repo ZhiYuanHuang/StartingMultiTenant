@@ -4,6 +4,7 @@ using StartingMultiTenant.Model.Dto;
 using StartingMultiTenant.Util;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,6 +19,8 @@ namespace StartingMultiTenant.Service
         protected readonly ILogger<IDbServerExecutor> _logger;
         protected readonly SysConstService _sysConstService;
         protected readonly EncryptService _encryptService;
+
+        protected const int CmdTimeoutSec = 60 * 10;
 
         public DbServerModel DbServer { get => _dbServer; }
 
@@ -91,12 +94,9 @@ namespace StartingMultiTenant.Service
 
             originUpdateSchemaScript = Encoding.UTF8.GetString(tmpByteArr);
 
-            if(schemaUpdateScript.RollBackScriptBinaryContent==null || (tmpByteArr=schemaUpdateScript.RollBackScriptBinaryContent as byte[]) == null) {
-                _logger.LogError($"updateSchema script {schemaUpdateScript.Name} rollback script content not exists");
-                return false;
+            if(schemaUpdateScript.RollBackScriptBinaryContent!=null && (tmpByteArr=schemaUpdateScript.RollBackScriptBinaryContent as byte[]) != null && tmpByteArr.Any()) {
+                originRollbackScript = Encoding.UTF8.GetString(tmpByteArr);
             }
-
-            originRollbackScript=Encoding.UTF8.GetString(tmpByteArr);
 
             string updateSchemaScript = string.Empty;
             string rollbackScript = string.Empty;
@@ -107,21 +107,11 @@ namespace StartingMultiTenant.Service
                 updateSchemaScript = originUpdateSchemaScript;
                 rollbackScript = originRollbackScript;
 
-                //string dbNameWildcard = !string.IsNullOrEmpty(schemaUpdateScript.DbNameWildcard) ? schemaUpdateScript.DbNameWildcard : _sysConstService.DbNameWildcard;
-                //var generateResult = SqlScriptHelper.GenerateUpdateSchemaScript(originUpdateSchemaScript, dbNameWildcard, dataBaseName);
-                //if (generateResult.Item1) {
-                //    updateSchemaScript = generateResult.Item2;
-                //}
-
-                //generateResult = SqlScriptHelper.GenerateRollbackSchemaScript(originRollbackScript, dbNameWildcard, dataBaseName);
-                //if (generateResult.Item1) {
-                //    updateSchemaScript = generateResult.Item2;
-                //}
             } catch (Exception ex) {
                 _logger.LogError($"generate create db script raise error,ex:{ex.Message}");
             }
 
-            if (string.IsNullOrEmpty(connStr) || string.IsNullOrEmpty(updateSchemaScript) || string.IsNullOrEmpty(rollbackScript)) {
+            if (string.IsNullOrEmpty(connStr) || string.IsNullOrEmpty(updateSchemaScript)) {
                 return false;
             }
 
