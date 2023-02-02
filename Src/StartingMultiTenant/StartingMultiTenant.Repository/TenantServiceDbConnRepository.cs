@@ -16,8 +16,8 @@ namespace StartingMultiTenant.Repository
         }
 
         public bool BatchInsertDbConns(List<TenantServiceDbConnModel> dbConnList) {
-            string sql = @"Insert Into TenantServiceDbConn (TenantIdentifier,TenantDomain,ServiceIdentifier,DbIdentifier,CreateScriptName,CreateScriptVersion,CurSchemaVersion,DbServerId,EncryptedConnStr)
-                           Values (@tenantIdentifier,@tenantDomain,@serviceIdentifier,@dbIdentifier,@createScriptName,@createScriptVersion,@curSchemaVersion,@dbServerId,@encryptedConnStr)";
+            string sql = @"Insert Into TenantServiceDbConn (TenantIdentifier,TenantDomain,ServiceIdentifier,DbIdentifier,CreateScriptName,CreateScriptVersion,CurSchemaVersion,DbServerId,EncryptedConnStr,UpdateTime)
+                           Values (@tenantIdentifier,@tenantDomain,@serviceIdentifier,@dbIdentifier,@createScriptName,@createScriptVersion,@curSchemaVersion,@dbServerId,@encryptedConnStr,now())";
 
             bool success = false;
             try {
@@ -43,11 +43,11 @@ namespace StartingMultiTenant.Repository
         }
 
         public bool InsertOrUpdate(TenantServiceDbConnModel dbConn) {
-            string sql = @"Insert Into TenantServiceDbConn (TenantIdentifier,TenantDomain,ServiceIdentifier,DbIdentifier,CreateScriptName,CreateScriptVersion,CurSchemaVersion,DbServerId,EncryptedConnStr)
-                           Values (@tenantIdentifier,@tenantDomain,@serviceIdentifier,@dbIdentifier,@createScriptName,@createScriptVersion,@curSchemaVersion,@dbServerId,@encryptedConnStr)
+            string sql = @"Insert Into TenantServiceDbConn (TenantIdentifier,TenantDomain,ServiceIdentifier,DbIdentifier,CreateScriptName,CreateScriptVersion,CurSchemaVersion,DbServerId,EncryptedConnStr,UpdateTime)
+                           Values (@tenantIdentifier,@tenantDomain,@serviceIdentifier,@dbIdentifier,@createScriptName,@createScriptVersion,@curSchemaVersion,@dbServerId,@encryptedConnStr,now())
                            ON CONFLICT ON CONSTRAINT u_tenantservicedbconn_1
                            DO Update Set
-                             ServiceIdentifier=@serviceIdentifier,DbIdentifier=@dbIdentifier,CreateScriptVersion=@createScriptVersion,CurSchemaVersion=@curSchemaVersion,DbServerId=@dbServerId,EncryptedConnStr=@encryptedConnStr";
+                             ServiceIdentifier=@serviceIdentifier,DbIdentifier=@dbIdentifier,CreateScriptVersion=@createScriptVersion,CurSchemaVersion=@curSchemaVersion,DbServerId=@dbServerId,EncryptedConnStr=@encryptedConnStr,UpdateTime=now()";
 
             return _tenantDbDataContext.Master.ExecuteNonQuery(sql,dbConn)>0;
            

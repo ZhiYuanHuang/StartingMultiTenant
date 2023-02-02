@@ -75,6 +75,10 @@ namespace StartingMultiTenant.Business
             return success;
         }
 
+        public List<HistoryTenantServiceDbConnModel> GetHistoryConnsByDbConn(Int64 dbConnId) {
+            return _historyTenantServiceDbConnRepo.GetByDbConn(dbConnId);
+        }
+
         public bool ExchangeToAnotherDbServer(TenantServiceDbConnModel toUpdateDbConn, Int64 newDbServerId, string newEncryptedConnStr) {
 
             bool success = false;

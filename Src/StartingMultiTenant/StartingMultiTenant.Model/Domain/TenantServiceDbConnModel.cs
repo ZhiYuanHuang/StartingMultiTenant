@@ -17,7 +17,6 @@ namespace StartingMultiTenant.Model.Domain
         public int CurSchemaVersion { get; set; }
         public Int64 DbServerId { get; set; }
         public string EncryptedConnStr { get; set; }
-
-       
+        public DateTime? UpdateTime { get; set; }
     }
 }

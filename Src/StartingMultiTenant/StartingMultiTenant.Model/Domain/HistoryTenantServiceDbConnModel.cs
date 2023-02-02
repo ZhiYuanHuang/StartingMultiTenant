@@ -14,5 +14,6 @@ namespace StartingMultiTenant.Model.Domain
         public Int64 DbServerId { get; set; }
         public string EncryptedConnStr { get; set; }
         public int ActionType { get; set; }
+        public DateTime? CreateTime { get; set; }
     }
 }

@@ -16,8 +16,8 @@ namespace StartingMultiTenant.Repository
         }
 
         public bool InsertHistoryDbConn(TenantServiceDbConnModel tenantServiceDbConn, DbConnActionTypeEnum dbConnActionType) {
-            string sql = @"Insert into HistoryTenantServiceDbConn (DbConnId,CreateScriptName,CreateScriptVersion,CurSchemaVersion,DbServerId,EncryptedConnStr,ActionType)
-                           Values (@dbConnId,@createScriptName,@createScriptVersion,@curSchemaVersion,@dbServerId,@encryptedConnStr,@actionType)";
+            string sql = @"Insert into HistoryTenantServiceDbConn (DbConnId,CreateScriptName,CreateScriptVersion,CurSchemaVersion,DbServerId,EncryptedConnStr,ActionType,CreateTime)
+                           Values (@dbConnId,@createScriptName,@createScriptVersion,@curSchemaVersion,@dbServerId,@encryptedConnStr,@actionType,now())";
 
             return _tenantDbDataContext.Master.ExecuteNonQuery(sql, 
                 new { 
@@ -38,7 +38,7 @@ namespace StartingMultiTenant.Repository
             };
 
             var set= GetEntitiesByQuery(p);
-            return set.OrderBy(x => x.Id).ToList();
+            return set.ToList();
         }
     }
 }

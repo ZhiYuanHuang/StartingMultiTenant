@@ -17,5 +17,8 @@ namespace StartingMultiTenant.Model.Dto
         public int MinorVersion { get; set;}
 
         public int ActionType { get; set; }
+        public Int64? DbServerId { get; set; }
+        public string CreateScriptName { get; set; }
+        public DateTime? CreateTime { get; set; }
     }
 }

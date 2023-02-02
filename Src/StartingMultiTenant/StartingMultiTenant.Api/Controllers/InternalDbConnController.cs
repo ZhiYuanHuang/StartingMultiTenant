@@ -6,6 +6,7 @@ using StartingMultiTenant.Model.Const;
 using StartingMultiTenant.Model.Domain;
 using StartingMultiTenant.Model.Dto;
 using StartingMultiTenant.Service;
+using System.Collections.Generic;
 
 namespace StartingMultiTenant.Api.Controllers
 {
@@ -37,6 +38,27 @@ namespace StartingMultiTenant.Api.Controllers
             }
 
             var dto = convertFromModel(model);
+            dto.HistoryConns = new List<ServiceDbConnsDto>();
+
+            var historyList = _internalDbConnBusiness.GetHistoryConnsByDbConn(id);
+
+            if (historyList.Any()) {
+                historyList=historyList.OrderByDescending(x => x.CreateTime).ToList();
+                foreach (var dbConn in historyList) {
+                    ServiceDbConnsDto dbConnDto = new ServiceDbConnsDto() {
+                        Id = dbConn.Id,
+                        MajorVersion = dbConn.CreateScriptVersion,
+                        MinorVersion = dbConn.CurSchemaVersion,
+                        ActionType = dbConn.ActionType,
+                        DbServerId = dbConn.DbServerId,
+                        CreateScriptName=dto.CreateScriptName,
+                        CreateTime=dbConn.CreateTime,
+                    };
+
+                    dbConnDto.DecryptDbConn = _encryptService.Decrypt_DbConn(dbConn.EncryptedConnStr);
+                    dto.HistoryConns.Add(dbConnDto);
+                }
+            }
 
             return new AppResponseDto<TenantServiceDbConnDto>() { Result = dto };
         }
@@ -77,6 +99,30 @@ namespace StartingMultiTenant.Api.Controllers
             return new AppResponseDto<PagingData<TenantServiceDbConnDto>>() { Result = list };
         }
 
+        [HttpGet]
+        public AppResponseDto<ServiceDbConnsDto> GetHistoryDbConn(Int64 dbConnId) {
+            var list = _internalDbConnBusiness.GetHistoryConnsByDbConn(dbConnId);
+
+            List<ServiceDbConnsDto> serviceDbConnsDtos = new List<ServiceDbConnsDto>();
+            if (list.Any()) {
+                foreach (var dbConn in list) {
+                    ServiceDbConnsDto dbConnDto = new ServiceDbConnsDto() {
+                        Id = dbConn.Id,
+                        MajorVersion = dbConn.CreateScriptVersion,
+                        MinorVersion = dbConn.CurSchemaVersion,
+                        ActionType = dbConn.ActionType,
+                        DbServerId=dbConn.DbServerId,
+                    };
+
+                    dbConnDto.DecryptDbConn = _encryptService.Decrypt_DbConn(dbConn.EncryptedConnStr);
+                    serviceDbConnsDtos.Add(dbConnDto);
+                }
+            }
+
+            return new AppResponseDto<ServiceDbConnsDto>() {
+                ResultList = serviceDbConnsDtos
+            };
+        }
 
         private TenantServiceDbConnDto convertFromModel(TenantServiceDbConnModel model) {
             var dto = new TenantServiceDbConnDto() {
@@ -90,6 +136,7 @@ namespace StartingMultiTenant.Api.Controllers
                 CurSchemaVersion= model.CurSchemaVersion,
                 DbServerId=model.DbServerId,
                 EncryptedConnStr=model.EncryptedConnStr,
+                UpdateTime= model.UpdateTime,
             };
 
             if (!string.IsNullOrEmpty(model.EncryptedConnStr)) {
