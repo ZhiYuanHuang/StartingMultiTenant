@@ -65,6 +65,10 @@ namespace StartingMultiTenant.Business
                 TenantIdentifier = model.TenantIdentifier,
                 TenantDomain = model.TenantDomain,
                 TenantGuid = model.TenantGuid,
+                TenantName=model.TenantName,
+                Description=model.Description,
+                CreateTime=model.CreateTime,
+                UpdateTime=model.UpdateTime,
                 CreateDbScriptIds = new List<long>()
             };
         }

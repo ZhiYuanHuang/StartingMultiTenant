@@ -101,7 +101,7 @@ namespace StartingMultiTenant.Api.Controllers
 
         [HttpGet]
         public AppResponseDto<SchemaUpdateScriptModel> Get(Int64 id) {
-            var model = _schemaUpdateScriptBusiness.Get(id);
+            var model = _schemaUpdateScriptBusiness.GetNoContent(id);
             if (model == null) {
                 return new AppResponseDto<SchemaUpdateScriptModel>(false);
             }
@@ -143,7 +143,7 @@ namespace StartingMultiTenant.Api.Controllers
 
         [HttpGet]
         public IActionResult GetScriptContent(Int64 scriptId) {
-            var createScript = _schemaUpdateScriptBusiness.Get(scriptId);
+            var createScript = _schemaUpdateScriptBusiness.GetNoContent(scriptId);
             if (createScript == null) {
                 return NotFound();
             }
@@ -155,7 +155,7 @@ namespace StartingMultiTenant.Api.Controllers
 
         [HttpGet]
         public IActionResult GetRollBackScriptContent(Int64 scriptId) {
-            var createScript = _schemaUpdateScriptBusiness.Get(scriptId);
+            var createScript = _schemaUpdateScriptBusiness.GetNoContent(scriptId);
             if (createScript == null) {
                 return NotFound();
             }

@@ -68,7 +68,10 @@ namespace StartingMultiTenant.Api.Controllers
             Int64 id = 0;
             if (!existed) {
                 tenantGuid = Guid.NewGuid().ToString("N");
-                bool toInsertSuccess = _tenantIdentifierBusiness.Insert(new TenantIdentifierModel() { TenantDomain=createTenantDto.TenantDomain,TenantIdentifier=createTenantDto.TenantIdentifier,TenantGuid=tenantGuid},out id);
+                bool toInsertSuccess = _tenantIdentifierBusiness.Insert(new TenantIdentifierModel() { 
+                    TenantDomain=createTenantDto.TenantDomain,TenantIdentifier=createTenantDto.TenantIdentifier,TenantGuid=tenantGuid
+                    ,TenantName=createTenantDto.TenantName,Description=createTenantDto.Description
+                },out id);
                 if(!toInsertSuccess) {
                     return new AppResponseDto<Int64>(false);
                 }
@@ -100,10 +103,12 @@ namespace StartingMultiTenant.Api.Controllers
                 TenantDomain = createTenantDto.TenantDomain,
                 TenantIdentifier = createTenantDto.TenantIdentifier,
                 TenantGuid = createTenantDto.TenantGuid,
+                TenantName=createTenantDto.TenantName,
+                Description=createTenantDto.Description,
             };
 
             //don't change
-            if (createTenantDto.CreateDbs==null || !createTenantDto.CreateDbs.Any()) {
+            if (createTenantDto.CreateDbs==null) {
                 return new AppResponseDto<TenantIdentifierDto>() { Result = tenantIdentifierDto };
             }
 
@@ -112,6 +117,7 @@ namespace StartingMultiTenant.Api.Controllers
             var createdScriptIds = createdScripts.Select(x => x.Id);
             newCreateDbScriptIds = newCreateDbScriptIds.Except(createdScriptIds).ToList();
 
+            _tenantIdentifierBusiness.Update(tenantIdentifierDto);
             if (!newCreateDbScriptIds.Any()) {
                 return new AppResponseDto<TenantIdentifierDto>() { Result = tenantIdentifierDto };
             }

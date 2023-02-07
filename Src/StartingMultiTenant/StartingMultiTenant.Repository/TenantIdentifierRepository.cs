@@ -21,10 +21,15 @@ namespace StartingMultiTenant.Repository
         }
 
         public override bool Insert(TenantIdentifierModel tenantIdentifier,out Int64 id) {
-            string sql = "Insert Into TenantIdentifier (TenantGuid,TenantIdentifier,TenantDomain) Values (@tenantGuid,@tenantIdentifier,@tenantDomain) RETURNING Id";
+            string sql = "Insert Into TenantIdentifier (TenantGuid,TenantIdentifier,TenantDomain,TenantName,Description,CreateTime) Values (@tenantGuid,@tenantIdentifier,@tenantDomain,@tenantName,@description,now()) RETURNING Id";
 
             id=(Int64) _tenantDbDataContext.Master.ExecuteScalar(sql, tenantIdentifier);
             return true;
+        }
+
+        public override bool Update(TenantIdentifierModel t) {
+            string sql = "Update TenantIdentifier Set TenantName=@tenantName,Description=@description,UpdateTime=now() Where Id=@id";
+            return _tenantDbDataContext.Master.ExecuteNonQuery(sql, t) > 0;
         }
 
         public bool Delete(string tenantGuid) {

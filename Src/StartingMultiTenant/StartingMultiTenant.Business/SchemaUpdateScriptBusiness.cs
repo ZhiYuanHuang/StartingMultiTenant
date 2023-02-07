@@ -24,8 +24,13 @@ namespace StartingMultiTenant.Business
             _logger= logger;
         }
 
-        public override SchemaUpdateScriptModel Get(long id) {
+        public SchemaUpdateScriptModel GetNoContent(long id) {
             return _schemaUpdateScriptRepo.GetNoContent(id);
+        }
+
+        public List<SchemaUpdateScriptModel> GetNoContent(List<long> ids) {
+            return _schemaUpdateScriptRepo.GetNoContent(ids);
+
         }
 
         public byte[] GetScriptContent(Int64 scriptId,bool getRollBack=false) {

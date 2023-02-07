@@ -10,5 +10,7 @@ namespace StartingMultiTenant.Model.Dto
         public string? TenantDomain { get; set; }
         public string? TenantIdentifier { get; set; }
         public string? TenantGuid { get; set; }
+        public string? TenantName { get; set; }
+        public string? Description { get; set; }
     }
 }

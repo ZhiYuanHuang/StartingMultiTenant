@@ -10,6 +10,7 @@ using StartingMultiTenant.Model.Const;
 using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using StartingMultiTenant.Model.Domain;
+using StartingMultiTenant.Api.Hubs;
 
 namespace StartingMultiTenant.Api
 {
@@ -48,6 +49,13 @@ namespace StartingMultiTenant.Api
                     policy.AllowAnyOrigin();
                     policy.AllowAnyHeader();
                     policy.AllowAnyMethod();
+                });
+                options.AddPolicy("any", builder => {
+                    
+                    builder.SetIsOriginAllowed(x=>true)
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials();
                 });
             });
 
@@ -99,6 +107,21 @@ namespace StartingMultiTenant.Api
                   .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options => {
                       options.SaveToken = true;
                       options.TokenValidationParameters = tokenOptions.ToTokenValidationParams();
+                      options.Events = new JwtBearerEvents {
+                          OnMessageReceived = context =>
+                          {
+                              var accessToken = context.Request.Query["access_token"];
+
+                              // If the request is for our hub...
+                              var path = context.HttpContext.Request.Path;
+                              if (!string.IsNullOrEmpty(accessToken) &&
+                                  (path.StartsWithSegments("/api/TaskNotification"))) {
+                                  // Read the token out of the query string
+                                  context.Token = accessToken;
+                              }
+                              return Task.CompletedTask;
+                          }
+                      };
                   });
             builder.Services.AddAuthorization(options => {
                 options.DefaultPolicy = new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme)
@@ -122,6 +145,13 @@ namespace StartingMultiTenant.Api
                 });
             });
 
+            builder.Services.AddSignalR(options => {
+                options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+                options.EnableDetailedErrors = true;
+            }).AddJsonProtocol(options => {
+                options.PayloadSerializerOptions.PropertyNamingPolicy = null;
+            });
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -134,7 +164,11 @@ namespace StartingMultiTenant.Api
             app.UseAuthentication();
             app.UseAuthorization();
 
+
             app.MapControllers();
+
+           
+            app.MapHub<TaskNotificationHub>("/api/TaskNotification").RequireCors("any");
 
             app.Run();
         }
