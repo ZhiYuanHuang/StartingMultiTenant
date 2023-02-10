@@ -20,6 +20,8 @@ namespace StartingMultiTenant.Service
         private readonly SchemaUpdateScriptBusiness _schemaUpdateScriptBusiness;
         private readonly TenantServiceDbConnBusiness _tenantServiceDbConnBusiness;
         private readonly TenantActionNoticeService _actionNoticeService;
+        private readonly ExternalStoreSyncService _externalStoreSyncService;
+        private readonly TenantIdentifierBusiness _tenantIdentifierBusiness;
 
         private readonly Random _random;
 
@@ -29,7 +31,9 @@ namespace StartingMultiTenant.Service
             DbServerBusiness dbServerBusiness,
             SchemaUpdateScriptBusiness schemaUpdateScriptBusiness,
             TenantActionNoticeService actionNoticeService,
-            TenantServiceDbConnBusiness tenantServiceDbConnBusiness) {
+            TenantServiceDbConnBusiness tenantServiceDbConnBusiness,
+            ExternalStoreSyncService externalStoreSyncService,
+            TenantIdentifierBusiness tenantIdentifierBusiness) {
             _random = new Random();
             _dbServerExecutorFactory = dbServerExecutorFactory;
             _logger = logger;
@@ -38,37 +42,42 @@ namespace StartingMultiTenant.Service
             _schemaUpdateScriptBusiness = schemaUpdateScriptBusiness;
             _tenantServiceDbConnBusiness = tenantServiceDbConnBusiness;
             _actionNoticeService = actionNoticeService;
+            _externalStoreSyncService = externalStoreSyncService;
+            _tenantIdentifierBusiness= tenantIdentifierBusiness;
         }
 
-        public async Task<bool> CreateTenantDbs(string tenantDomain, string tenantIdentifier, List<string> createScriptNameList, bool overrideWhenExisted) {
+        public async Task<bool> CreateTenantDbs(Int64 id,string tenantDomain, string tenantIdentifier, List<string> createScriptNameList, bool overrideWhenExisted) {
             var distinctNameList= createScriptNameList.Distinct().ToList();
             var createScriptList= _createDbScriptBusiness.GetListByNames(distinctNameList, true);
             if (createScriptList.Count != distinctNameList.Count) {
                 return false;
             }
-            bool result = await createTenantDbsAndNotify(tenantDomain,tenantIdentifier, createScriptList, overrideWhenExisted);
+            bool result = await createTenantDbsAndNotify(id,tenantDomain,tenantIdentifier, createScriptList, overrideWhenExisted);
 
             return result;
         }
 
-        public async Task<bool> CreateTenantDbs(string tenantDomain, string tenantIdentifier, List<Int64> createScriptIdList, bool overrideWhenExisted) {
+        public async Task<bool> CreateTenantDbs(Int64 id, string tenantDomain, string tenantIdentifier, List<Int64> createScriptIdList, bool overrideWhenExisted) {
             var distinctIdList= createScriptIdList.Distinct().ToList();
             List<CreateDbScriptModel> createDbScriptList = _createDbScriptBusiness.Get(distinctIdList);
             if (createDbScriptList.Count != distinctIdList.Count) {
                 return false;
             }
 
-            bool result = await createTenantDbsAndNotify(tenantDomain, tenantIdentifier, createDbScriptList, overrideWhenExisted);
+            bool result = await createTenantDbsAndNotify(id,tenantDomain, tenantIdentifier, createDbScriptList, overrideWhenExisted);
 
             return result;
         }
 
-        internal async Task<bool> createTenantDbsAndNotify(string tenantDomain, string tenantIdentifier, List<CreateDbScriptModel> createDbScriptList, bool overrideWhenExisted) {
+        internal async Task<bool> createTenantDbsAndNotify(Int64 id, string tenantDomain, string tenantIdentifier, List<CreateDbScriptModel> createDbScriptList, bool overrideWhenExisted) {
             _actionNoticeService.PublishTenantStartCreate(tenantDomain, tenantIdentifier);
 
             bool result = false;
             try {
                 result = await createTenantDbs(tenantDomain, tenantIdentifier, createDbScriptList, overrideWhenExisted);
+                if (result) {
+                    _externalStoreSyncService.SyncToExternalStore(id).ConfigureAwait(false);
+                }
             } finally {
                 _actionNoticeService.PublishTenantCreated(tenantDomain, tenantIdentifier, result);
             }

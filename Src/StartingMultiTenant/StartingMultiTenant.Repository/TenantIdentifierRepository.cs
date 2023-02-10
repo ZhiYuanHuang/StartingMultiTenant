@@ -45,6 +45,16 @@ namespace StartingMultiTenant.Repository
             return GetEntitiesByQuery(p);
         }
 
+        public bool ExistTenant(string tenantDomain, string tenantIdentifier, out TenantIdentifierModel model) {
+            Dictionary<string, object> p = new Dictionary<string, object>() {
+                { "TenantIdentifier",tenantIdentifier},
+                { "TenantDomain",tenantDomain}
+            };
+
+            model=GetEntityByQuery(p);
+            return model != null;
+        }
+
         public PagingData<TenantIdentifierDto> GetPage(int pageSize, int pageIndex, Func<TenantIdentifierModel, TenantIdentifierDto> mappingFunc, string tenantDomain = null) {
             Dictionary<string, object> p = new Dictionary<string, object>();
             if (!string.IsNullOrEmpty(tenantDomain)) {

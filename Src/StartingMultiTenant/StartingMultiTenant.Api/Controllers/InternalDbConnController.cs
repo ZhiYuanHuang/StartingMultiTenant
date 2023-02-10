@@ -38,14 +38,14 @@ namespace StartingMultiTenant.Api.Controllers
             }
 
             var dto = convertFromModel(model);
-            dto.HistoryConns = new List<ServiceDbConnsDto>();
+            dto.HistoryConns = new List<ServiceDbConnDto>();
 
             var historyList = _internalDbConnBusiness.GetHistoryConnsByDbConn(id);
 
             if (historyList.Any()) {
                 historyList=historyList.OrderByDescending(x => x.CreateTime).ToList();
                 foreach (var dbConn in historyList) {
-                    ServiceDbConnsDto dbConnDto = new ServiceDbConnsDto() {
+                    ServiceDbConnDto dbConnDto = new ServiceDbConnDto() {
                         Id = dbConn.Id,
                         MajorVersion = dbConn.CreateScriptVersion,
                         MinorVersion = dbConn.CurSchemaVersion,
@@ -100,13 +100,13 @@ namespace StartingMultiTenant.Api.Controllers
         }
 
         [HttpGet]
-        public AppResponseDto<ServiceDbConnsDto> GetHistoryDbConn(Int64 dbConnId) {
+        public AppResponseDto<ServiceDbConnDto> GetHistoryDbConn(Int64 dbConnId) {
             var list = _internalDbConnBusiness.GetHistoryConnsByDbConn(dbConnId);
 
-            List<ServiceDbConnsDto> serviceDbConnsDtos = new List<ServiceDbConnsDto>();
+            List<ServiceDbConnDto> serviceDbConnsDtos = new List<ServiceDbConnDto>();
             if (list.Any()) {
                 foreach (var dbConn in list) {
-                    ServiceDbConnsDto dbConnDto = new ServiceDbConnsDto() {
+                    ServiceDbConnDto dbConnDto = new ServiceDbConnDto() {
                         Id = dbConn.Id,
                         MajorVersion = dbConn.CreateScriptVersion,
                         MinorVersion = dbConn.CurSchemaVersion,
@@ -119,7 +119,7 @@ namespace StartingMultiTenant.Api.Controllers
                 }
             }
 
-            return new AppResponseDto<ServiceDbConnsDto>() {
+            return new AppResponseDto<ServiceDbConnDto>() {
                 ResultList = serviceDbConnsDtos
             };
         }

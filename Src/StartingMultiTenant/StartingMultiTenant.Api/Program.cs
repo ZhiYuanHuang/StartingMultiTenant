@@ -11,6 +11,7 @@ using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using StartingMultiTenant.Model.Domain;
 using StartingMultiTenant.Api.Hubs;
+using StartingMultiTenant.Model.Dto;
 
 namespace StartingMultiTenant.Api
 {
@@ -94,14 +95,16 @@ namespace StartingMultiTenant.Api
             builder.Services.AddSingleton<SingleTenantService>();
             builder.Services.AddSingleton<MultiTenantService>();
             builder.Services.AddSingleton<TenantActionNoticeService>();
+            builder.Services.AddSingleton<ExternalStoreSyncService>();
 
             builder.Services.AddSingleton<DbServerExecutorFactory>();
             builder.Services.AddSingleton<QueueNoticeFactory>();
+            builder.Services.AddSingleton<ExternalStoreFactory>();
 
             builder.Services.AddSingleton<TokenBuilder>();
             builder.Services.Configure<JwtTokenOptions>(
                 builder.Configuration.GetSection("JwtTokenOptions"));
-
+            
             JwtTokenOptions tokenOptions =builder.Configuration.GetSection("JwtTokenOptions").Get<JwtTokenOptions>();
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                   .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options => {

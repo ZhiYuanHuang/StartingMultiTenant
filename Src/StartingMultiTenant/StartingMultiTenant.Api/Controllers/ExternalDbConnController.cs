@@ -19,14 +19,20 @@ namespace StartingMultiTenant.Api.Controllers
         private readonly EncryptService _encryptService;
         private readonly TenantDomainBusiness _tenantDomainBusiness;
         private readonly ServiceInfoBusiness _serviceInfoBusiness;
+        private readonly TenantIdentifierBusiness _tenantIdentifierBusiness;
+        private readonly ExternalStoreSyncService _externalStoreSyncService;
         public ExternalDbConnController(ExternalTenantServiceDbConnBusiness externalConnBusiness,
             EncryptService encryptService,
             TenantDomainBusiness tenantDomainBusiness,
-            ServiceInfoBusiness serviceInfoBusiness) {
+            ServiceInfoBusiness serviceInfoBusiness,
+            TenantIdentifierBusiness tenantIdentifierBusiness,
+            ExternalStoreSyncService externalStoreSyncService) {
             _externalConnBusiness = externalConnBusiness;
             _encryptService= encryptService;
             _tenantDomainBusiness = tenantDomainBusiness;
             _serviceInfoBusiness = serviceInfoBusiness;
+            _tenantIdentifierBusiness = tenantIdentifierBusiness;
+            _externalStoreSyncService = externalStoreSyncService;
         }
 
         [HttpPost]
@@ -52,10 +58,14 @@ namespace StartingMultiTenant.Api.Controllers
                 requestDto.Data.TenantDomain = domainModel.TenantDomain;
             }
 
+
             bool result = false;
             Int64 id = 0;
             try {
                 result= _externalConnBusiness.Insert(requestDto.Data,out id);
+                if (result && _tenantIdentifierBusiness.ExistTenant(requestDto.Data.TenantDomain,requestDto.Data.TenantIdentifier,out TenantIdentifierModel tenantModel)) {
+                    _externalStoreSyncService.SyncToExternalStore(tenantModel.Id).ConfigureAwait(false);
+                }
             }
             catch(Exception ex) {
                 result= true;
@@ -75,6 +85,13 @@ namespace StartingMultiTenant.Api.Controllers
             requestDto.Data.EncryptedConnStr = _encryptService.Encrypt_DbConn(requestDto.Data.DbConnStr);
 
             bool result = _externalConnBusiness.Update(requestDto.Data);
+            if (result) {
+                var externalConn = _externalConnBusiness.Get(requestDto.Data.Id);
+                if(_tenantIdentifierBusiness.ExistTenant(externalConn.TenantDomain,externalConn.TenantIdentifier,out TenantIdentifierModel tenantModel)) {
+                    _externalStoreSyncService.SyncToExternalStore(tenantModel.Id).ConfigureAwait(false);
+                }
+                
+            }
             return new AppResponseDto<ExternalTenantServiceDbConnDto>(result) { Result = requestDto.Data };
         }
 

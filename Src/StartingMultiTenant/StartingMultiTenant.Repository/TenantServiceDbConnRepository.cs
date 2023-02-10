@@ -102,6 +102,15 @@ namespace StartingMultiTenant.Repository
             return GetEntitiesByQuery(p);
         }
 
+        public List<TenantServiceDbConnModel> GetConnByTenantIds(List<Int64> tenantIds) {
+
+            string sql = @"Select a.* From TenantServiceDbConn a
+                            Inner Join TenantIdentifier b
+                                using(TenantIdentifier,TenantDomain)
+                            Where b.Id =Any(@tenantIds)";
+            return _tenantDbDataContext.Slave.QueryList<TenantServiceDbConnModel>(sql,new { tenantIds =tenantIds.ToArray()});
+        }
+
         public TenantServiceDbConnModel GetConnByTenantAndCreateScript(string tenantDomain, string tenantIdentifier, string createScriptName) {
             Dictionary<string, object> p = new Dictionary<string, object>() {
                 { "TenantDomain",tenantDomain},

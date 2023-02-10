@@ -9,8 +9,8 @@ namespace StartingMultiTenant.Model.Dto
         public string TenantDomain { get; set; }
         public string TenantIdentifier { get; set; }
 
-        public List<ServiceDbConnsDto> InnerDbConnList { get; set; }
-        public List<ServiceDbConnsDto> ExternalDbConnList { get; set; }
-        public List<ServiceDbConnsDto> MergeDbConnList { get; set; }
+        public List<ServiceDbConnDto> InnerDbConnList { get; set; }
+        public List<ServiceDbConnDto> ExternalDbConnList { get; set; }
+        public List<ServiceDbConnDto> MergeDbConnList { get; set; }
     }
 }

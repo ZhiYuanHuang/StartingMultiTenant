@@ -59,6 +59,7 @@ namespace StartingMultiTenant.Service
                 lock (_pubLockObj) {
                     if (_pubConnection == null) {
                         _pubConnection = ConnectionMultiplexer.Connect(_connStr);
+                       
                         _pubDb = _pubConnection.GetDatabase();
                     }
                 }

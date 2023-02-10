@@ -41,6 +41,15 @@ namespace StartingMultiTenant.Repository
             return _tenantDbDataContext.Master.ExecuteNonQuery(sql, t) > 0;
         }
 
+        public List<ExternalTenantServiceDbConnModel> GetConnByTenantIds(List<Int64> tenantIds) {
+
+            string sql = @"Select a.* From ExternalTenantServiceDbConn a
+                            Inner Join TenantIdentifier b
+                                using(TenantIdentifier,TenantDomain)
+                            Where b.Id =Any(@tenantIds)";
+            return _tenantDbDataContext.Slave.QueryList<ExternalTenantServiceDbConnModel>(sql, new { tenantIds = tenantIds.ToArray() });
+        }
+
         public PagingData<ExternalTenantServiceDbConnModel> GetPage(int pageSize,int pageIndex,string tenantDomain=null,string tenantIdentifier=null,string serviceIdentifier=null,string dbIdentifier=null) {
             Dictionary<string, object> p = new Dictionary<string, object>();
             if (!string.IsNullOrEmpty(tenantIdentifier)) {

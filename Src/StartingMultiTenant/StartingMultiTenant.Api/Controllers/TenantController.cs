@@ -23,6 +23,7 @@ namespace StartingMultiTenant.Api.Controllers
         private readonly EncryptService _encryptService;
         private readonly TenantActionNoticeService _actionNoticeService;
         private readonly CreateDbScriptBusiness _createDbScriptBusiness;
+        private readonly ExternalStoreSyncService _externalStoreSyncService;
         public TenantController(SingleTenantService singleTenantService,
             TenantDomainBusiness tenantDomainBusiness,
             TenantIdentifierBusiness tenantIdentifierBusiness,
@@ -30,7 +31,8 @@ namespace StartingMultiTenant.Api.Controllers
             ExternalTenantServiceDbConnRepository externalTenantServiceDbConnRepo,
             TenantActionNoticeService actionNoticeService,
             CreateDbScriptBusiness createDbScriptBusiness,
-            EncryptService encryptService) {
+            EncryptService encryptService,
+            ExternalStoreSyncService externalStoreSyncService) {
             _singleTenantService = singleTenantService;
             _tenantDomainBusiness = tenantDomainBusiness;
             _tenantIdentifierBusiness = tenantIdentifierBusiness;
@@ -39,6 +41,7 @@ namespace StartingMultiTenant.Api.Controllers
             _encryptService = encryptService;
             _createDbScriptBusiness = createDbScriptBusiness;
             _actionNoticeService = actionNoticeService;
+            _externalStoreSyncService = externalStoreSyncService;
         }
 
         [HttpPost]
@@ -81,7 +84,7 @@ namespace StartingMultiTenant.Api.Controllers
             if (createTenantDto.CreateDbs != null) {
                 List<Int64> createDbScriptIds = createTenantDto.CreateDbs.Values.ToList();
                 if (createDbScriptIds.Any()) {
-                    result = await _singleTenantService.CreateTenantDbs(createTenantDto.TenantDomain, createTenantDto.TenantIdentifier, createDbScriptIds, createTenantDto.OverrideWhenExisted);
+                    result = await _singleTenantService.CreateTenantDbs(id,createTenantDto.TenantDomain, createTenantDto.TenantIdentifier, createDbScriptIds, createTenantDto.OverrideWhenExisted);
                 }
             }
 
@@ -89,7 +92,7 @@ namespace StartingMultiTenant.Api.Controllers
                 if (!existed) {
                     _tenantIdentifierBusiness.Delete(tenantGuid);
                 }
-            }
+            } 
 
             return new AppResponseDto<Int64>(result) {Result=id};
         }
@@ -122,7 +125,7 @@ namespace StartingMultiTenant.Api.Controllers
                 return new AppResponseDto<TenantIdentifierDto>() { Result = tenantIdentifierDto };
             }
 
-            var result = await _singleTenantService.CreateTenantDbs(createTenantDto.TenantDomain, createTenantDto.TenantIdentifier, newCreateDbScriptIds, true);
+            var result = await _singleTenantService.CreateTenantDbs(createTenantDto.Id,createTenantDto.TenantDomain, createTenantDto.TenantIdentifier, newCreateDbScriptIds, true);
             
           
             return new AppResponseDto<TenantIdentifierDto>(result) { Result = tenantIdentifierDto };
@@ -169,11 +172,11 @@ namespace StartingMultiTenant.Api.Controllers
             }
 
             List<ExternalTenantServiceDbConnModel> externalList = _externalTenantServiceDbConnRepo.GetByTenantAndService(requestDto.Data.TenantDomain,requestDto.Data.TenantIdentifier);
-            List<ServiceDbConnsDto> externalDbConns = new List<ServiceDbConnsDto>();
-            List<ServiceDbConnsDto> mergeDbConns = new List<ServiceDbConnsDto>();
+            List<ServiceDbConnDto> externalDbConns = new List<ServiceDbConnDto>();
+            List<ServiceDbConnDto> mergeDbConns = new List<ServiceDbConnDto>();
             if (externalList.Any()) {
                 foreach(var externalDbConn in externalList) {
-                    ServiceDbConnsDto dbConn = new ServiceDbConnsDto() {
+                    ServiceDbConnDto dbConn = new ServiceDbConnDto() {
                         Id=externalDbConn.Id,
                         ServiceIdentifier = externalDbConn.ServiceIdentifier,
                         DbIdentifier = externalDbConn.DbIdentifier,
@@ -190,10 +193,10 @@ namespace StartingMultiTenant.Api.Controllers
             }
 
             List<TenantServiceDbConnModel> list = _tenantServiceDbConnBusiness.GetByTenant(requestDto.Data.TenantDomain, requestDto.Data.TenantIdentifier);
-            List<ServiceDbConnsDto> innerDbConns = new List<ServiceDbConnsDto>();
+            List<ServiceDbConnDto> innerDbConns = new List<ServiceDbConnDto>();
             if (list.Any()) {
                 foreach (var tenantServiceDbConn in list) {
-                    ServiceDbConnsDto dbConn = new ServiceDbConnsDto() {
+                    ServiceDbConnDto dbConn = new ServiceDbConnDto() {
                         Id=tenantServiceDbConn.Id,
                         ServiceIdentifier = tenantServiceDbConn.ServiceIdentifier,
                         DbIdentifier = tenantServiceDbConn.DbIdentifier,
@@ -229,6 +232,19 @@ namespace StartingMultiTenant.Api.Controllers
             }
 
             return new AppResponseDto(true);
+        }
+
+        [HttpGet]
+        public async Task<AppResponseDto> SyncToExternalStore(Int64 id) {
+            var result=await _externalStoreSyncService.SyncToExternalStore(id);
+            return new AppResponseDto(result) { ErrorMsg="sync error"};
+        }
+
+        [HttpGet]
+        public async Task<AppResponseDto> FullSyncToExternalStore() {
+            var result = await _externalStoreSyncService.SyncToExternalStore();
+            Thread.Sleep(1000*10);
+            return new AppResponseDto(result) { ErrorMsg = "full sync error" };
         }
     }
 }

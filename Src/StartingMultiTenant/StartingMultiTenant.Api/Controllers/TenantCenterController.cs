@@ -68,7 +68,7 @@ namespace StartingMultiTenant.Api.Controllers
                 }
             }
 
-            var result = await _singleTenantService.CreateTenantDbs(createTenantDto.TenantDomain, createTenantDto.TenantIdentifier, createTenantDto.CreateDbScripts, createTenantDto.OverrideWhenExisted);
+            var result = await _singleTenantService.CreateTenantDbs(0,createTenantDto.TenantDomain, createTenantDto.TenantIdentifier, createTenantDto.CreateDbScripts, createTenantDto.OverrideWhenExisted);
 
             if (!result) {
                 if (!existed) {
@@ -87,10 +87,10 @@ namespace StartingMultiTenant.Api.Controllers
             }
 
             List<ExternalTenantServiceDbConnModel> externalList = _externalTenantServiceDbConnRepo.GetByTenantAndService(requestDto.Data.TenantDomain, requestDto.Data.TenantIdentifier,requestDto.Data.ServiceIdentifier);
-            List<ServiceDbConnsDto> mergeDbConns = new List<ServiceDbConnsDto>();
+            List<ServiceDbConnDto> mergeDbConns = new List<ServiceDbConnDto>();
             if (externalList.Any()) {
                 foreach (var externalDbConn in externalList) {
-                    ServiceDbConnsDto dbConn = new ServiceDbConnsDto() {
+                    ServiceDbConnDto dbConn = new ServiceDbConnDto() {
                         Id = externalDbConn.Id,
                         ServiceIdentifier = externalDbConn.ServiceIdentifier,
                         DbIdentifier = externalDbConn.DbIdentifier,
@@ -108,7 +108,7 @@ namespace StartingMultiTenant.Api.Controllers
             List<TenantServiceDbConnModel> list = _tenantServiceDbConnBusiness.GetByTenant(requestDto.Data.TenantDomain, requestDto.Data.TenantIdentifier, requestDto.Data.ServiceIdentifier);
             if (list.Any()) {
                 foreach (var tenantServiceDbConn in list) {
-                    ServiceDbConnsDto dbConn = new ServiceDbConnsDto() {
+                    ServiceDbConnDto dbConn = new ServiceDbConnDto() {
                         Id = tenantServiceDbConn.Id,
                         ServiceIdentifier = tenantServiceDbConn.ServiceIdentifier,
                         DbIdentifier = tenantServiceDbConn.DbIdentifier,
