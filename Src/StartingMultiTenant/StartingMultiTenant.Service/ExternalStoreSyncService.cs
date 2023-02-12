@@ -42,7 +42,9 @@ namespace StartingMultiTenant.Service
                     object storeTypeObj= Enum.Parse(enumType, x.StoreType);
                     return new ExternalStoreDataDto() {
                         StoreType = (StoreTypeEnum)storeTypeObj,
-                        Conn = x.Conn
+                        Conn = x.Conn,
+                        ConfigFilePath= x.ConfigFilePath,
+                        K8sNamespace = x.K8sNamespace,
                     };
                 }).ToList();
             } else {

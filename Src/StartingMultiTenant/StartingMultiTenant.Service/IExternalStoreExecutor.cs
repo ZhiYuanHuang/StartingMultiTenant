@@ -32,7 +32,11 @@ namespace StartingMultiTenant.Service
                         externalStore = new RedisExternalStore(externalStoreData.Conn, logger);
                     }
                     break;
-                
+                case StoreTypeEnum.k8s_secret: {
+                        var logger = _loggerFactory.CreateLogger<K8sSecretExternalStore>();
+                        externalStore = new K8sSecretExternalStore(externalStoreData.ConfigFilePath,externalStoreData.K8sNamespace,logger);
+                        break;
+                    }
                 default:
                     externalStore = null;
                     break;
