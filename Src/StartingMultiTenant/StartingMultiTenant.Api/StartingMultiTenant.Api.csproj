@@ -25,6 +25,13 @@
 
   <ItemGroup>
     <Folder Include="Filters\" />
+    <Folder Include="cer\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="cer\kubeconfig">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

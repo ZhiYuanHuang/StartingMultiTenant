@@ -26,7 +26,9 @@ namespace StartingMultiTenant.Model.Enum
         DeletedSuccess = 15,
         DeletedFailed = 16,
 
-        ManualModify=17,
-        ManualAllModify = 18,
+        DbConnsModify=17,
+        ManualAllClear=18,
+        //ManualModify=17,
+        //ManualAllModify = 18,
     }
 }

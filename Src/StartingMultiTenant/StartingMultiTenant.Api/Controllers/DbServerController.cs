@@ -158,13 +158,13 @@ namespace StartingMultiTenant.Api.Controllers
             };
         }
 
-        [HttpPost]
+        [HttpPut]
         public async Task<AppResponseDto> ExchangeDbServer(AppRequestDto<DbConnAndDbserverIdDto> requestDto) {
             if (requestDto.Data == null) {
                 return new AppResponseDto(false);
             }
 
-            bool sameDbType = _dbServerBusiness.CheckSameTypeDb(requestDto.Data.OldDbServerId,requestDto.Data.DbServerId,out DbServerModel oldDbServer,out DbServerModel newDbServer);
+            bool sameDbType = _dbServerBusiness.CheckSameTypeDb(requestDto.Data.DbServerId,requestDto.Data.NewDbServerId,out DbServerModel oldDbServer,out DbServerModel newDbServer);
 
             if (!sameDbType) {
                 return new AppResponseDto(false);
@@ -183,5 +183,10 @@ namespace StartingMultiTenant.Api.Controllers
             return new AppResponseDto(true);
         }
 
+        [HttpGet]
+        public AppResponseDto<DbServerRefDto> GetStatRef(Int64 id) {
+            var statDto= _dbServerBusiness.StatRef(id);
+            return new AppResponseDto<DbServerRefDto>() { Result=statDto};
+        }
     }
 }

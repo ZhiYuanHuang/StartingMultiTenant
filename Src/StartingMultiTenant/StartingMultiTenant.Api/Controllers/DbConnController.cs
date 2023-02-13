@@ -60,7 +60,7 @@ namespace StartingMultiTenant.Api.Controllers
                 return new AppResponseDto(false);
             }
 
-            bool sameDbType = _dbServerBusiness.CheckSameTypeDbByConn(requestDto.Data.DbConnId, requestDto.Data.DbServerId, out TenantServiceDbConnModel dbConn, out DbServerModel toExchangeDbServer);
+            bool sameDbType = _dbServerBusiness.CheckSameTypeDbByConn(requestDto.Data.DbConnId, requestDto.Data.NewDbServerId, out TenantServiceDbConnModel dbConn, out DbServerModel toExchangeDbServer);
             if (!sameDbType) {
                 return new AppResponseDto(false);
             }

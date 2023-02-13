@@ -46,40 +46,71 @@ namespace StartingMultiTenant.Service
             _tenantIdentifierBusiness= tenantIdentifierBusiness;
         }
 
-        public async Task<bool> CreateTenantDbs(Int64 id,string tenantDomain, string tenantIdentifier, List<string> createScriptNameList, bool overrideWhenExisted) {
+        public async Task<bool> CreateTenantDbs(Int64 id,string tenantDomain, string tenantIdentifier, List<string> createScriptNameList) {
             var distinctNameList= createScriptNameList.Distinct().ToList();
             var createScriptList= _createDbScriptBusiness.GetListByNames(distinctNameList, true);
             if (createScriptList.Count != distinctNameList.Count) {
                 return false;
             }
-            bool result = await createTenantDbsAndNotify(id,tenantDomain,tenantIdentifier, createScriptList, overrideWhenExisted);
+            bool result = await createTenantDbsAndNotify(id,tenantDomain,tenantIdentifier, createScriptList);
 
             return result;
         }
 
-        public async Task<bool> CreateTenantDbs(Int64 id, string tenantDomain, string tenantIdentifier, List<Int64> createScriptIdList, bool overrideWhenExisted) {
+        public async Task<bool> CreateTenantDbs(Int64 id, string tenantDomain, string tenantIdentifier, List<Int64> createScriptIdList) {
             var distinctIdList= createScriptIdList.Distinct().ToList();
             List<CreateDbScriptModel> createDbScriptList = _createDbScriptBusiness.Get(distinctIdList);
             if (createDbScriptList.Count != distinctIdList.Count) {
                 return false;
             }
 
-            bool result = await createTenantDbsAndNotify(id,tenantDomain, tenantIdentifier, createDbScriptList, overrideWhenExisted);
+            bool result = await createTenantDbsAndNotify(id,tenantDomain, tenantIdentifier, createDbScriptList);
 
             return result;
         }
 
-        internal async Task<bool> createTenantDbsAndNotify(Int64 id, string tenantDomain, string tenantIdentifier, List<CreateDbScriptModel> createDbScriptList, bool overrideWhenExisted) {
+        public async Task<bool> OverrideTenantDbs(Int64 id, string tenantDomain, string tenantIdentifier, List<Int64> createScriptIdList) {
+            var distinctIdList = createScriptIdList.Distinct().ToList();
+            List<CreateDbScriptModel> createDbScriptList = _createDbScriptBusiness.Get(distinctIdList);
+            if (createDbScriptList.Count != distinctIdList.Count) {
+                return false;
+            }
+
+            bool result = await overrideTenantDbsAndNotify(id, tenantDomain, tenantIdentifier, createDbScriptList);
+
+            return result;
+        }
+
+        internal async Task<bool> createTenantDbsAndNotify(Int64 id, string tenantDomain, string tenantIdentifier, List<CreateDbScriptModel> createDbScriptList) {
             _actionNoticeService.PublishTenantStartCreate(tenantDomain, tenantIdentifier);
 
             bool result = false;
             try {
-                result = await createTenantDbs(tenantDomain, tenantIdentifier, createDbScriptList, overrideWhenExisted);
+                result = await createTenantDbs(tenantDomain, tenantIdentifier, createDbScriptList, false);
                 if (result) {
                     _externalStoreSyncService.SyncToExternalStore(id).ConfigureAwait(false);
                 }
             } finally {
-                _actionNoticeService.PublishTenantCreated(tenantDomain, tenantIdentifier, result);
+                if (result) {
+                    _actionNoticeService.PublishTenantCreated(tenantDomain, tenantIdentifier, result);
+                }
+            }
+            return result;
+        }
+
+        internal async Task<bool> overrideTenantDbsAndNotify(Int64 id, string tenantDomain, string tenantIdentifier, List<CreateDbScriptModel> createDbScriptList) {
+            
+            bool result = false;
+            try {
+                result = await createTenantDbs(tenantDomain, tenantIdentifier, createDbScriptList, true);
+                if (result) {
+                    _externalStoreSyncService.SyncToExternalStore(id).ConfigureAwait(false);
+                }
+            } finally {
+                if (result) {
+                    _actionNoticeService.PublishTenantDbConnsModify(tenantDomain, tenantIdentifier);
+                }
+                
             }
             return result;
         }
@@ -221,6 +252,10 @@ namespace StartingMultiTenant.Service
             _actionNoticeService.PublishTenantStartExchange(toUpdateDbConn.TenantDomain,toUpdateDbConn.TenantIdentifier,toUpdateDbConn.ServiceIdentifier);
 
             bool result = await exchangeTenantDbServer(toUpdateDbConn,toUseDbServer);
+
+            if (result && _tenantIdentifierBusiness.ExistTenant(toUpdateDbConn.TenantDomain,toUpdateDbConn.TenantIdentifier,out TenantIdentifierModel model)) {
+                _externalStoreSyncService.SyncToExternalStore(model.Id).ConfigureAwait(false);
+            }
 
             _actionNoticeService.PublishTenantExchanged(toUpdateDbConn.TenantDomain, toUpdateDbConn.TenantIdentifier, toUpdateDbConn.ServiceIdentifier,result);
 

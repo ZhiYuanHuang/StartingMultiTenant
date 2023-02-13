@@ -5,6 +5,7 @@ using StartingMultiTenant.Repository;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -78,6 +79,44 @@ namespace StartingMultiTenant.Business
             newDbServer = newDbServers[0];
 
             return oldDbServer.DbType == newDbServer.DbType;
+        }
+
+        public DbServerRefDto StatRef(Int64 dbServerId) {
+            var model= Get(dbServerId);
+
+            var statDto= new DbServerRefDto() { DbServerId =dbServerId};
+            if (model == null) {
+                return statDto;
+            }
+
+            var dbConns= _tenantServiceDbConnRepository.GetConnListByDbServer(dbServerId);
+            if (!dbConns.Any()) {
+                return statDto;
+            }
+
+            statDto.DbConnCount = dbConns.Count;
+            Dictionary<string, int> domainCountDict = new Dictionary<string, int>();
+            Dictionary<string, int> tenantCountDict = new Dictionary<string, int>();
+            Dictionary<string, int> serviceCountDict = new Dictionary<string, int>();
+            dbConns.ForEach(x => { 
+                
+                if(!domainCountDict.ContainsKey(x.TenantDomain)) {
+                    domainCountDict.Add(x.TenantDomain, 1);
+                }
+                string tenantKey = $"{x.TenantDomain}_{x.TenantIdentifier}";
+                if (!tenantCountDict.ContainsKey(tenantKey)) {
+                    tenantCountDict.Add(tenantKey, 1);
+                } 
+
+                if (!serviceCountDict.ContainsKey(x.ServiceIdentifier)) {
+                    serviceCountDict.Add(x.ServiceIdentifier,1);
+                }
+            });
+
+            statDto.TenantDomainCount = domainCountDict.Keys.Count;
+            statDto.TenantCount = tenantCountDict.Keys.Count;
+            statDto.ServiceCount = serviceCountDict.Keys.Count;
+            return statDto;
         }
     }
 }

@@ -55,20 +55,21 @@ namespace StartingMultiTenant.Api.Controllers
             }
 
             bool existed = _tenantIdentifierBusiness.ExistTenant(createTenantDto.TenantDomain, createTenantDto.TenantIdentifier);
-            if (existed && !createTenantDto.OverrideWhenExisted) {
+            if (existed) {
                 return new AppResponseDto(false) { ErrorMsg = $"tenantdomain {createTenantDto.TenantDomain} identifier {createTenantDto.TenantIdentifier} had existed" };
             }
 
+            Int64 id = 0;
             string tenantGuid = string.Empty;
             if (!existed) {
                 tenantGuid = Guid.NewGuid().ToString("N");
-                bool toInsertSuccess = _tenantIdentifierBusiness.Insert(new TenantIdentifierModel() { TenantDomain = createTenantDto.TenantDomain, TenantIdentifier = createTenantDto.TenantIdentifier, TenantGuid = tenantGuid });
+                bool toInsertSuccess = _tenantIdentifierBusiness.Insert(new TenantIdentifierModel() { TenantDomain = createTenantDto.TenantDomain, TenantIdentifier = createTenantDto.TenantIdentifier, TenantGuid = tenantGuid },out id);
                 if (!toInsertSuccess) {
                     return new AppResponseDto(false);
                 }
             }
 
-            var result = await _singleTenantService.CreateTenantDbs(0,createTenantDto.TenantDomain, createTenantDto.TenantIdentifier, createTenantDto.CreateDbScripts, createTenantDto.OverrideWhenExisted);
+            var result = await _singleTenantService.CreateTenantDbs(id,createTenantDto.TenantDomain, createTenantDto.TenantIdentifier, createTenantDto.CreateDbScripts);
 
             if (!result) {
                 if (!existed) {

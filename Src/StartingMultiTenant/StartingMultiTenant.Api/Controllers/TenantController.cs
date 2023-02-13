@@ -84,7 +84,7 @@ namespace StartingMultiTenant.Api.Controllers
             if (createTenantDto.CreateDbs != null) {
                 List<Int64> createDbScriptIds = createTenantDto.CreateDbs.Values.ToList();
                 if (createDbScriptIds.Any()) {
-                    result = await _singleTenantService.CreateTenantDbs(id,createTenantDto.TenantDomain, createTenantDto.TenantIdentifier, createDbScriptIds, createTenantDto.OverrideWhenExisted);
+                    result = await _singleTenantService.CreateTenantDbs(id,createTenantDto.TenantDomain, createTenantDto.TenantIdentifier, createDbScriptIds);
                 }
             }
 
@@ -125,7 +125,7 @@ namespace StartingMultiTenant.Api.Controllers
                 return new AppResponseDto<TenantIdentifierDto>() { Result = tenantIdentifierDto };
             }
 
-            var result = await _singleTenantService.CreateTenantDbs(createTenantDto.Id,createTenantDto.TenantDomain, createTenantDto.TenantIdentifier, newCreateDbScriptIds, true);
+            var result = await _singleTenantService.OverrideTenantDbs(createTenantDto.Id,createTenantDto.TenantDomain, createTenantDto.TenantIdentifier, newCreateDbScriptIds);
             
           
             return new AppResponseDto<TenantIdentifierDto>(result) { Result = tenantIdentifierDto };
@@ -224,12 +224,19 @@ namespace StartingMultiTenant.Api.Controllers
         }
 
         [HttpGet]
-        public AppResponseDto TriggerManualModify(string tenantDomain,string tenantIdentifier) {
-            if (string.IsNullOrEmpty(tenantIdentifier)) {
-                _actionNoticeService.PublishTenantManualModify();
-            } else {
-                _actionNoticeService.PublishTenantManualModify(tenantDomain,tenantIdentifier);
+        public AppResponseDto TriggerDbConnsModify(Int64 id) {
+            var model= _tenantIdentifierBusiness.Get(id);
+            if(model != null)
+            {
+                _actionNoticeService.PublishTenantDbConnsModify(model.TenantDomain, model.TenantIdentifier);
             }
+
+            return new AppResponseDto(true);
+        }
+
+        [HttpGet]
+        public AppResponseDto TriggerAllClear() {
+            _actionNoticeService.PublishManualAllClear();
 
             return new AppResponseDto(true);
         }

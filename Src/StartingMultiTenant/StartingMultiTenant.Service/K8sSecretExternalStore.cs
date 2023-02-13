@@ -24,6 +24,7 @@ namespace StartingMultiTenant.Service
             ILogger<K8sSecretExternalStore> logger) {
             _logger= logger;
             _configFilePath=configFilePath;
+            _k8sNamespace = k8sNamespace;
             if (System.IO.File.Exists(configFilePath)) {
                 var config = KubernetesClientConfiguration.BuildConfigFromConfigFile(configFilePath);
                 
@@ -33,12 +34,14 @@ namespace StartingMultiTenant.Service
 
         public void WriteToExternalStore(List<TenantServiceDbConnsDto> tenantServiceDbConns) {
             foreach(var tenantDbConns in tenantServiceDbConns) {
+                string secretName = $"{tenantDbConns.TenantDomain}-{tenantDbConns.TenantIdentifier}-dbconns".ToLower();
                 V1Secret secretBody = new V1Secret() {
                     ApiVersion = "v1",
                     Metadata = new V1ObjectMeta() {
-                        Name = $"{tenantDbConns.TenantDomain}:{tenantDbConns.TenantIdentifier}"
+                        Name = secretName,
                     },
                     Type = "Opaque",
+                   
                     StringData = new Dictionary<string, string>()
                 };
                 if (tenantDbConns.InnerDbConnList != null && tenantDbConns.InnerDbConnList.Any()) {
@@ -53,8 +56,16 @@ namespace StartingMultiTenant.Service
                         secretBody.StringData.Add($"External_{externalDbConn.ServiceIdentifier}_{externalDbConn.DbIdentifier}", externalDbConn.DecryptDbConn);
                     }
                 }
-
-                _client.ReplaceNamespacedSecret(secretBody, $"{tenantDbConns.TenantDomain}:{tenantDbConns.TenantIdentifier}", _k8sNamespace);
+                try {
+                    var existed = _client.ReplaceNamespacedSecret(secretBody, secretName, _k8sNamespace);
+                } catch(Exception ex) {
+                    _logger.LogError(ex,$"{secretName} maybe not existed");
+                    try {
+                        var result = _client.CreateNamespacedSecret(secretBody, _k8sNamespace);
+                    } catch(Exception ex2) {
+                        _logger.LogError(ex, $"{secretName} create error");
+                    }
+                }
             }
         }
 

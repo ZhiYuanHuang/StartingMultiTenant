@@ -92,13 +92,13 @@ namespace StartingMultiTenant.Service
             NoticeTenantAction(infoDto);
         }
 
-        public void PublishTenantManualModify(string tenantDomain=null,string tenantIdentifier = null) {
-            TenantActionInfoDto infoDto = null;
-            if (string.IsNullOrEmpty(tenantDomain)) {
-                infoDto = new TenantActionInfoDto(null,null,TenantActionTypeEnum.ManualAllModify);
-            } else {
-                infoDto = new TenantActionInfoDto(tenantDomain, tenantIdentifier, TenantActionTypeEnum.ManualModify);
-            }
+        public void PublishTenantDbConnsModify(string tenantDomain,string tenantIdentifier) {
+            TenantActionInfoDto infoDto = new TenantActionInfoDto(tenantDomain, tenantIdentifier, TenantActionTypeEnum.DbConnsModify);
+            NoticeTenantAction(infoDto);
+        }
+
+        public void PublishManualAllClear() {
+            TenantActionInfoDto infoDto = new TenantActionInfoDto(string.Empty, string.Empty, TenantActionTypeEnum.ManualAllClear);
             NoticeTenantAction(infoDto);
         }
 

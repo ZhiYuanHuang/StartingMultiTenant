@@ -21,18 +21,21 @@ namespace StartingMultiTenant.Api.Controllers
         private readonly ServiceInfoBusiness _serviceInfoBusiness;
         private readonly TenantIdentifierBusiness _tenantIdentifierBusiness;
         private readonly ExternalStoreSyncService _externalStoreSyncService;
+        private readonly TenantActionNoticeService _actionNoticeService;
         public ExternalDbConnController(ExternalTenantServiceDbConnBusiness externalConnBusiness,
             EncryptService encryptService,
             TenantDomainBusiness tenantDomainBusiness,
             ServiceInfoBusiness serviceInfoBusiness,
             TenantIdentifierBusiness tenantIdentifierBusiness,
-            ExternalStoreSyncService externalStoreSyncService) {
+            ExternalStoreSyncService externalStoreSyncService,
+            TenantActionNoticeService actionNoticeService) {
             _externalConnBusiness = externalConnBusiness;
             _encryptService= encryptService;
             _tenantDomainBusiness = tenantDomainBusiness;
             _serviceInfoBusiness = serviceInfoBusiness;
             _tenantIdentifierBusiness = tenantIdentifierBusiness;
             _externalStoreSyncService = externalStoreSyncService;
+            _actionNoticeService= actionNoticeService;
         }
 
         [HttpPost]
@@ -65,6 +68,7 @@ namespace StartingMultiTenant.Api.Controllers
                 result= _externalConnBusiness.Insert(requestDto.Data,out id);
                 if (result && _tenantIdentifierBusiness.ExistTenant(requestDto.Data.TenantDomain,requestDto.Data.TenantIdentifier,out TenantIdentifierModel tenantModel)) {
                     _externalStoreSyncService.SyncToExternalStore(tenantModel.Id).ConfigureAwait(false);
+                    _actionNoticeService.PublishTenantDbConnsModify(tenantModel.TenantDomain,tenantModel.TenantIdentifier);
                 }
             }
             catch(Exception ex) {
@@ -89,6 +93,7 @@ namespace StartingMultiTenant.Api.Controllers
                 var externalConn = _externalConnBusiness.Get(requestDto.Data.Id);
                 if(_tenantIdentifierBusiness.ExistTenant(externalConn.TenantDomain,externalConn.TenantIdentifier,out TenantIdentifierModel tenantModel)) {
                     _externalStoreSyncService.SyncToExternalStore(tenantModel.Id).ConfigureAwait(false);
+                    _actionNoticeService.PublishTenantDbConnsModify(tenantModel.TenantDomain, tenantModel.TenantIdentifier);
                 }
                 
             }
@@ -102,13 +107,38 @@ namespace StartingMultiTenant.Api.Controllers
                 return new AppResponseDto(false);
             }
 
+            var externalConn = _externalConnBusiness.Get(requestDto.Data.Id);
             var result = _externalConnBusiness.Delete(requestDto.Data.Id);
+            if (result.Item1) {
+               
+                if (_tenantIdentifierBusiness.ExistTenant(externalConn.TenantDomain, externalConn.TenantIdentifier, out TenantIdentifierModel tenantModel)) {
+                    _externalStoreSyncService.SyncToExternalStore(tenantModel.Id).ConfigureAwait(false);
+                    _actionNoticeService.PublishTenantDbConnsModify(externalConn.TenantDomain, externalConn.TenantIdentifier);
+                }
+                
+            }
             return new AppResponseDto(result.Item1) { ErrorMsg = result.Item2 };
         }
 
         [HttpDelete]
         public AppResponseDto<List<Int64>> DeleteMany(AppRequestDto<List<Int64>> requestDto) {
+
+            var externalConns= _externalConnBusiness.Get(requestDto.Data);
             var resultTuple = _externalConnBusiness.DeleteMany(requestDto.Data);
+
+            if (resultTuple.Item2.Any()) {
+                List<Int64> successIds = resultTuple.Item2;
+                externalConns.ForEach(x => {
+                    if (successIds.Contains(x.Id)) {
+                       
+                        if (_tenantIdentifierBusiness.ExistTenant(x.TenantDomain, x.TenantIdentifier, out TenantIdentifierModel tenantModel)) {
+                            _externalStoreSyncService.SyncToExternalStore(tenantModel.Id).ConfigureAwait(false);
+                            _actionNoticeService.PublishTenantDbConnsModify(x.TenantDomain, x.TenantIdentifier);
+                        }
+                    }
+                });
+            }
+            
             return new AppResponseDto<List<Int64>>(resultTuple.Item1) {
                 Result = resultTuple.Item2,
                 ErrorMsg = resultTuple.Item3
