@@ -56,7 +56,7 @@ namespace StartingMultiTenant.Service
                 }
 
                 if (serviceDbConnList.Any()) {
-                    batch.HashSetAsync($"{tenantServiceDbConns.TenantDomain}:{tenantServiceDbConns.TenantIdentifier}", serviceDbConnList.ToArray());
+                    batch.HashSetAsync($"{tenantServiceDbConns.TenantDomain}:{tenantServiceDbConns.TenantIdentifier}:DbConns", serviceDbConnList.ToArray());
                     groupCount++;
                 }
                 
