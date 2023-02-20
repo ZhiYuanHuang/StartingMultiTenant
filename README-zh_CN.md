@@ -81,7 +81,9 @@
    docker run -p 5251:80 --name startingmultitenant -v /root/docker/startmultitenant/appsettings.json:/app/appsettings.json -d startingmultitenant:1.0
    ```
 
-4. 部署前端工程，请转[StartingMultiTenant.front](https://github.com/ZhiYuanHuang/StartingMultiTenant.front)
+4. 访问 ip:port/api/apiclient/init，初始化管理员账号
+
+5. 部署前端工程，请转[StartingMultiTenant.front](https://github.com/ZhiYuanHuang/StartingMultiTenant.front)
 
 ## 🔨 示例
 

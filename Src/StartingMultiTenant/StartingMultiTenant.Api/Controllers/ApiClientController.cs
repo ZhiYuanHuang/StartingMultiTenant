@@ -40,7 +40,7 @@ namespace StartingMultiTenant.Api.Controllers
                 builder.AppendLine(string.Format("<h3>already inited!Admin clients : {0}</h3>", string.Join(',', adminClients.Select(x => x.ClientId))));
             } else {
                 builder.AppendLine("<h3>添加管理client</h3>");
-                builder.AppendLine(@"<form action=""/api/client/init"" method=""post"">
+                builder.AppendLine(@"<form action=""/api/apiclient/init"" method=""post"">
   ClientId: <input type=""text"" name=""clientId""><br>
   ClientSecret: <input type=""text"" name=""clientSecret""><br>
   <input type=""submit"" value=""提交"">
