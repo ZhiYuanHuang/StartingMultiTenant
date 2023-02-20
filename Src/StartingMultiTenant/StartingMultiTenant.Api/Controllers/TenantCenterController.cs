@@ -6,6 +6,7 @@ using StartingMultiTenant.Business;
 using StartingMultiTenant.Model.Const;
 using StartingMultiTenant.Model.Domain;
 using StartingMultiTenant.Model.Dto;
+using StartingMultiTenant.Model.Dto.ExportInterfaceDto;
 using StartingMultiTenant.Repository;
 using StartingMultiTenant.Service;
 
@@ -19,35 +20,31 @@ namespace StartingMultiTenant.Api.Controllers
         private readonly TenantDomainBusiness _tenantDomainBusiness;
         private readonly TenantIdentifierBusiness _tenantIdentifierBusiness;
         private readonly TenantServiceDbConnBusiness _tenantServiceDbConnBusiness;
-        private readonly ExternalTenantServiceDbConnRepository _externalTenantServiceDbConnRepo;
+        private readonly ExternalTenantServiceDbConnBusiness _externalDbConnBusiness;
         private readonly EncryptService _encryptService;
         private readonly ApiClientBusiness _apiClientBusiness;
         public TenantCenterController(SingleTenantService singleTenantService,
             TenantDomainBusiness tenantDomainBusiness,
             TenantIdentifierBusiness tenantIdentifierBusiness,
             TenantServiceDbConnBusiness tenantServiceDbConnBusiness,
-            ExternalTenantServiceDbConnRepository externalTenantServiceDbConnRepo,
+            ExternalTenantServiceDbConnBusiness externalDbConnBusiness,
             ApiClientBusiness apiClientBusiness,
             EncryptService encryptService) {
             _singleTenantService = singleTenantService;
             _tenantDomainBusiness = tenantDomainBusiness;
             _tenantIdentifierBusiness = tenantIdentifierBusiness;
             _tenantServiceDbConnBusiness = tenantServiceDbConnBusiness;
-            _externalTenantServiceDbConnRepo = externalTenantServiceDbConnRepo;
+            _externalDbConnBusiness = externalDbConnBusiness;
             _encryptService = encryptService;
             _apiClientBusiness = apiClientBusiness;
         }
 
         [HttpPost]
-        [Authorize(Policy =AuthorizePolicyConst.User_Write_Policy)]
-        public async Task<AppResponseDto> CreateTenant(AppRequestDto<CreateTenantDto> requestDto) {
-            if (requestDto.Data == null) {
-                return new AppResponseDto(false);
-            }
-
-            CreateTenantDto createTenantDto = requestDto.Data;
-            if (string.IsNullOrEmpty(createTenantDto.TenantDomain) || string.IsNullOrEmpty(createTenantDto.TenantIdentifier) || createTenantDto.CreateDbScripts == null || !createTenantDto.CreateDbScripts.Any()) {
-                return new AppResponseDto(false);
+        [Authorize(Policy = AuthorizePolicyConst.User_Write_Policy)]
+        public async Task<AppResponseDto> Create(AppRequestDto<TenantCenterCreateDto> requestDto) {
+            TenantCenterCreateDto createTenantDto = requestDto.Data;
+            if (createTenantDto == null || string.IsNullOrEmpty(createTenantDto.TenantDomain) || string.IsNullOrEmpty(createTenantDto.TenantIdentifier)) {
+                return new AppResponseDto(false) { ErrorMsg = "must commit tenant domain and identitifer" };
             }
 
             if (!_tenantDomainBusiness.Exist(createTenantDto.TenantDomain)) {
@@ -56,77 +53,87 @@ namespace StartingMultiTenant.Api.Controllers
 
             bool existed = _tenantIdentifierBusiness.ExistTenant(createTenantDto.TenantDomain, createTenantDto.TenantIdentifier);
             if (existed) {
-                return new AppResponseDto(false) { ErrorMsg = $"tenantdomain {createTenantDto.TenantDomain} identifier {createTenantDto.TenantIdentifier} had existed" };
+                return new AppResponseDto(false) { ErrorMsg = $"tenant {createTenantDto.TenantIdentifier}.{createTenantDto.TenantDomain} had existed" };
             }
 
             Int64 id = 0;
             string tenantGuid = string.Empty;
             if (!existed) {
                 tenantGuid = Guid.NewGuid().ToString("N");
-                bool toInsertSuccess = _tenantIdentifierBusiness.Insert(new TenantIdentifierModel() { TenantDomain = createTenantDto.TenantDomain, TenantIdentifier = createTenantDto.TenantIdentifier, TenantGuid = tenantGuid },out id);
+                var tenantModel = new TenantIdentifierModel() {
+                    TenantDomain = createTenantDto.TenantDomain,
+                    TenantIdentifier = createTenantDto.TenantIdentifier,
+                    TenantGuid = tenantGuid,
+                };
+                if (!string.IsNullOrEmpty(createTenantDto.TenantName)) {
+                    tenantModel.TenantName = createTenantDto.TenantName;
+                }
+                if (!string.IsNullOrEmpty(createTenantDto.Description)) {
+                    tenantModel.Description = createTenantDto.Description;
+                }
+                bool toInsertSuccess = _tenantIdentifierBusiness.Insert(tenantModel, out id);
                 if (!toInsertSuccess) {
-                    return new AppResponseDto(false);
+                    return new AppResponseDto(false) { ErrorMsg = "insert tenant error!" };
                 }
             }
 
-            var result = await _singleTenantService.CreateTenantDbs(id,createTenantDto.TenantDomain, createTenantDto.TenantIdentifier, createTenantDto.CreateDbScripts);
-
-            if (!result) {
-                if (!existed) {
-                    _tenantIdentifierBusiness.Delete(tenantGuid);
-                }
+            //no db to create
+            if (createTenantDto.CreateDbScripts == null || !createTenantDto.CreateDbScripts.Any()) {
+                return new AppResponseDto(true);
             }
 
-            return new AppResponseDto(result);
+            var createDbResult = await _singleTenantService.CreateTenantDbs(id, createTenantDto.TenantDomain, createTenantDto.TenantIdentifier, createTenantDto.CreateDbScripts);
+
+            if (!createDbResult) {
+                _tenantIdentifierBusiness.Delete(tenantGuid);
+            }
+
+            return new AppResponseDto(createDbResult) { ErrorMsg=createDbResult?string.Empty:"create tenant dbs error"};
         }
 
-        [HttpPost]
+        [HttpGet]
         [Authorize(Policy = AuthorizePolicyConst.User_Read_Policy)]
-        public AppResponseDto<TenantServiceDbConnsDto> GetTenantDbConn(AppRequestDto<TenantServiceInfoDto> requestDto) {
-            if (requestDto.Data == null) {
-                return new AppResponseDto<TenantServiceDbConnsDto>(false);
+        public AppResponseDto<TenantCenterDbConnsDto> GetDbConn(string tenantDomain,string tenantIdentifier,string? serviceIdentifier) {
+            if(string.IsNullOrEmpty(tenantDomain) || string.IsNullOrEmpty(tenantIdentifier)) {
+                return new AppResponseDto<TenantCenterDbConnsDto>(false) { 
+                    ErrorMsg="tenantdomain and tenantidentifier cann't be empty!"
+                };
             }
-
-            List<ExternalTenantServiceDbConnModel> externalList = _externalTenantServiceDbConnRepo.GetByTenantAndService(requestDto.Data.TenantDomain, requestDto.Data.TenantIdentifier,requestDto.Data.ServiceIdentifier);
-            List<ServiceDbConnDto> mergeDbConns = new List<ServiceDbConnDto>();
+            
+            List<ExternalTenantServiceDbConnModel> externalList = _externalDbConnBusiness.GetByTenantAndService(tenantDomain, tenantIdentifier, serviceIdentifier);
+            List<TenantCenterDbConnDto> externalDbConnList = new List<TenantCenterDbConnDto>();
             if (externalList.Any()) {
                 foreach (var externalDbConn in externalList) {
-                    ServiceDbConnDto dbConn = new ServiceDbConnDto() {
-                        Id = externalDbConn.Id,
-                        ServiceIdentifier = externalDbConn.ServiceIdentifier,
-                        DbIdentifier = externalDbConn.DbIdentifier,
-                    };
-                    dbConn.DecryptDbConn = _encryptService.Decrypt_DbConn(externalDbConn.EncryptedConnStr);
+                    string decryptConn = _encryptService.Decrypt_DbConn(externalDbConn.EncryptedConnStr);
 
-                    if (!string.IsNullOrEmpty(externalDbConn.OverrideEncryptedConnStr)) {
-                        dbConn.OverrideDbConn = _encryptService.Decrypt_DbConn(externalDbConn.OverrideEncryptedConnStr);
-                    }
-
-                    mergeDbConns.Add(dbConn);
+                    externalDbConnList.Add(new TenantCenterDbConnDto() { 
+                        ServiceIdentifier=externalDbConn.ServiceIdentifier,
+                        DbIdentifier=externalDbConn.DbIdentifier,
+                        DbConn= decryptConn,
+                    });
                 }
             }
 
-            List<TenantServiceDbConnModel> list = _tenantServiceDbConnBusiness.GetByTenant(requestDto.Data.TenantDomain, requestDto.Data.TenantIdentifier, requestDto.Data.ServiceIdentifier);
-            if (list.Any()) {
-                foreach (var tenantServiceDbConn in list) {
-                    ServiceDbConnDto dbConn = new ServiceDbConnDto() {
-                        Id = tenantServiceDbConn.Id,
-                        ServiceIdentifier = tenantServiceDbConn.ServiceIdentifier,
-                        DbIdentifier = tenantServiceDbConn.DbIdentifier,
-                    };
+            List<TenantServiceDbConnModel> innerlist = _tenantServiceDbConnBusiness.GetByTenant(tenantDomain, tenantIdentifier, serviceIdentifier);
+            List<TenantCenterDbConnDto> innerDbConnList = new List<TenantCenterDbConnDto>();
+            if (innerlist.Any()) {
+                foreach (var innerDbConn in innerlist) {
+                    string decryptConn = _encryptService.Decrypt_DbConn(innerDbConn.EncryptedConnStr);
 
-                    dbConn.DecryptDbConn = _encryptService.Decrypt_DbConn(tenantServiceDbConn.EncryptedConnStr);
-                    if (mergeDbConns.FirstOrDefault(x => x.ServiceIdentifier == tenantServiceDbConn.ServiceIdentifier && x.DbIdentifier == tenantServiceDbConn.DbIdentifier) == null) {
-                        mergeDbConns.Add(dbConn);
-                    }
+                    innerDbConnList.Add(new TenantCenterDbConnDto() {
+                        ServiceIdentifier = innerDbConn.ServiceIdentifier,
+                        DbIdentifier = innerDbConn.DbIdentifier,
+                        DbConn = decryptConn,
+                    });
                 }
             }
 
-            return new AppResponseDto<TenantServiceDbConnsDto>() {
-                Result = new TenantServiceDbConnsDto() {
-                    MergeDbConnList = mergeDbConns,
-                    TenantDomain = requestDto.Data.TenantDomain,
-                    TenantIdentifier = requestDto.Data.TenantIdentifier,
+            return new AppResponseDto<TenantCenterDbConnsDto>() {
+                Result = new TenantCenterDbConnsDto() {
+                    TenantDomain = tenantDomain,
+                    TenantIdentifier = tenantIdentifier,
+                    InnerDbConnList= innerDbConnList,
+                    ExternalDbConnList=externalDbConnList
                 }
             };
         }
