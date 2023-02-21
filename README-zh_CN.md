@@ -76,7 +76,7 @@
 
 3. docker部署镜像，或者dotnet run运行
 
-   docker 镜像 [startingmultitenant]()
+   docker 镜像 [zionyellow/startingmultitenant](https://hub.docker.com/repository/docker/zionyellow/startingmultitenant)
    ```bash
    docker run -p 5251:80 --name startingmultitenant -v /root/docker/startmultitenant/appsettings.json:/app/appsettings.json -d zionyellow/startingmultitenant:1.0
    ```
