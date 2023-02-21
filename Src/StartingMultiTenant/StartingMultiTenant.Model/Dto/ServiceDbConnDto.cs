@@ -20,5 +20,8 @@ namespace StartingMultiTenant.Model.Dto
         public Int64? DbServerId { get; set; }
         public string CreateScriptName { get; set; }
         public DateTime? CreateTime { get; set; }
+
+        public string TenantDomain { get; set; }
+        public string TenantIdentifier { get; set; }
     }
 }

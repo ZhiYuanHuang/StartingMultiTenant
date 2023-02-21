@@ -1,6 +1,8 @@
 ﻿using k8s;
 using k8s.Models;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.Extensions.Logging;
+using Org.BouncyCastle.Utilities;
 using StartingMultiTenant.Model.Dto;
 using System;
 using System.Collections.Generic;
@@ -32,39 +34,108 @@ namespace StartingMultiTenant.Service
             }
         }
 
-        public void WriteToExternalStore(List<TenantServiceDbConnsDto> tenantServiceDbConns) {
-            foreach(var tenantDbConns in tenantServiceDbConns) {
-                string secretName = $"{tenantDbConns.TenantDomain}-{tenantDbConns.TenantIdentifier}-dbconns".ToLower();
-                V1Secret secretBody = new V1Secret() {
-                    ApiVersion = "v1",
-                    Metadata = new V1ObjectMeta() {
-                        Name = secretName,
-                    },
-                    Type = "Opaque",
+        //public void WriteToExternalStore(List<TenantServiceDbConnsDto> tenantServiceDbConns) {
+        //    foreach(var tenantDbConns in tenantServiceDbConns) {
+        //        string secretName = $"{tenantDbConns.TenantDomain}-{tenantDbConns.TenantIdentifier}-dbconns".ToLower();
+        //        V1Secret secretBody = new V1Secret() {
+        //            ApiVersion = "v1",
+        //            Metadata = new V1ObjectMeta() {
+        //                Name = secretName,
+        //            },
+        //            Type = "Opaque",
                    
-                    StringData = new Dictionary<string, string>()
-                };
-                if (tenantDbConns.InnerDbConnList != null && tenantDbConns.InnerDbConnList.Any()) {
-                    foreach (var innerDbConn in tenantDbConns.InnerDbConnList) {
-                        secretBody.StringData.Add($"Inner_{innerDbConn.ServiceIdentifier}_{innerDbConn.DbIdentifier}", innerDbConn.DecryptDbConn);
+        //            StringData = new Dictionary<string, string>()
+        //        };
+        //        if (tenantDbConns.InnerDbConnList != null && tenantDbConns.InnerDbConnList.Any()) {
+        //            foreach (var innerDbConn in tenantDbConns.InnerDbConnList) {
+        //                secretBody.StringData.Add($"Inner_{innerDbConn.ServiceIdentifier}_{innerDbConn.DbIdentifier}", innerDbConn.DecryptDbConn);
                         
-                    }
-                }
+        //            }
+        //        }
 
-                if (tenantDbConns.ExternalDbConnList != null && tenantDbConns.ExternalDbConnList.Any()) {
-                    foreach (var externalDbConn in tenantDbConns.ExternalDbConnList) {
-                        secretBody.StringData.Add($"External_{externalDbConn.ServiceIdentifier}_{externalDbConn.DbIdentifier}", externalDbConn.DecryptDbConn);
-                    }
-                }
+        //        if (tenantDbConns.ExternalDbConnList != null && tenantDbConns.ExternalDbConnList.Any()) {
+        //            foreach (var externalDbConn in tenantDbConns.ExternalDbConnList) {
+        //                secretBody.StringData.Add($"External_{externalDbConn.ServiceIdentifier}_{externalDbConn.DbIdentifier}", externalDbConn.DecryptDbConn);
+        //            }
+        //        }
+        //        try {
+        //            var existed = _client.ReplaceNamespacedSecret(secretBody, secretName, _k8sNamespace);
+                   
+        //        } catch(Exception ex) {
+        //            _logger.LogError(ex,$"{secretName} maybe not existed");
+        //            try {
+        //                var result = _client.CreateNamespacedSecret(secretBody, _k8sNamespace);
+        //            } catch(Exception ex2) {
+        //                _logger.LogError(ex, $"{secretName} create error");
+        //            }
+        //        }
+        //    }
+        //}
+
+        public void WriteToExternalStore(List<TenantServiceDbConnsDto> tenantServiceDbConns) {
+            Dictionary<string,List<ServiceDbConnDto>> serviceDbInnerDict= tenantServiceDbConns.Where(x=>x.InnerDbConnList!=null).SelectMany(x => x.InnerDbConnList).GroupBy(x => $"{x.ServiceIdentifier}-{x.DbIdentifier}-Inner".ToLower(), x => x).ToDictionary(g => g.Key, v => v.ToList());
+            Dictionary<string, List<ServiceDbConnDto>> serviceDbExternalDict = tenantServiceDbConns.Where(x => x.ExternalDbConnList != null).SelectMany(x => x.ExternalDbConnList).GroupBy(x => $"{x.ServiceIdentifier}-{x.DbIdentifier}-External".ToLower(), x => x).ToDictionary(g => g.Key, v => v.ToList());
+
+            var secretList= _client.ListNamespacedSecret(_k8sNamespace);
+            var existedSecretDict= secretList.Items.Select(x => x.Name()).ToDictionary(x=>x);
+            writeToExternalStore(existedSecretDict,serviceDbInnerDict);
+            writeToExternalStore(existedSecretDict, serviceDbExternalDict);
+        }
+
+        private void writeToExternalStore(Dictionary<string,string> existedSecretDict, Dictionary<string, List<ServiceDbConnDto>> serviceDbDict) {
+            foreach (var innerPair in serviceDbDict) {
+                string secretName = innerPair.Key;
+                List<ServiceDbConnDto> serviceDbConnDtos = innerPair.Value;
+
                 try {
-                    var existed = _client.ReplaceNamespacedSecret(secretBody, secretName, _k8sNamespace);
-                } catch(Exception ex) {
-                    _logger.LogError(ex,$"{secretName} maybe not existed");
-                    try {
-                        var result = _client.CreateNamespacedSecret(secretBody, _k8sNamespace);
-                    } catch(Exception ex2) {
-                        _logger.LogError(ex, $"{secretName} create error");
+                    if (!existedSecretDict.ContainsKey(secretName)) {
+                        var stringData = new Dictionary<string, string>();
+                        List<ServiceDbConnDto> orderedServiceDbConnDtos = serviceDbConnDtos.OrderBy(x => x.TenantDomain).ThenBy(x => x.TenantIdentifier).ToList();
+
+                        foreach (var serviceDbConn in orderedServiceDbConnDtos) {
+                            stringData.Add($"{serviceDbConn.TenantDomain}_{serviceDbConn.TenantIdentifier}", serviceDbConn.DecryptDbConn);
+                        }
+
+                        V1Secret secretBody = new V1Secret() {
+                            ApiVersion = "v1",
+                            Metadata = new V1ObjectMeta() {
+                                Name = secretName,
+                            },
+                            Type = "Opaque",
+
+                            StringData = stringData,
+                        };
+                        _client.CreateNamespacedSecret(secretBody, _k8sNamespace);
+                    } else {
+                        //var existSecret = _client.ReadNamespacedSecret(secretName, _k8sNamespace);
+                        //List<k8sPatchObjectDto> patchList = new List<k8sPatchObjectDto>();
+
+                        //if (!existSecret.Data.Any()) {
+                        //    patchList = serviceDbConnDtos.Select(x => new k8sPatchObjectDto($"{x.TenantDomain}_{x.TenantIdentifier}", Convert.ToBase64String(Encoding.Default.GetBytes(x.DecryptDbConn)), true)).ToList();
+                        //} else {
+                        //    patchList = serviceDbConnDtos.Select(x => {
+                        //        if (existSecret.Data.ContainsKey($"{x.TenantDomain}_{x.TenantIdentifier}")) {
+                        //            return new k8sPatchObjectDto($"/data/{x.TenantDomain}_{x.TenantIdentifier}", Convert.ToBase64String(Encoding.Default.GetBytes(x.DecryptDbConn)));
+                        //        }
+                        //        return new k8sPatchObjectDto($"/data/{x.TenantDomain}_{x.TenantIdentifier}", Convert.ToBase64String(Encoding.Default.GetBytes(x.DecryptDbConn)), true);
+                        //    }).ToList();
+                        //}
+                        //string jsonStr = Newtonsoft.Json.JsonConvert.SerializeObject(patchList);
+
+                        //V1Patch patchBody = new V1Patch(jsonStr, V1Patch.PatchType.JsonPatch);  
+
+                        K8sSecretModifyDto k8SSecretModifyDto = new K8sSecretModifyDto() { data=new Dictionary<string, string>()};
+                        serviceDbConnDtos.ForEach(x => {
+                            k8SSecretModifyDto.data.Add($"{x.TenantDomain}_{x.TenantIdentifier}", Convert.ToBase64String(Encoding.Default.GetBytes(x.DecryptDbConn)));
+                        });
+
+                        string jsonStr = Newtonsoft.Json.JsonConvert.SerializeObject(k8SSecretModifyDto);
+                        V1Patch patchBody = new V1Patch(jsonStr, V1Patch.PatchType.MergePatch);
+
+                        var result= _client.PatchNamespacedSecret(patchBody, secretName, _k8sNamespace);
                     }
+                } catch (Exception ex) {
+                    _logger.LogError(ex, $"{secretName} write error");
                 }
             }
         }

@@ -79,14 +79,20 @@ namespace StartingMultiTenant.Business
                 dto.InnerDbConnList.AddRange(innerDbConns.Select(x=>new ServiceDbConnDto() { 
                     ServiceIdentifier=x.ServiceIdentifier,
                     DbIdentifier=x.DbIdentifier,
-                    EncryptedConnStr=x.EncryptedConnStr
+                    EncryptedConnStr=x.EncryptedConnStr,
+
+                    TenantDomain= x.TenantDomain,
+                    TenantIdentifier=x.TenantIdentifier,
                 }));
             }
             if (externalDbConns.Any()) {
                 dto.ExternalDbConnList.AddRange(externalDbConns.Select(x => new ServiceDbConnDto() {
                     ServiceIdentifier = x.ServiceIdentifier,
                     DbIdentifier = x.DbIdentifier,
-                    EncryptedConnStr = x.EncryptedConnStr
+                    EncryptedConnStr = x.EncryptedConnStr,
+
+                    TenantDomain = x.TenantDomain,
+                    TenantIdentifier = x.TenantIdentifier,
                 }));
             }
             return dto;
@@ -114,7 +120,10 @@ namespace StartingMultiTenant.Business
                         dto.InnerDbConnList = arr.Select(x => new ServiceDbConnDto() {
                             ServiceIdentifier = x.ServiceIdentifier,
                             DbIdentifier = x.DbIdentifier,
-                            DecryptDbConn = decryptDbConnFunc( x.EncryptedConnStr)
+                            DecryptDbConn = decryptDbConnFunc( x.EncryptedConnStr),
+
+                            TenantDomain=x.TenantDomain,
+                            TenantIdentifier=x.TenantIdentifier,
                         }).ToList();
                     }
                 }
@@ -127,7 +136,10 @@ namespace StartingMultiTenant.Business
                         dto.ExternalDbConnList = arr.Select(x => new ServiceDbConnDto() {
                             ServiceIdentifier = x.ServiceIdentifier,
                             DbIdentifier = x.DbIdentifier,
-                            DecryptDbConn = decryptDbConnFunc(x.EncryptedConnStr)
+                            DecryptDbConn = decryptDbConnFunc(x.EncryptedConnStr),
+
+                            TenantDomain = x.TenantDomain,
+                            TenantIdentifier = x.TenantIdentifier,
                         }).ToList();
                     }
                 }
