@@ -28,6 +28,10 @@
 
 1. 部署postgres数据库，执行[StartingMultiTenant_Db_Sql](./StartingMultiTenant_Db_Sql/db.sql)脚本
 
+```
+psql.exe -U postgres -h localhost -p 5432 -f db.sql
+```
+
 2. 修改配置文件[appsettings.json](./Src/StartingMultiTenant/StartingMultiTenant.Api/appsettings.json)，修改工程数据库链接等配置
 
    ```

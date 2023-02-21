@@ -28,6 +28,10 @@ English | [简体中文](./README-zh_CN.md)
 
 1. Deploy the postgres database, and execute [StartingMultiTenant_Db_Sql](./StartingMultiTenant_Db_Sql/db.sql) script
 
+```
+psql.exe -U postgres -h localhost -p 5432 -f db.sql
+```
+
 2. Modifying the configuration file[appsettings.json](./Src/StartingMultiTenant/StartingMultiTenant.Api/appsettings.json),Modify configurations such as project database links
 
    ```
