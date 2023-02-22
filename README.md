@@ -82,8 +82,15 @@ psql.exe -U postgres -h localhost -p 5432 -f db.sql
 
    docker image [zionyellow/startingmultitenant](https://hub.docker.com/repository/docker/zionyellow/startingmultitenant)
    ```bash
-   docker run -p 5251:80 --name startingmultitenant -v /root/docker/startmultitenant/appsettings.json:/app/appsettings.json -d zionyellow/startingmultitenant:1.0
+   docker run \
+   -p 5251:80 \
+   --name startingmultitenant \
+   -v /root/docker/startmultitenant/appsettings.json:/app/appsettings.json \
+   -v /root/docker/startingmultitenant/cer:/app/cer \
+   -d zionyellow/startingmultitenant:1.0
    ```
+
+   that '/app/cer' is the dir of kubeconfig file
 
 4. visit ip:port/API/apiclient/init, initialize the administrator account
 

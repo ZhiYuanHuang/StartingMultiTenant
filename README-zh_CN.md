@@ -82,8 +82,15 @@ psql.exe -U postgres -h localhost -p 5432 -f db.sql
 
    docker 镜像 [zionyellow/startingmultitenant](https://hub.docker.com/repository/docker/zionyellow/startingmultitenant)
    ```bash
-   docker run -p 5251:80 --name startingmultitenant -v /root/docker/startmultitenant/appsettings.json:/app/appsettings.json -d zionyellow/startingmultitenant:1.0
+   docker run \
+   -p 5251:80 \
+   --name startingmultitenant \
+   -v /root/docker/startmultitenant/appsettings.json:/app/appsettings.json \
+   -v /root/docker/startingmultitenant/cer:/app/cer \
+   -d zionyellow/startingmultitenant:1.0
    ```
+
+   这里的'/app/cer'为步骤2中配置kubeconfig文件的目录
 
 4. 访问 ip:port/api/apiclient/init，初始化管理员账号
 
