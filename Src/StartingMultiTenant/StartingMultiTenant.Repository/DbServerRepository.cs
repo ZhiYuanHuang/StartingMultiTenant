@@ -32,6 +32,11 @@ namespace StartingMultiTenant.Repository
             return true;
         }
 
+        public override bool Update(DbServerModel t) {
+            string sql = "Update DbServer Set CanCreateNew=@canCreateNew Where Id=@id";
+            return _tenantDbDataContext.Master.ExecuteNonQuery(sql,t)>0;
+        }
+
         public PagingData<DbServerModel> GetPage(int pageSize, int pageIndex, string serverHost,int? dbType) {
             Dictionary<string, object> p = new Dictionary<string, object>();
             if (!string.IsNullOrEmpty(serverHost)) {

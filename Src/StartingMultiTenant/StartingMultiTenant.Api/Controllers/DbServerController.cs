@@ -47,6 +47,17 @@ namespace StartingMultiTenant.Api.Controllers
             return new AppResponseDto<Int64>(result) { Result=id};
         }
 
+        [HttpPut]
+        public AppResponseDto<DbServerDto> Update(AppRequestDto<DbServerDto> requestDto) {
+
+            if (requestDto.Data == null || requestDto.Data.Id <= 0) {
+                return new AppResponseDto<DbServerDto>(false);
+            }
+
+            bool result = _dbServerBusiness.Update(requestDto.Data);
+            return new AppResponseDto<DbServerDto>(result) { Result = requestDto.Data };
+        }
+
         [HttpDelete]
         public AppResponseDto Delete(AppRequestDto<DbServerModel> requestDto) {
             if (requestDto.Data==null || requestDto.Data.Id <= 0) {
