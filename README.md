@@ -12,7 +12,7 @@ English | [简体中文](./README-zh_CN.md)
 
 ## ✨ 特性
 
-- ⚙️ A tenant is identified by a tenant domain (such as reader.com) and its unique identifier. That is, tenant A (tom.reader.com) and tenant B (tony.reader.com) belong to different tenant domains
+- ⚙️ A tenant is identified by a tenant domain (such as reader.com) and its unique identifier. That is, tenant A (tom.reader.com) and tenant B (tony.reader.com) belong to different tenant in the same tenant domains
 - ⚙️ Databases such as postgresql and mysql are supported
 - ⚙️ Database servers can be dynamically added to randomly select databases for creating all services provided by tenants
 - ⚙️ The database creation script of the primary version and upgrade script of the secondary version are supported, for example, createTestdb.sql2.2 The database creation script of createTestDb whose primary version is 2 and secondary version is iterated to 2.
@@ -133,11 +133,31 @@ curl --location --request POST 'http://localhost:5251/api/tenantcenter/create' \
 
 ### access tenant database link resources using http api
 
++ Tenant granularity to access database link resources
+
 ```
 curl --location --request GET 'http://localhost:5251/api/tenantcenter/GetDbConn?tenantDomain=test.com&tenantIdentifier=joicy2' \
 --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoic2VydmljZUNsaWVudCIsInNjb3BlIjpbInJlYWQiLCJ3cml0ZSJdLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJ1c2VyIiwiaXNzIjoiRkFOLklzc3VlciIsImF1ZCI6IkZBTi5BdWRpZW5jZSJ9.21oxggLD2PGfmzN9qFMvz_oekhPDMPzcPs7miimKLYk'
 ```
 
++ Service granularity to access database link resources
+
+```
+curl --location --request GET 'http://localhost:5251/api/tenantcenter/GetDbConn?tenantDomain=test.com&tenantIdentifier=joicy2&serviceIdentifier=test.svc' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoic2VydmljZUNsaWVudCIsInNjb3BlIjpbInJlYWQiLCJ3cml0ZSJdLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJ1c2VyIiwiaXNzIjoiRkFOLklzc3VlciIsImF1ZCI6IkZBTi5BdWRpZW5jZSJ9.21oxggLD2PGfmzN9qFMvz_oekhPDMPzcPs7miimKLYk'
+```
+
+### The tenant database is linked to external storage
+
++ k8s Secret External Store (\$"{serviceIdentifier}-{dbIdentifier}-{(isInner?"inner":"external")}") as name，and content ($"{tenantDomain}_{tenantIdentifier}") as key,dbConn as value
+
+![k8s Secret ](./snap/k8sSecrets.png)
+
+![tenant dbconn in the Secret](./snap/k8sSecretDetail.png)
+
++ redis External Store
+
+![redis store](./snap/redisStore.png)
 
 
 

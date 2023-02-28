@@ -12,7 +12,7 @@
 
 ## ✨ 特性
 
-- ⚙️ 租户由租户域（如reader.com），和该域下的唯一标识确定，即：租户A（tom.reader.com）和租户B（tony.reader.com）为不同租户域下的租户
+- ⚙️ 租户由租户域（如reader.com），和该域下的唯一标识确定，即：租户A（tom.reader.com）和租户B（tony.reader.com）为同一租户域下的不同租户
 - ⚙️ 支持postgresql、mysql等类型的数据库
 - ⚙️ 支持动态添加数据库服务器，随机选取创建租户所有服务的数据库
 - ⚙️ 支持主版本号的建库脚本，次版本号的升级脚本，如：createTestDb.sql_2.2为主版本号为2，次版本号迭代到2的createTestDb的建库脚本。
@@ -133,12 +133,30 @@ curl --location --request POST 'http://localhost:5251/api/tenantcenter/create' \
 
 ### 通过 http api 获取租户数据库链接资源
 
++ 租户粒度获取数据库链接资源
+
 ```
 curl --location --request GET 'http://localhost:5251/api/tenantcenter/GetDbConn?tenantDomain=test.com&tenantIdentifier=joicy2' \
 --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoic2VydmljZUNsaWVudCIsInNjb3BlIjpbInJlYWQiLCJ3cml0ZSJdLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJ1c2VyIiwiaXNzIjoiRkFOLklzc3VlciIsImF1ZCI6IkZBTi5BdWRpZW5jZSJ9.21oxggLD2PGfmzN9qFMvz_oekhPDMPzcPs7miimKLYk'
 ```
 
++ 服务粒度获取数据库资源
 
+```
+curl --location --request GET 'http://localhost:5251/api/tenantcenter/GetDbConn?tenantDomain=test.com&tenantIdentifier=joicy2&serviceIdentifier=test.svc' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoic2VydmljZUNsaWVudCIsInNjb3BlIjpbInJlYWQiLCJ3cml0ZSJdLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJ1c2VyIiwiaXNzIjoiRkFOLklzc3VlciIsImF1ZCI6IkZBTi5BdWRpZW5jZSJ9.21oxggLD2PGfmzN9qFMvz_oekhPDMPzcPs7miimKLYk'
+```
 
+### 租户数据库链接存储至外部存储
+
++ k8s Secret 存储以（\$"{serviceIdentifier}-{dbIdentifier}-{(isInner?"inner":"external")}"）为name，内容以（$"{tenantDomain}_{tenantIdentifier}"）为key，数据库链接为value的json对象
+
+![k8s Secret ](./snap/k8sSecrets.png)
+
+![Secret里的租户链接 ](./snap/k8sSecretDetail.png)
+
++ redis 存储则以下截图形式存储
+
+![redis store](./snap/redisStore.png)
 
 

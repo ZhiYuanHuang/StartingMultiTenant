@@ -671,14 +671,14 @@ INSERT INTO public.dbinfo VALUES (7, 'oauth数据库', 'oauth.db', 'identityserv
 
 INSERT INTO public.dbserver VALUES (10, 0, '192.168.1.14', 5443, 'devuser1', '23232', false);
 INSERT INTO public.dbserver VALUES (11, 1, '127.0.0.1', 16636, 'root', 'GH0ceyhUAz/OCLUneOHdzg==', false);
-INSERT INTO public.dbserver VALUES (13, 0, '127.0.0.1', 5441, 'postgres', 'GH0ceyhUAz/OCLUneOHdzg==', true);
-INSERT INTO public.dbserver VALUES (14, 0, '127.0.0.1', 5442, 'postgres', 'GH0ceyhUAz/OCLUneOHdzg==', true);
-INSERT INTO public.dbserver VALUES (15, 0, '127.0.0.1', 5443, 'postgres', 'GH0ceyhUAz/OCLUneOHdzg==', true);
-INSERT INTO public.dbserver VALUES (16, 0, '127.0.0.1', 5444, 'postgres', 'GH0ceyhUAz/OCLUneOHdzg==', true);
-INSERT INTO public.dbserver VALUES (17, 1, '127.0.0.1', 3311, 'root', 'GH0ceyhUAz/OCLUneOHdzg==', true);
-INSERT INTO public.dbserver VALUES (18, 1, '127.0.0.1', 3312, 'root', 'GH0ceyhUAz/OCLUneOHdzg==', true);
-INSERT INTO public.dbserver VALUES (19, 1, '127.0.0.1', 3313, 'root', 'GH0ceyhUAz/OCLUneOHdzg==', true);
-INSERT INTO public.dbserver VALUES (20, 1, '127.0.0.1', 3314, 'root', 'GH0ceyhUAz/OCLUneOHdzg==', true);
+INSERT INTO public.dbserver VALUES (13, 0, '127.0.0.1', 5441, 'postgres', 'GH0ceyhUAz/OCLUneOHdzg==', false);
+INSERT INTO public.dbserver VALUES (14, 0, '127.0.0.1', 5442, 'postgres', 'GH0ceyhUAz/OCLUneOHdzg==', false);
+INSERT INTO public.dbserver VALUES (15, 0, '127.0.0.1', 5443, 'postgres', 'GH0ceyhUAz/OCLUneOHdzg==', false);
+INSERT INTO public.dbserver VALUES (16, 0, '127.0.0.1', 5444, 'postgres', 'GH0ceyhUAz/OCLUneOHdzg==', false);
+INSERT INTO public.dbserver VALUES (17, 1, '127.0.0.1', 3311, 'root', 'GH0ceyhUAz/OCLUneOHdzg==', false);
+INSERT INTO public.dbserver VALUES (18, 1, '127.0.0.1', 3312, 'root', 'GH0ceyhUAz/OCLUneOHdzg==', false);
+INSERT INTO public.dbserver VALUES (19, 1, '127.0.0.1', 3313, 'root', 'GH0ceyhUAz/OCLUneOHdzg==', false);
+INSERT INTO public.dbserver VALUES (20, 1, '127.0.0.1', 3314, 'root', 'GH0ceyhUAz/OCLUneOHdzg==', false);
 INSERT INTO public.dbserver VALUES (12, 0, '127.0.0.1', 5432, 'postgres', 'EmxuEz/RdEBY4Pi4zkyzzw==', false);
 
 
