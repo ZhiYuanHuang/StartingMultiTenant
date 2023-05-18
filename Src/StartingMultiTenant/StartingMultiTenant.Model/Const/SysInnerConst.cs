@@ -10,5 +10,6 @@ namespace StartingMultiTenant.Model.Const
     public static class SysInnerConst
     {
         public const string DbNameWildcard = "DbOfStartingMultiTenant";
+        public static char[] Invalid_Char_Arr = new char[] { ' ','-','_',',','+','@','&'};
     }
 }

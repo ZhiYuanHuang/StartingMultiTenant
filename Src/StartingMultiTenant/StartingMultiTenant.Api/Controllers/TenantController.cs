@@ -62,6 +62,13 @@ namespace StartingMultiTenant.Api.Controllers
                 return new AppResponseDto<Int64>(false);
             }
 
+            if (!string.IsNullOrEmpty(createTenantDto.TenantDomain) && (createTenantDto.TenantDomain.IndexOfAny(SysInnerConst.Invalid_Char_Arr) != -1)) {
+                return new AppResponseDto<long>(false) { ErrorMsg = $"TenantDomain cann't use any of '{string.Join("','", SysInnerConst.Invalid_Char_Arr)}'" };
+            }
+            if (!string.IsNullOrEmpty(createTenantDto.TenantIdentifier) && (createTenantDto.TenantIdentifier.IndexOfAny(SysInnerConst.Invalid_Char_Arr) != -1)) {
+                return new AppResponseDto<long>(false) { ErrorMsg = $"TenantDomain cann't use any of '{string.Join("','", SysInnerConst.Invalid_Char_Arr)}'" };
+            }
+
             bool existed = _tenantIdentifierBusiness.ExistTenant(createTenantDto.TenantDomain, createTenantDto.TenantIdentifier);
             if(existed && !createTenantDto.OverrideWhenExisted) {
                 return new AppResponseDto<Int64>(false) { ErrorMsg = $"tenantdomain {createTenantDto.TenantDomain} identifier {createTenantDto.TenantIdentifier} had existed" };

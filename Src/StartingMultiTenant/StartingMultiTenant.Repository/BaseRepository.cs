@@ -198,22 +198,6 @@ namespace StartingMultiTenant.Repository
             return new PagingData<T>(pageIndex, pageSize, count, list);
         }
 
-        public PagingData<TDto> GetPageWithMaping<TDto>(int pageSize, int pageIndex, Func<T, TDto> mappingFunc)
-            where TDto:new()
-        {
-            StringBuilder countBuilder = new StringBuilder($"Select Count(Id) From {TableName} ");
-            StringBuilder dataBuilder = new StringBuilder($"Select * From {TableName} ");
-
-            Dictionary<string, object> p = new Dictionary<string, object>() {
-                { "pageSize",pageSize},
-                { "offSet",pageSize*pageIndex}
-            };
-
-            dataBuilder.Append(" Limit @pageSize OFFSET @offSet");
-
-            return GetPageWithMaping(countBuilder.ToString(), dataBuilder.ToString(), p, pageSize, pageIndex,mappingFunc);
-        }
-
         public PagingData<TDto> GetPageWithMaping<TDto>(int pageSize, int pageIndex, Dictionary<string, object> whereFieldDict,Func<T, TDto> mappingFunc, Dictionary<string, bool> orderFieldDict = null, List<string> selectFields = null)
             where TDto : new() 
         {

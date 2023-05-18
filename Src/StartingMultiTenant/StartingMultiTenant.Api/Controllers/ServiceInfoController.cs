@@ -46,6 +46,10 @@ namespace StartingMultiTenant.Api.Controllers
                 return new AppResponseDto<Int64>(false);
             }
 
+            if (!string.IsNullOrEmpty(requestDto.Data.Identifier) && (requestDto.Data.Identifier.IndexOfAny(SysInnerConst.Invalid_Char_Arr) !=-1)) {
+                return new AppResponseDto<long>(false) { ErrorMsg=$"identifier cann't use any of '{string.Join("','", SysInnerConst.Invalid_Char_Arr)}'"};
+            }
+
             bool result= _serviceInfoBusiness.Insert(requestDto.Data,out Int64 id);
             return new AppResponseDto<Int64>(result) { Result=id};
         }

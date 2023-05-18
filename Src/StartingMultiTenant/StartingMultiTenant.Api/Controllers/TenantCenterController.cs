@@ -47,6 +47,13 @@ namespace StartingMultiTenant.Api.Controllers
                 return new AppResponseDto(false) { ErrorMsg = "must commit tenant domain and identitifer" };
             }
 
+            if (!string.IsNullOrEmpty(createTenantDto.TenantDomain) && (createTenantDto.TenantDomain.IndexOfAny(SysInnerConst.Invalid_Char_Arr) != -1)) {
+                return new AppResponseDto<long>(false) { ErrorMsg = $"TenantDomain cann't use any of '{string.Join("','", SysInnerConst.Invalid_Char_Arr)}'" };
+            }
+            if (!string.IsNullOrEmpty(createTenantDto.TenantIdentifier) && (createTenantDto.TenantIdentifier.IndexOfAny(SysInnerConst.Invalid_Char_Arr) != -1)) {
+                return new AppResponseDto<long>(false) { ErrorMsg = $"TenantDomain cann't use any of '{string.Join("','", SysInnerConst.Invalid_Char_Arr)}'" };
+            }
+
             if (!_tenantDomainBusiness.Exist(createTenantDto.TenantDomain)) {
                 return new AppResponseDto(false) { ErrorMsg = $"tenantdomain {createTenantDto.TenantDomain} not exists" };
             }
