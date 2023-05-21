@@ -25,6 +25,8 @@ CREATE DATABASE startingmultitenant WITH TEMPLATE = template0 ENCODING = 'UTF8' 
 
 ALTER DATABASE startingmultitenant OWNER TO postgres;
 
+\connect startingmultitenant
+
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
