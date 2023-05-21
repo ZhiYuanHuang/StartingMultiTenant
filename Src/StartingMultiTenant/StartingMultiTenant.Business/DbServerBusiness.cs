@@ -36,7 +36,7 @@ namespace StartingMultiTenant.Business
                 return Tuple.Create(false,"still has use");
             }
 
-            return Delete(dbServerId);
+            return base.Delete(dbServerId);
         }
 
         public PagingData<DbServerModel> GetPage(string serverHost,int? dbType, int pageSize, int pageIndex) {
