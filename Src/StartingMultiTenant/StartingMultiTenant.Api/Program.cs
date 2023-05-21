@@ -20,6 +20,14 @@ namespace StartingMultiTenant.Api
         public static void Main(string[] args) {
             var builder = WebApplication.CreateBuilder(args);
 
+            if (System.IO.Directory.Exists("./conf.d")) {
+                builder.Host.ConfigureAppConfiguration((hostingContext, config) => {
+                    config.AddJsonFile(System.IO.Path.Combine(".", "conf.d", "appsettings.json"),
+                        optional: true,
+                        reloadOnChange: true);
+                });
+            }
+
             // Add services to the container.
 
             builder.Services.AddControllers();
