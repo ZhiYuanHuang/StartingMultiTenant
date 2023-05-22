@@ -53,10 +53,12 @@ internal static class HostingExtensions
             }
         });
 
+        string serviceIdentifier = builder.Configuration.GetValue("MultiTenantOption:SpecifiedServiceIdentifier", string.Empty);
+
         //add multi tenant resovle middleware
         builder.Services.WithMultiTenant(options => {
             options.CacheMilliSec = 1000 * 60 * 3;
-            options.ServiceIdentifier = builder.Configuration.GetValue("MultiTenantOption:SpecifiedServiceIdentifier", string.Empty);
+            options.ServiceIdentifier = serviceIdentifier;
         }, ServiceLifetime.Scoped)
             .WithPerTenantOptions<JwtBearerOptions>((o, tenantInfo) => {
                 var schema= builder.Configuration.GetValue<string>("MultiTenantOption:JwtBearerSchema","http");
@@ -105,7 +107,7 @@ internal static class HostingExtensions
                     if (contextTenant != null) {
                         if (!string.IsNullOrEmpty(specifiedDbIdentifier)) {
                             var foundDbConnDto = contextTenant.InnerDbConnList.FirstOrDefault(x => string.Compare(x.DbIdentifier, specifiedDbIdentifier, true) == 0);
-                            if (foundDbConnDto == null && !string.IsNullOrEmpty(foundDbConnDto.DbConn)) {
+                            if (foundDbConnDto != null && !string.IsNullOrEmpty(foundDbConnDto.DbConn)) {
                                 builder.UseMySql(foundDbConnDto.DbConn, MySqlServerVersion.AutoDetect(foundDbConnDto.DbConn));
                             }
                         } else {
@@ -120,7 +122,7 @@ internal static class HostingExtensions
                     if (contextTenant != null) {
                         if (!string.IsNullOrEmpty(specifiedDbIdentifier)) {
                             var foundDbConnDto = contextTenant.InnerDbConnList.FirstOrDefault(x => string.Compare(x.DbIdentifier, specifiedDbIdentifier, true) == 0);
-                            if (foundDbConnDto == null && !string.IsNullOrEmpty(foundDbConnDto.DbConn)) {
+                            if (foundDbConnDto != null && !string.IsNullOrEmpty(foundDbConnDto.DbConn)) {
                                 builder.UseMySql(foundDbConnDto.DbConn, MySqlServerVersion.AutoDetect(foundDbConnDto.DbConn));
                             }
                         } else {
@@ -151,7 +153,7 @@ internal static class HostingExtensions
             options.AddPolicy(IdsConst.AuthorPolicy_TenantAdmin, builder => {
                 builder.AddAuthenticationSchemes("Bearer");
                 builder.RequireAuthenticatedUser();
-                builder.RequireRole(IdsConst.TenantAdminRole);
+                builder.RequireClaim(  "aud", serviceIdentifier);
             });
         });
 
