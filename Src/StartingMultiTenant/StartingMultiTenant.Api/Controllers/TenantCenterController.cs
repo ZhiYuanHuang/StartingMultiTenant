@@ -106,6 +106,8 @@ namespace StartingMultiTenant.Api.Controllers
                     ErrorMsg="tenantdomain and tenantidentifier cann't be empty!"
                 };
             }
+
+            bool noExist=!_tenantIdentifierBusiness.ExistTenant(tenantDomain,tenantIdentifier);
             
             List<ExternalTenantServiceDbConnModel> externalList = _externalDbConnBusiness.GetByTenantAndService(tenantDomain, tenantIdentifier, serviceIdentifier);
             List<TenantCenterDbConnDto> externalDbConnList = new List<TenantCenterDbConnDto>();
@@ -136,7 +138,9 @@ namespace StartingMultiTenant.Api.Controllers
             }
 
             return new AppResponseDto<TenantCenterDbConnsDto>() {
+
                 Result = new TenantCenterDbConnsDto() {
+                    NoExist = noExist,
                     TenantDomain = tenantDomain,
                     TenantIdentifier = tenantIdentifier,
                     InnerDbConnList= innerDbConnList,

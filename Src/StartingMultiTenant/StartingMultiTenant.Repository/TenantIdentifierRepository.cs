@@ -15,12 +15,16 @@ namespace StartingMultiTenant.Repository
         }
 
         public bool Insert(TenantIdentifierModel tenantIdentifier) {
+            tenantIdentifier.TenantIdentifier = tenantIdentifier.TenantIdentifier.ToLower();
+            tenantIdentifier.TenantDomain=tenantIdentifier.TenantDomain.ToLower();
             string sql = "Insert Into TenantIdentifier (TenantGuid,TenantIdentifier,TenantDomain) Values (@tenantGuid,@tenantIdentifier,@tenantDomain)";
 
             return _tenantDbDataContext.Master.ExecuteNonQuery(sql,tenantIdentifier)>0;
         }
 
         public override bool Insert(TenantIdentifierModel tenantIdentifier,out Int64 id) {
+            tenantIdentifier.TenantIdentifier = tenantIdentifier.TenantIdentifier.ToLower();
+            tenantIdentifier.TenantDomain = tenantIdentifier.TenantDomain.ToLower();
             string sql = "Insert Into TenantIdentifier (TenantGuid,TenantIdentifier,TenantDomain,TenantName,Description,CreateTime) Values (@tenantGuid,@tenantIdentifier,@tenantDomain,@tenantName,@description,now()) RETURNING Id";
 
             id=(Int64) _tenantDbDataContext.Master.ExecuteScalar(sql, tenantIdentifier);
