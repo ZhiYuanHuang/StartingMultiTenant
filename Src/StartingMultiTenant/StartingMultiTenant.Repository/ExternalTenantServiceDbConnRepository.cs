@@ -18,6 +18,8 @@ namespace StartingMultiTenant.Repository
         }
 
         public override bool Insert(ExternalTenantServiceDbConnModel externalTenantServiceDbConn,out Int64 id) {
+            externalTenantServiceDbConn.TenantIdentifier = externalTenantServiceDbConn.TenantIdentifier.ToLower();
+            externalTenantServiceDbConn.TenantDomain = externalTenantServiceDbConn.TenantDomain.ToLower();
             string sql = @"Insert Into ExternalTenantServiceDbConn
                            (TenantIdentifier,TenantDomain,ServiceIdentifier,DbIdentifier,EncryptedConnStr,UpdateTime)
                            Values 
@@ -34,6 +36,8 @@ namespace StartingMultiTenant.Repository
         }
 
         public override bool Update(ExternalTenantServiceDbConnModel t) {
+            t.TenantIdentifier = t.TenantIdentifier.ToLower();
+            t.TenantDomain = t.TenantDomain.ToLower();
             string sql = @"Update ExternalTenantServiceDbConn 
                              Set OverrideEncryptedConnStr=ExternalTenantServiceDbConn.EncryptedConnStr,
                              EncryptedConnStr=@encryptedConnStr,

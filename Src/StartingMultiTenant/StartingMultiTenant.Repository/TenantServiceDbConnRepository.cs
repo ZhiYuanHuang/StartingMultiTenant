@@ -24,6 +24,8 @@ namespace StartingMultiTenant.Repository
                 BeginTransaction();
 
                 foreach(var dbConn in dbConnList) {
+                    dbConn.TenantIdentifier = dbConn.TenantIdentifier.ToLower();
+                    dbConn.TenantDomain = dbConn.TenantDomain.ToLower();
                     bool insertResult= _tenantDbDataContext.Master.ExecuteNonQuery(sql,dbConn)>0;
                     if (!insertResult) {
                         success = false;
@@ -43,6 +45,8 @@ namespace StartingMultiTenant.Repository
         }
 
         public bool InsertOrUpdate(TenantServiceDbConnModel dbConn) {
+            dbConn.TenantIdentifier = dbConn.TenantIdentifier.ToLower();
+            dbConn.TenantDomain = dbConn.TenantDomain.ToLower();
             string sql = @"Insert Into TenantServiceDbConn (TenantIdentifier,TenantDomain,ServiceIdentifier,DbIdentifier,CreateScriptName,CreateScriptVersion,CurSchemaVersion,DbServerId,EncryptedConnStr,UpdateTime)
                            Values (@tenantIdentifier,@tenantDomain,@serviceIdentifier,@dbIdentifier,@createScriptName,@createScriptVersion,@curSchemaVersion,@dbServerId,@encryptedConnStr,now())
                            ON CONFLICT ON CONSTRAINT u_tenantservicedbconn_1
