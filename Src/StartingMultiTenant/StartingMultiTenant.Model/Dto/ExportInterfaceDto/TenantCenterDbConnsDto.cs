@@ -13,6 +13,8 @@ namespace StartingMultiTenant.Model.Dto.ExportInterfaceDto
     {
         public string TenantDomain { get; set; }
         public string TenantIdentifier { get; set; }
+
+        public bool NoExist { get; set; }
         public List<TenantCenterDbConnDto> InnerDbConnList { get; set; }
         public List<TenantCenterDbConnDto> ExternalDbConnList { get; set; }
     }

@@ -7,13 +7,13 @@ using StartingMultiTenantLib;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using IdentityServer.MultiTenant.Service;
-using Duende.IdentityServer.Services;
+using IdentityServer4.Services;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.AspNetCore.Authorization;
-using IdentityServer.MultiTenant.Const;
 using System.Globalization;
 using Finbuckle.MultiTenant;
 using IdentityServer.MultiTenant.Middleware;
+using StartingMultiTenantLib.Const;
 
 namespace IdentityServer.MultiTenant;
 
@@ -62,6 +62,8 @@ internal static class HostingExtensions
         builder.Services.WithMultiTenant(options => {
             options.CacheMilliSec = 1000 * 60 * 3;
             options.ServiceIdentifier = serviceIdentifier;
+            //不存在租户使用空数据源
+            options.UseEmptySourceWhenNoExistTenant = true;
         }, ServiceLifetime.Scoped)
             .WithPerTenantOptions<JwtBearerOptions>((o, tenantInfo) => {
                 var schema= builder.Configuration.GetValue<string>("MultiTenantOption:JwtBearerSchema","http");
@@ -106,7 +108,7 @@ internal static class HostingExtensions
             options.InputLengthRestrictions.Scope = 2000;
 
             options.Authentication.CookieSameSiteMode = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
-        })
+        }).AddDeveloperSigningCredential()
             .AddConfigurationStore(options => {
                 options.ResolveDbContextOptions = (provider, builder) => {
                     var contextTenant = provider.GetRequiredService<ContextTenantInfo>();
@@ -158,10 +160,10 @@ internal static class HostingExtensions
             options.DefaultPolicy = new AuthorizationPolicyBuilder("Bearer")
                 .RequireAuthenticatedUser().Build();
 
-            options.AddPolicy(IdsConst.AuthorPolicy_TenantAdmin, builder => {
+            options.AddPolicy(SMTConsts.AuthorPolicy_SuperAdmin, builder => {
                 builder.AddAuthenticationSchemes("Bearer");
                 builder.RequireAuthenticatedUser();
-                builder.RequireClaim("aud", serviceIdentifier);
+                builder.RequireClaim("aud", SMTConsts.Service_Super_Admin_Aud);
             });
         });
 

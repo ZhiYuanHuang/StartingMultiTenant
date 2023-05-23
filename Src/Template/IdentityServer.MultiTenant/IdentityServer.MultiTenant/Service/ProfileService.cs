@@ -1,6 +1,6 @@
-﻿using Duende.IdentityServer.Extensions;
-using Duende.IdentityServer.Models;
-using Duende.IdentityServer.Services;
+﻿using IdentityServer4.Extensions;
+using IdentityServer4.Models;
+using IdentityServer4.Services;
 using IdentityModel;
 using IdentityServer.MultiTenant.DbContext;
 using Microsoft.AspNetCore.Identity;

@@ -6,10 +6,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Duende.IdentityServer" Version="6.3.0" />
-		<PackageReference Include="Duende.IdentityServer.AspNetIdentity" Version="6.3.0" />
-		<PackageReference Include="Duende.IdentityServer.EntityFramework" Version="6.3.0" />
 		<PackageReference Include="Finbuckle.MultiTenant.AspNetCore" Version="6.10.0" />
+		<PackageReference Include="IdentityServer4" Version="4.1.2" />
+		<PackageReference Include="IdentityServer4.AspNetIdentity" Version="4.1.2" />
+		<PackageReference Include="IdentityServer4.EntityFramework" Version="4.1.2" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.16" />
 		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="6.0.16" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.16">
@@ -27,5 +27,9 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\..\..\..\..\StartingMultiTenant.SDK\src\dotnet\StartingMultiTenantLib\StartingMultiTenantLib\StartingMultiTenantLib.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Const\" />
 	</ItemGroup>
 </Project>
