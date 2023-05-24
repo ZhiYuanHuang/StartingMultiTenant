@@ -722,15 +722,16 @@ INSERT INTO public.serviceinfo VALUES (5, 'oauth服务', 'oauth.svc', '实现oau
 -- Data for Name: tenantdomain; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO public.tenantdomain VALUES (1, 'test.com');
-INSERT INTO public.tenantdomain VALUES (14, 'abc.com');
-INSERT INTO public.tenantdomain VALUES (15, 'reader.com');
+INSERT INTO public.tenantdomain (tenantdomain) VALUES ('sys.com');
+INSERT INTO public.tenantdomain(tenantdomain) VALUES ('test.com');
+INSERT INTO public.tenantdomain (tenantdomain) VALUES ('abc.com');
 
 
 --
 -- Data for Name: tenantidentifier; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
+INSERT INTO public.tenantidentifier(tenantguid, tenantidentifier, tenantdomain, tenantname, description) VALUES (gen_random_uuid(), 'empty', 'sys.com', '系统空租户', '系统空租户占用');
 INSERT INTO public.tenantidentifier VALUES (36, 'ce838565c9be4ec09cac657393034070', 'testtenant1', 'test.com', '测试租户1', '测试租户1', '2023-02-21 08:13:39.064518+00', NULL);
 INSERT INTO public.tenantidentifier VALUES (37, '79cb34fcd56c4208a42913407672efc4', 'testtenant1', 'abc.com', '测试租户1', '测试租户1', '2023-02-21 08:16:21.83215+00', '2023-02-21 08:16:35.084115+00');
 INSERT INTO public.tenantidentifier VALUES (38, '05e3218be97141ee823dfea387688f02', 'testtenant2', 'test.com', '测试租户2', '测试租户2', '2023-02-21 08:18:14.387783+00', NULL);

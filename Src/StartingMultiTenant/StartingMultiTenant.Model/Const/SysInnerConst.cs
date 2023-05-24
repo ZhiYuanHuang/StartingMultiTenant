@@ -11,5 +11,7 @@ namespace StartingMultiTenant.Model.Const
     {
         public const string DbNameWildcard = "DbOfStartingMultiTenant";
         public static char[] Invalid_Char_Arr = new char[] { ' ','-','_',',','+','@','&'};
+
+        public const string Sys_TenantDomain = "sys.com";
     }
 }

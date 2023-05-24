@@ -36,11 +36,6 @@ namespace StartingMultiTenant.Repository
             return _tenantDbDataContext.Master.ExecuteNonQuery(sql, t) > 0;
         }
 
-        public bool Delete(string tenantGuid) {
-            string sql = "Delete From TenantIdentifier Where TenantGuid=@tenantGuid";
-            return _tenantDbDataContext.Master.ExecuteNonQuery(sql, new { tenantGuid = tenantGuid })>0;
-        }
-
         public List<TenantIdentifierModel> GetTenantListByDomain(string tenantDomain) {
             Dictionary<string, object> p = new Dictionary<string, object>() {
                 { "TenantDomain",tenantDomain}

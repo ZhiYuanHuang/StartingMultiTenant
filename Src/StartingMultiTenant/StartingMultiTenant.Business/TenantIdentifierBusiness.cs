@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using StartingMultiTenant.Model.Const;
 using StartingMultiTenant.Model.Domain;
 using StartingMultiTenant.Model.Dto;
 using StartingMultiTenant.Repository;
@@ -34,8 +35,24 @@ namespace StartingMultiTenant.Business
             return _tenantIdentifierRepo.Insert(tenantIdentifier);
         }
 
-        public bool Delete(string tenantGuid) {
-            return _tenantIdentifierRepo.Delete(tenantGuid);
+        public Tuple<bool,string> Delete(TenantIdentifierModel tenantIdentifier) {
+            
+            if (string.Compare(tenantIdentifier.TenantDomain, SysInnerConst.Sys_TenantDomain, true) == 0) {
+                return Tuple.Create(false, $"can not delete system tenant");
+            }
+
+            bool result = false;
+            string errMsg = string.Empty;
+
+            try {
+                result = _tenantDomainRepo.Delete(tenantIdentifier.Id);
+            }catch(Exception ex) {
+                errMsg = $"delete tenant {tenantIdentifier.TenantIdentifier} {tenantIdentifier.TenantDomain} raise error";
+                _logger.LogError(ex, errMsg);
+                return Tuple.Create(false, errMsg);
+            }
+
+            return Tuple.Create(result, errMsg);
         }
 
         public bool ExistTenant(string tenantDomain,string tenantIdentifier) {
@@ -57,8 +74,6 @@ namespace StartingMultiTenant.Business
 
             return pageData;
         }
-
-
 
         public TenantServiceDbConnsDto GetTenantsDbConns(Int64 id) {
             var model= Get(id);

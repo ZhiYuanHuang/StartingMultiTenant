@@ -97,7 +97,7 @@ namespace StartingMultiTenant.Api.Controllers
 
             if (!result) {
                 if (!existed) {
-                    _tenantIdentifierBusiness.Delete(tenantGuid);
+                    _tenantIdentifierBusiness.Delete(id);
                 }
             } 
 

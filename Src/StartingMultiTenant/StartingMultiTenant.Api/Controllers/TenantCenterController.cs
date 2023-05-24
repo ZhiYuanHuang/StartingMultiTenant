@@ -92,7 +92,7 @@ namespace StartingMultiTenant.Api.Controllers
             var createDbResult = await _singleTenantService.CreateTenantDbs(id, createTenantDto.TenantDomain, createTenantDto.TenantIdentifier, createTenantDto.CreateDbScripts);
 
             if (!createDbResult) {
-                _tenantIdentifierBusiness.Delete(tenantGuid);
+                _tenantIdentifierBusiness.Delete(id);
             }
 
             return new AppResponseDto(createDbResult) { ErrorMsg=createDbResult?string.Empty:"create tenant dbs error"};

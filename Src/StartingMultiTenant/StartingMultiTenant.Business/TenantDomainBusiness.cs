@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using StartingMultiTenant.Model.Const;
 using StartingMultiTenant.Model.Domain;
 using StartingMultiTenant.Model.Dto;
 using StartingMultiTenant.Repository;
@@ -43,11 +44,15 @@ namespace StartingMultiTenant.Business
             if (domain == null) {
                 return Tuple.Create(false,"domain no exist") ;
             }
-
+            
             return Delete(domain);
         }
 
         public Tuple<bool,string> Delete(TenantDomainModel model) {
+            if (string.Compare(model.TenantDomain, SysInnerConst.Sys_TenantDomain,true)==0) {
+                return Tuple.Create(false, $"can not delete system domain");
+            }
+
             List<TenantIdentifierModel> tenantList= _tenantIdentifierRepo.GetTenantListByDomain(model.TenantDomain);
             if (tenantList.Any()) {
                 _logger.LogError($"tenantDomain {model.TenantDomain} still has {tenantList.Count} tenant");
