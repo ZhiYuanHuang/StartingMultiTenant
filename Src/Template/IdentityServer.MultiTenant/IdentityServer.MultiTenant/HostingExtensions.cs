@@ -163,7 +163,13 @@ internal static class HostingExtensions
             options.AddPolicy(SMTConsts.AuthorPolicy_SuperAdmin, builder => {
                 builder.AddAuthenticationSchemes("Bearer");
                 builder.RequireAuthenticatedUser();
-                builder.RequireClaim("aud", SMTConsts.Service_Super_Admin_Aud);
+                builder.RequireClaim("scope", SMTConsts.Service_Super_Admin_Scope);
+            });
+
+            options.AddPolicy(SMTConsts.AuthorPolicy_TenantAdmin, builder => {
+                builder.AddAuthenticationSchemes("Bearer");
+                builder.RequireAuthenticatedUser();
+                builder.RequireClaim("scope", SMTConsts.Service_Tenant_Admin_Scope);
             });
         });
 
@@ -206,6 +212,10 @@ internal static class HostingExtensions
 
         app.UseIdentityServer();
         app.UseAuthorization();
+
+        app.UseEndpoints(endpoints => {
+            endpoints.MapControllerRoute("default", "api/{controller=Home}/{action=Index}");
+        });
 
         // uncomment if you want to add a UI
         //app.UseAuthorization();
