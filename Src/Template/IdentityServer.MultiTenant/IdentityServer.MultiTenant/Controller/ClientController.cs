@@ -34,7 +34,7 @@ namespace IdentityServer.MultiTenant.Controller
                 return new AppResponseDto(false) { ErrorMsg = "ClientId 应为英文字母、数字组合，最小5位，最大15位" };
             }
 
-            if (clientInfo.ClientSecrets.Any() && !System.Text.RegularExpressions.Regex.IsMatch(clientInfo.ClientSecrets[0].Value, "[a-zA-Z0-9]{6,20}")) {
+            if (clientInfo.ClientSecrets ==null || !clientInfo.ClientSecrets.Any() || !System.Text.RegularExpressions.Regex.IsMatch(clientInfo.ClientSecrets[0].Value, "[a-zA-Z0-9]{6,20}")) {
                 return new AppResponseDto(false) { ErrorMsg = "ClientSecret 应为英文字母、数字组合，最小5位，最大20位" };
             }
 
@@ -46,11 +46,6 @@ namespace IdentityServer.MultiTenant.Controller
 
             bool result = false;
             if (existedClient == null) {
-                if (clientInfo.ClientSecrets == null || !clientInfo.ClientSecrets.Any()) {
-                    clientInfo.ClientSecrets = new List<IdentityServer4.EntityFramework.Entities.ClientSecret>() {
-                        new IdentityServer4.EntityFramework.Entities.ClientSecret(){ Value="123!@#"}
-                    };
-                }
                 clientInfo.AccessTokenLifetime = 60 * 60 * 24 * 15;
                 clientInfo.AllowedGrantTypes = new List<IdentityServer4.EntityFramework.Entities.ClientGrantType>() {
                     new IdentityServer4.EntityFramework.Entities.ClientGrantType(){ GrantType=GrantType.ClientCredentials}
@@ -63,10 +58,6 @@ namespace IdentityServer.MultiTenant.Controller
                     clientInfo.AllowedScopes = new List<IdentityServer4.EntityFramework.Entities.ClientScope>();
                 }
 
-                if (clientInfo.AllowedScopes.FirstOrDefault(x => string.Compare(x.Scope, "tenantservice.superadmin", true) == 0) == null) {
-                    clientInfo.AllowedScopes.Add(new IdentityServer4.EntityFramework.Entities.ClientScope() { Scope = "tenantservice.superadmin" });
-                }
-
                 _configurationDbContext.Clients.Add(clientInfo);
                 result = _configurationDbContext.SaveChanges() > 0;
             } else {
@@ -75,7 +66,9 @@ namespace IdentityServer.MultiTenant.Controller
                     existedClient.AllowOfflineAccess = true;
                     existedClient.ClientName = clientInfo.ClientName;
                     existedClient.Description = clientInfo.Description;
-                   
+
+                    existedClient.AllowedScopes = clientInfo.AllowedScopes == null ? (new List<IdentityServer4.EntityFramework.Entities.ClientScope>() ): clientInfo.AllowedScopes;
+
                     result = _configurationDbContext.SaveChanges() > 0;
                     result = true;
                 } catch (Exception ex) {
