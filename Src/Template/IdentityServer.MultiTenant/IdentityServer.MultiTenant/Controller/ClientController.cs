@@ -12,7 +12,8 @@ namespace IdentityServer.MultiTenant.Controller
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
-    //[Authorize(Policy = SMTConsts.AuthorPolicy_SuperAdmin)]
+    [Authorize(Policy = SMTConsts.AuthorPolicy_SuperAdmin)]
+    //[Authorize(Roles ="admin")]
     public class ClientController : ControllerBase
     {
         ConfigurationDbContext _configurationDbContext;

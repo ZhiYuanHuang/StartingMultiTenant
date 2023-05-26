@@ -10,17 +10,20 @@ namespace IdentityServer.MultiTenant.Service
     public class ProfileService : IProfileService
     {
         UserManager<ApplicationUser> _userManager;
-        public ProfileService(UserManager<ApplicationUser> userManager) {
+        RoleManager<IdentityRole> _roleManager;
+        public ProfileService(UserManager<ApplicationUser> userManager,
+            RoleManager<IdentityRole> roleManager) {
             _userManager = userManager;
+            _roleManager = roleManager;
         }
         public async Task GetProfileDataAsync(ProfileDataRequestContext context) {
             var user = await _userManager.FindByIdAsync(context.Subject.GetSubjectId());
             if (user != null) {
                 var claims = await _userManager.GetClaimsAsync(user);
+                
                 context.IssuedClaims.AddRange(claims);
 
                 var roles = await _userManager.GetRolesAsync(user);
-
                 context.IssuedClaims.AddRange(roles.Select(x => new System.Security.Claims.Claim(JwtClaimTypes.Role, x)));
             }
             await Task.CompletedTask;

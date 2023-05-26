@@ -75,18 +75,20 @@ internal static class HostingExtensions
             });
 
         string specifiedDbIdentifier = builder.Configuration.GetValue("MultiTenantOption:SpecifiedDbIdentifier", string.Empty);
+        bool useInnerConn = builder.Configuration.GetValue("MultiTenantOption:UseInnerConn", true);
         builder.Services.AddDbContext<AspNetAccountDbContext>((provider, options) => {
             var contextTenant= provider.GetRequiredService<ContextTenantInfo>();
             if (contextTenant != null && contextTenant.CurrentTenantInfo!=null) {
                 var tenantDbConnsDto = contextTenant.CurrentTenantInfo;
-                if (tenantDbConnsDto.InnerDbConnList != null && tenantDbConnsDto.InnerDbConnList.Any()) {
+                var dbconnList = useInnerConn ? tenantDbConnsDto.InnerDbConnList : tenantDbConnsDto.ExternalDbConnList;
+                if (dbconnList != null && dbconnList.Any()) {
                     if (!string.IsNullOrEmpty(specifiedDbIdentifier)) {
-                        var foundDbConnDto = tenantDbConnsDto.InnerDbConnList.FirstOrDefault(x => string.Compare(x.DbIdentifier, specifiedDbIdentifier, true) == 0);
+                        var foundDbConnDto = dbconnList.FirstOrDefault(x => string.Compare(x.DbIdentifier, specifiedDbIdentifier, true) == 0);
                         if (foundDbConnDto != null && !string.IsNullOrEmpty(foundDbConnDto.DbConn)) {
                             options.UseMySql(foundDbConnDto.DbConn, MySqlServerVersion.AutoDetect(foundDbConnDto.DbConn));
                         }
                     } else {
-                        options.UseMySql(tenantDbConnsDto.InnerDbConnList[0].DbConn, MySqlServerVersion.AutoDetect(tenantDbConnsDto.InnerDbConnList[0].DbConn));
+                        options.UseMySql(dbconnList[0].DbConn, MySqlServerVersion.AutoDetect(dbconnList[0].DbConn));
                     }
                 }
             }
@@ -101,12 +103,10 @@ internal static class HostingExtensions
             options.Events.RaiseInformationEvents = true;
             options.Events.RaiseFailureEvents = true;
             options.Events.RaiseSuccessEvents = true;
-
+           
             // https://docs.duendesoftware.com/identityserver/v6/fundamentals/resources/api_scopes#authorization-based-on-scopes
             options.EmitStaticAudienceClaim = true;
-
             options.InputLengthRestrictions.Scope = 2000;
-
             options.Authentication.CookieSameSiteMode = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
         }).AddDeveloperSigningCredential()
             .AddConfigurationStore(options => {
@@ -114,13 +114,15 @@ internal static class HostingExtensions
                     var contextTenant = provider.GetRequiredService<ContextTenantInfo>();
                     if (contextTenant != null && contextTenant.CurrentTenantInfo != null) {
                         var tenantDbConnsDto = contextTenant.CurrentTenantInfo;
+                        var dbconnList = useInnerConn ? tenantDbConnsDto.InnerDbConnList : tenantDbConnsDto.ExternalDbConnList;
                         if (!string.IsNullOrEmpty(specifiedDbIdentifier)) {
-                            var foundDbConnDto = tenantDbConnsDto.InnerDbConnList.FirstOrDefault(x => string.Compare(x.DbIdentifier, specifiedDbIdentifier, true) == 0);
+                           
+                            var foundDbConnDto = dbconnList.FirstOrDefault(x => string.Compare(x.DbIdentifier, specifiedDbIdentifier, true) == 0);
                             if (foundDbConnDto != null && !string.IsNullOrEmpty(foundDbConnDto.DbConn)) {
                                 builder.UseMySql(foundDbConnDto.DbConn, MySqlServerVersion.AutoDetect(foundDbConnDto.DbConn));
                             }
                         } else {
-                            builder.UseMySql(tenantDbConnsDto.InnerDbConnList[0].DbConn, MySqlServerVersion.AutoDetect(tenantDbConnsDto.InnerDbConnList[0].DbConn));
+                            builder.UseMySql(dbconnList[0].DbConn, MySqlServerVersion.AutoDetect(dbconnList[0].DbConn));
                         }
                     }
                 };
@@ -130,13 +132,14 @@ internal static class HostingExtensions
                     var contextTenant = provider.GetRequiredService<ContextTenantInfo>();
                     if (contextTenant != null && contextTenant.CurrentTenantInfo != null) {
                         var tenantDbConnsDto = contextTenant.CurrentTenantInfo;
+                        var dbconnList = useInnerConn ? tenantDbConnsDto.InnerDbConnList : tenantDbConnsDto.ExternalDbConnList;
                         if (!string.IsNullOrEmpty(specifiedDbIdentifier)) {
-                            var foundDbConnDto = tenantDbConnsDto.InnerDbConnList.FirstOrDefault(x => string.Compare(x.DbIdentifier, specifiedDbIdentifier, true) == 0);
+                            var foundDbConnDto = dbconnList.FirstOrDefault(x => string.Compare(x.DbIdentifier, specifiedDbIdentifier, true) == 0);
                             if (foundDbConnDto != null && !string.IsNullOrEmpty(foundDbConnDto.DbConn)) {
                                 builder.UseMySql(foundDbConnDto.DbConn, MySqlServerVersion.AutoDetect(foundDbConnDto.DbConn));
                             }
                         } else {
-                            builder.UseMySql(tenantDbConnsDto.InnerDbConnList[0].DbConn, MySqlServerVersion.AutoDetect(tenantDbConnsDto.InnerDbConnList[0].DbConn));
+                            builder.UseMySql(dbconnList[0].DbConn, MySqlServerVersion.AutoDetect(dbconnList[0].DbConn));
                         }
                     }
                 };
