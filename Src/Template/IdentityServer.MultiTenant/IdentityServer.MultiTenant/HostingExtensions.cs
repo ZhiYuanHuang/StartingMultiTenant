@@ -172,7 +172,7 @@ internal static class HostingExtensions
             options.AddPolicy(SMTConsts.AuthorPolicy_TenantAdmin, builder => {
                 builder.AddAuthenticationSchemes("Bearer");
                 builder.RequireAuthenticatedUser();
-                builder.RequireClaim("scope", SMTConsts.Service_Tenant_Admin_Scope);
+                builder.RequireRole(SMTConsts.Service_Admin_Role);
             });
         });
 
