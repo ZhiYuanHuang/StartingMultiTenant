@@ -11,8 +11,7 @@ namespace IdentityServer.MultiTenant.Controller
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
-    public class AccountController : ControllerBase
-    {
+    public class AccountController : ControllerBase {
         ConfigurationDbContext _configurationDbContext;
         AspNetAccountDbContext _aspNetAccountDbContext;
         UserManager<ApplicationUser> _userMgr;
@@ -21,10 +20,12 @@ namespace IdentityServer.MultiTenant.Controller
             UserManager<ApplicationUser> userMgr) {
             _configurationDbContext = configurationDbContext;
             _aspNetAccountDbContext = aspNetAccountDbContext;
-            _userMgr=userMgr;
+            _userMgr = userMgr;
         }
 
+        
         [HttpPost]
+        [Authorize]
         public async Task<AppResponseDto> AddOrUpdate(ApplicationUserDto applicationUserDto) {
             var existedUser = await _userMgr.FindByNameAsync(applicationUserDto.UserName);
             IdentityResult result = null;
@@ -49,6 +50,7 @@ namespace IdentityServer.MultiTenant.Controller
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<AppResponseDto> Add(ApplicationUserDto applicationUserDto) {
             var existedUser=await _userMgr.FindByNameAsync(applicationUserDto.UserName);
             if (existedUser != null) {
@@ -66,6 +68,7 @@ namespace IdentityServer.MultiTenant.Controller
 
 
         [HttpPost]
+        [Authorize]
         public async Task<AppResponseDto> Update(ApplicationUserDto applicationUserDto) {
             var existedUser =await _userMgr.FindByNameAsync(applicationUserDto.UserName);
             if (existedUser == null) {
