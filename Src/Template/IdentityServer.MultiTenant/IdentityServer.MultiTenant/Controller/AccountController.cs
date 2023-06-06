@@ -25,14 +25,33 @@ namespace IdentityServer.MultiTenant.Controller
         }
 
         [HttpPost]
+        public async Task<AppResponseDto> AddOrUpdate(ApplicationUserDto applicationUserDto) {
+            var existedUser = await _userMgr.FindByNameAsync(applicationUserDto.UserName);
+            IdentityResult result = null;
+            if (existedUser != null) {
+                var samePassword= await _userMgr.CheckPasswordAsync(existedUser,applicationUserDto.PlainPassword);
+                if (!samePassword) {
+                    string token = await _userMgr.GeneratePasswordResetTokenAsync(existedUser);
+                    result= await _userMgr.ResetPasswordAsync(existedUser, token, applicationUserDto.PlainPassword);
+                    if (!result.Succeeded) {
+                        return new AppResponseDto(false);
+                    }
+                }
+            } else {
+                result = await _userMgr.CreateAsync(applicationUserDto, applicationUserDto.PlainPassword);
+                if (!result.Succeeded) {
+                    return new AppResponseDto(false);
+                }
+            }
+
+
+            return new AppResponseDto();
+        }
+
+        [HttpPost]
         public async Task<AppResponseDto> Add(ApplicationUserDto applicationUserDto) {
             var existedUser=await _userMgr.FindByNameAsync(applicationUserDto.UserName);
             if (existedUser != null) {
-                //var result=await _userMgr.CreateAsync(applicationUser, "123456");
-
-                //if (!result.Succeeded) {
-                //    return new AppResponseDto(false);
-                //}
                 return new AppResponseDto(false) { ErrorMsg = $"user {applicationUserDto.UserName} existed!" };
             }
             
@@ -41,11 +60,6 @@ namespace IdentityServer.MultiTenant.Controller
             if (!result.Succeeded) {
                 return new AppResponseDto(false);
             }
-
-            //var result = await _userMgr.UpdateAsync(applicationUser);
-            //if (!result.Succeeded) {
-            //    return new AppResponseDto(false);
-            //}
 
             return new AppResponseDto();
         }
