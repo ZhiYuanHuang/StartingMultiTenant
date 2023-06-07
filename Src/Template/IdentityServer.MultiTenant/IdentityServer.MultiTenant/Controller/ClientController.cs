@@ -65,10 +65,15 @@ namespace IdentityServer.MultiTenant.Controller
                     new IdentityServer4.EntityFramework.Entities.ClientGrantType(){ GrantType=GrantType.ClientCredentials}
                 };
             }
-            
-            for (int i = 0; i < clientInfo.ClientSecrets.Count; i++) {
-                clientInfo.ClientSecrets[i].Value = clientInfo.ClientSecrets[i].Value.Sha256();
+
+            if (clientInfo.ClientSecrets != null && clientInfo.ClientSecrets.Any()) {
+                for (int i = 0; i < clientInfo.ClientSecrets.Count; i++) {
+                    clientInfo.ClientSecrets[i].Value = clientInfo.ClientSecrets[i].Value.Sha256();
+                }
+            } else {
+                clientInfo.RequireClientSecret= false;
             }
+           
 
             if (clientInfo.AllowedScopes == null) {
                 clientInfo.AllowedScopes = new List<IdentityServer4.EntityFramework.Entities.ClientScope>();
