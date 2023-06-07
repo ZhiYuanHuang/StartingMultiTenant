@@ -44,7 +44,7 @@ namespace IdentityServer.MultiTenant.Controller
                 return new AppResponseDto(false) { ErrorMsg = "ClientId 应为英文字母、数字组合，最小5位，最大15位" };
             }
 
-            if (clientInfo.ClientSecrets == null || !clientInfo.ClientSecrets.Any() || !System.Text.RegularExpressions.Regex.IsMatch(clientInfo.ClientSecrets[0].Value, "[a-zA-Z0-9]{6,20}")) {
+            if (clientInfo.ClientSecrets != null && clientInfo.ClientSecrets.Any() && !System.Text.RegularExpressions.Regex.IsMatch(clientInfo.ClientSecrets[0].Value, "[a-zA-Z0-9]{6,20}")) {
                 return new AppResponseDto(false) { ErrorMsg = "ClientSecret 应为英文字母、数字组合，最小5位，最大20位" };
             }
 
