@@ -50,7 +50,7 @@ namespace IdentityServer.MultiTenant.Controller
 
                         IEnumerable<System.Security.Claims.Claim> claims = applicationUserDto.Claims
                                 .Select(x => new System.Security.Claims.Claim(x.Type, x.Value));
-                        await _userMgr.AddClaimsAsync(applicationUserDto, claims);
+                        await _userMgr.AddClaimsAsync(existedUser, claims);
                     }
                 }
             } else {
