@@ -5,5 +5,6 @@ namespace IdentityServer.MultiTenant.Dto
     public class ApplicationUserDto: ApplicationUser
     {
         public string PlainPassword { get; set; }
+        public List<AppClaimDto>? Claims { get; set; }
     }
 }

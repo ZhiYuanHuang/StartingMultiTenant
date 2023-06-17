@@ -37,14 +37,36 @@ namespace IdentityServer.MultiTenant.Controller
                     if (!result.Succeeded) {
                         return new AppResponseDto(false);
                     }
+
+                    var existClaims = await _userMgr.GetClaimsAsync(existedUser);
+                    if (applicationUserDto.Claims==null || !applicationUserDto.Claims.Any()) {
+                        if (existClaims.Any()) {
+                            await _userMgr.RemoveClaimsAsync(existedUser, existClaims);
+                        }
+                    } else {
+                        if (existClaims.Any()) {
+                            await _userMgr.RemoveClaimsAsync(existedUser, existClaims);
+                        }
+
+                        IEnumerable<System.Security.Claims.Claim> claims = applicationUserDto.Claims
+                                .Select(x => new System.Security.Claims.Claim(x.Type, x.Value));
+                        await _userMgr.AddClaimsAsync(applicationUserDto, claims);
+                    }
                 }
             } else {
+                
                 result = await _userMgr.CreateAsync(applicationUserDto, applicationUserDto.PlainPassword);
+                
                 if (!result.Succeeded) {
                     return new AppResponseDto(false);
                 }
-            }
 
+                if(applicationUserDto.Claims!=null && applicationUserDto.Claims.Any()) {
+                    IEnumerable<System.Security.Claims.Claim> claims = applicationUserDto.Claims
+                        .Select(x => new System.Security.Claims.Claim(x.Type, x.Value));
+                    await _userMgr.AddClaimsAsync(applicationUserDto, claims);
+                }
+            }
 
             return new AppResponseDto();
         }
