@@ -207,16 +207,7 @@ internal static class HostingExtensions
     {
         app.UseForwardedHeaders();
 
-        app.Use(async (ctx, next) =>
-        {
-            string prefix = ctx.Request.Headers["X-Forwarded-Prefix"];
-            if (!string.IsNullOrWhiteSpace(prefix)) {
-                string host = ctx.Request.Host.Value;
-                ctx.Request.Host = new HostString($"{host}/{prefix}");
-            }
-            await next();
-        });
-
+       
         app.UseSerilogRequestLogging();
     
         if (app.Environment.IsDevelopment())
@@ -236,6 +227,16 @@ internal static class HostingExtensions
 
         app.UseIdentityServer();
         app.UseAuthorization();
+
+        app.Use(async (ctx, next) => {
+            string prefix = ctx.Request.Headers["X-Forwarded-Prefix"];
+            if (!string.IsNullOrWhiteSpace(prefix)) {
+                string host = ctx.Request.Host.Value;
+                ctx.Request.Host = new HostString($"{host}/{prefix}");
+            }
+            await next();
+        });
+
 
         app.UseEndpoints(endpoints => {
             endpoints.MapControllerRoute("default", "api/{controller=Home}/{action=Index}");
