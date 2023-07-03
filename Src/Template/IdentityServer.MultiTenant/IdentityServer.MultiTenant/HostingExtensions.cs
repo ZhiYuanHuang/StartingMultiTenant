@@ -14,6 +14,7 @@ using System.Globalization;
 using Finbuckle.MultiTenant;
 using IdentityServer.MultiTenant.Middleware;
 using StartingMultiTenantLib.Const;
+using Microsoft.AspNetCore.HttpOverrides;
 
 namespace IdentityServer.MultiTenant;
 
@@ -191,11 +192,31 @@ internal static class HostingExtensions
             });
         });
 
+        builder.Services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            options.KnownNetworks.Clear();
+            options.KnownProxies.Clear();
+        });
+
+
         return builder.Build();
     }
     
     public static WebApplication ConfigurePipeline(this WebApplication app)
-    { 
+    {
+        app.UseForwardedHeaders();
+
+        app.Use(async (ctx, next) =>
+        {
+            string prefix = ctx.Request.Headers["X-Forwarded-Prefix"];
+            if (!string.IsNullOrWhiteSpace(prefix)) {
+                string host = ctx.Request.Host.Value;
+                ctx.Request.Host = new HostString($"{host}/{prefix}");
+            }
+            await next();
+        });
+
         app.UseSerilogRequestLogging();
     
         if (app.Environment.IsDevelopment())
