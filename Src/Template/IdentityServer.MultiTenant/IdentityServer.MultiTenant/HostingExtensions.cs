@@ -15,6 +15,8 @@ using Finbuckle.MultiTenant;
 using IdentityServer.MultiTenant.Middleware;
 using StartingMultiTenantLib.Const;
 using Microsoft.AspNetCore.HttpOverrides;
+using IdentityServer4.Extensions;
+using Microsoft.Extensions.Logging;
 
 namespace IdentityServer.MultiTenant;
 
@@ -192,22 +194,20 @@ internal static class HostingExtensions
             });
         });
 
-        builder.Services.Configure<ForwardedHeadersOptions>(options =>
-        {
-            options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-            options.KnownNetworks.Clear();
-            options.KnownProxies.Clear();
-        });
-
 
         return builder.Build();
     }
     
     public static WebApplication ConfigurePipeline(this WebApplication app)
     {
-        app.UseForwardedHeaders();
+        var fordwardedHeaderOptions = new ForwardedHeadersOptions {
+            ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+        };
+        fordwardedHeaderOptions.KnownNetworks.Clear();
+        fordwardedHeaderOptions.KnownProxies.Clear();
 
-       
+        app.UseForwardedHeaders(fordwardedHeaderOptions);
+
         app.UseSerilogRequestLogging();
     
         if (app.Environment.IsDevelopment())
@@ -225,17 +225,21 @@ internal static class HostingExtensions
 
         app.UseMiddleware<ContextTenantAttachMiddleware>();
 
-        app.UseIdentityServer();
-        app.UseAuthorization();
-
         app.Use(async (ctx, next) => {
             string prefix = ctx.Request.Headers["X-Forwarded-Prefix"];
             if (!string.IsNullOrWhiteSpace(prefix)) {
                 string host = ctx.Request.Host.Value;
-                ctx.Request.Host = new HostString($"{host}/{prefix}");
+                //ctx.Request.Host = new HostString($"{host}/{prefix}");
+                //ctx.SetIdentityServerBasePath($"/{prefix}");
+                //ctx.SetIdentityServerOrigin($"{(!string.IsNullOrEmpty(proto) ? $"{proto}://" : "http://")}{host}/{prefix}");
+                ctx.SetIdentityServerOrigin($"{ctx.Request.Scheme}://{host}/{prefix}");
             }
             await next();
+
         });
+
+        app.UseIdentityServer();
+        app.UseAuthorization();
 
 
         app.UseEndpoints(endpoints => {
