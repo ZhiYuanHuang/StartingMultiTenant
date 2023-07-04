@@ -70,7 +70,11 @@ internal static class HostingExtensions
         }, ServiceLifetime.Scoped)
             .WithPerTenantOptions<JwtBearerOptions>((o, tenantInfo) => {
                 var schema= builder.Configuration.GetValue<string>("MultiTenantOption:JwtBearerSchema","http");
+                var oauthBasePath = builder.Configuration.GetValue<string>("MultiTenantOption:OAuthBasePath", string.Empty);
                 string jwtBearerUrl = $"{schema}://{tenantInfo.Identifier}.{tenantInfo.TenantDomain}";
+                if (!string.IsNullOrEmpty(oauthBasePath)) {
+                    jwtBearerUrl = string.Concat(jwtBearerUrl,$"/{oauthBasePath}");
+                }
                 o.Authority = jwtBearerUrl;
                 o.Audience = jwtBearerUrl + "/resources";
 
