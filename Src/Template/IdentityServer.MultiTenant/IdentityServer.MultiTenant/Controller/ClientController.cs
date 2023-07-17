@@ -19,6 +19,12 @@ namespace IdentityServer.MultiTenant.Controller
             _configurationDbContext = configurationDbContext;
         }
 
+        [HttpGet]
+        [Authorize]
+        public IActionResult Check() {
+            return Content("yep!");
+        }
+
         [HttpPost]
         [Authorize(Policy = SMTConsts.AuthorPolicy_TenantAdmin)]
         public async Task<AppResponseDto> Add(IdentityServer4.EntityFramework.Entities.Client clientInfo ) {

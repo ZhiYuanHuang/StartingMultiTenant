@@ -69,16 +69,22 @@ internal static class HostingExtensions
             options.UseEmptySourceWhenNoExistTenant = true;
         }, ServiceLifetime.Scoped)
             .WithPerTenantOptions<JwtBearerOptions>((o, tenantInfo) => {
-                var schema= builder.Configuration.GetValue<string>("MultiTenantOption:JwtBearerSchema","http");
-                var oauthBasePath = builder.Configuration.GetValue<string>("MultiTenantOption:OAuthBasePath", string.Empty);
-                string jwtBearerUrl = $"{schema}://{tenantInfo.Identifier}.{tenantInfo.TenantDomain}";
-                if (!string.IsNullOrEmpty(oauthBasePath)) {
-                    jwtBearerUrl = string.Concat(jwtBearerUrl,$"/{oauthBasePath}");
-                }
-                o.Authority = jwtBearerUrl;
-                o.Audience = jwtBearerUrl + "/resources";
+                //var schema= builder.Configuration.GetValue<string>("MultiTenantOption:JwtBearerSchema","http");
+                //var oauthBasePath = builder.Configuration.GetValue<string>("MultiTenantOption:OAuthBasePath", string.Empty);
 
-                o.RequireHttpsMetadata = false;
+                //string jwtBearerUrl = $"{schema}://{tenantInfo.Identifier}.{tenantInfo.TenantDomain}";
+                //if (!string.IsNullOrEmpty(oauthBasePath)) {
+                //    jwtBearerUrl = string.Concat(jwtBearerUrl,$"/{oauthBasePath}");
+                //}
+
+                string oauthUrl= builder.Configuration.GetValue("MultiTenantOption:OAuthUrl", "http://127.0.0.1");
+                oauthUrl = oauthUrl.TrimEnd('/');
+                o.Authority = oauthUrl;
+                o.Audience = oauthUrl + "/resources";
+
+                o.RequireHttpsMetadata = oauthUrl.StartsWith("https");
+                o.TokenValidationParameters.ValidateAudience = false;
+                o.TokenValidationParameters.ValidateIssuer = false;
             });
 
         string specifiedDbIdentifier = builder.Configuration.GetValue("MultiTenantOption:SpecifiedDbIdentifier", string.Empty);
@@ -185,9 +191,18 @@ internal static class HostingExtensions
 
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, opts => {
-                opts.RequireHttpsMetadata = false;
-                opts.Authority = "http://localhost:5000";
-                opts.Audience = "http://localhost:5000/resources";
+                //opts.RequireHttpsMetadata = false;
+                //opts.Authority = "http://localhost:5000";
+                //opts.Audience = "http://localhost:5000/resources";
+
+                string oauthUrl = builder.Configuration.GetValue("MultiTenantOption:OAuthUrl", "http://127.0.0.1");
+                oauthUrl = oauthUrl.TrimEnd('/');
+                opts.Authority = oauthUrl;
+                opts.Audience = oauthUrl + "/resources";
+                
+                opts.RequireHttpsMetadata = oauthUrl.StartsWith("https");
+                opts.TokenValidationParameters.ValidateAudience = false;
+                opts.TokenValidationParameters.ValidateIssuer = false;
             });
 
         builder.Services.AddCors(options => {
