@@ -105,6 +105,7 @@ internal static class HostingExtensions
                     }
                 }
             }
+           
         });
 
         builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
@@ -137,7 +138,7 @@ internal static class HostingExtensions
                         } else {
                             builder.UseMySql(dbconnList[0].DbConn, MySqlServerVersion.AutoDetect(dbconnList[0].DbConn));
                         }
-                    }
+                    } 
                 };
             })
             .AddOperationalStore(options => {
