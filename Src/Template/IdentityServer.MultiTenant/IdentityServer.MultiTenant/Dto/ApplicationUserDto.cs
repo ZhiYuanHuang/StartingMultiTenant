@@ -6,5 +6,6 @@ namespace IdentityServer.MultiTenant.Dto
     {
         public string PlainPassword { get; set; }
         public List<AppClaimDto>? Claims { get; set; }
+        public bool NotChangePasswordWhenExist { get; set; }
     }
 }

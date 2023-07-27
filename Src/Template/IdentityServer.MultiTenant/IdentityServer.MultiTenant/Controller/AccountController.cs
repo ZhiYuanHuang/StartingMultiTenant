@@ -32,12 +32,14 @@ namespace IdentityServer.MultiTenant.Controller
             if (existedUser != null) {
                 var samePassword= await _userMgr.CheckPasswordAsync(existedUser,applicationUserDto.PlainPassword);
                 if (!samePassword) {
-                    string token = await _userMgr.GeneratePasswordResetTokenAsync(existedUser);
-                    result= await _userMgr.ResetPasswordAsync(existedUser, token, applicationUserDto.PlainPassword);
-                    if (!result.Succeeded) {
-                        return new AppResponseDto(false);
+                    if (!applicationUserDto.NotChangePasswordWhenExist) {
+                        string token = await _userMgr.GeneratePasswordResetTokenAsync(existedUser);
+                        result = await _userMgr.ResetPasswordAsync(existedUser, token, applicationUserDto.PlainPassword);
+                        if (!result.Succeeded) {
+                            return new AppResponseDto(false);
+                        }
                     }
-
+                    
                     var existClaims = await _userMgr.GetClaimsAsync(existedUser);
                     if (applicationUserDto.Claims==null || !applicationUserDto.Claims.Any()) {
                         if (existClaims.Any()) {
