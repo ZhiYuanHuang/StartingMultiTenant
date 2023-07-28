@@ -39,21 +39,21 @@ namespace IdentityServer.MultiTenant.Controller
                             return new AppResponseDto(false);
                         }
                     }
-                    
-                    var existClaims = await _userMgr.GetClaimsAsync(existedUser);
-                    if (applicationUserDto.Claims==null || !applicationUserDto.Claims.Any()) {
-                        if (existClaims.Any()) {
-                            await _userMgr.RemoveClaimsAsync(existedUser, existClaims);
-                        }
-                    } else {
-                        if (existClaims.Any()) {
-                            await _userMgr.RemoveClaimsAsync(existedUser, existClaims);
-                        }
+                }
 
-                        IEnumerable<System.Security.Claims.Claim> claims = applicationUserDto.Claims
-                                .Select(x => new System.Security.Claims.Claim(x.Type, x.Value));
-                        await _userMgr.AddClaimsAsync(existedUser, claims);
+                var existClaims = await _userMgr.GetClaimsAsync(existedUser);
+                if (applicationUserDto.Claims == null || !applicationUserDto.Claims.Any()) {
+                    if (existClaims.Any()) {
+                        await _userMgr.RemoveClaimsAsync(existedUser, existClaims);
                     }
+                } else {
+                    if (existClaims.Any()) {
+                        await _userMgr.RemoveClaimsAsync(existedUser, existClaims);
+                    }
+
+                    IEnumerable<System.Security.Claims.Claim> claims = applicationUserDto.Claims
+                            .Select(x => new System.Security.Claims.Claim(x.Type, x.Value));
+                    await _userMgr.AddClaimsAsync(existedUser, claims);
                 }
             } else {
                 
