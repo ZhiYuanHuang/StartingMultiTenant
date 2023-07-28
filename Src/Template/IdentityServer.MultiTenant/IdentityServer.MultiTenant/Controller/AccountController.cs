@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using StartingMultiTenantLib.Const;
+using System.Text;
 
 namespace IdentityServer.MultiTenant.Controller
 {
@@ -159,6 +160,45 @@ namespace IdentityServer.MultiTenant.Controller
             await _userMgr.ResetPasswordAsync(existedUser, token, applicationUserDto.PlainPassword);
 
             return new AppResponseDto();
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<AppResponseDto> ResetMyPasswd([FromForm]string oldPasswd, [FromForm]string newPasswd) {
+            if (string.Compare(oldPasswd, newPasswd) == 0) {
+                return new AppResponseDto(false) { ErrorMsg="old password cann't be same with new password"};
+            }
+
+            string accountName= HttpContext.User.Identity.Name;
+            if (string.IsNullOrEmpty(accountName)) {
+                return new AppResponseDto(false) { ErrorMsg="cann't find accountName"};
+            }
+
+            var existedUser = await _userMgr.FindByNameAsync(accountName);
+            if(existedUser == null) {
+                return new AppResponseDto(false) { ErrorMsg = $"account {accountName} cann't found" };
+            }
+
+            var checkSuccess = await _userMgr.CheckPasswordAsync(existedUser, oldPasswd);
+            if (!checkSuccess) {
+                return new AppResponseDto(false) { ErrorMsg = "old password not right" };
+            }
+
+            string token = await _userMgr.GeneratePasswordResetTokenAsync(existedUser);
+            var result = await _userMgr.ResetPasswordAsync(existedUser, token, newPasswd);
+
+            if (!result.Succeeded) {
+                StringBuilder errBuilder = new StringBuilder();
+                if(result.Errors!=null && result.Errors.Any()) {
+                    foreach(var error in result.Errors) {
+                        errBuilder.Append($"{error.Code}-{error.Description};");
+                    }
+                }
+                return new AppResponseDto(false) { ErrorMsg=errBuilder.ToString()};
+            }
+
+
+            return new AppResponseDto(true);
         }
     }
 }
